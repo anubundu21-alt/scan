@@ -61,7 +61,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Unlimited scans'), findsOneWidget);
-    expect(find.text('All tools'), findsOneWidget);
+    expect(find.text('All tools'), findsNothing);
     expect(find.text('Auto-save by document type'), findsOneWidget);
     expect(
       find.text('Passports go to Private. ID cards get a second copy in IDs.'),

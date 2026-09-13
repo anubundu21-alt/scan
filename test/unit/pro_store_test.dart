@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scan2/features/pro/data/iap_gateway.dart';
 import 'package:scan2/features/pro/data/storekit_purchase.dart';
@@ -60,5 +61,45 @@ void main() {
     expect(controller.state.offer?.currencyCode, 'INR');
     expect(controller.state.offer?.source, 'internet');
     expect(controller.state.offer?.monthlyLabel, isNot(contains(r'$4.99')));
+  });
+
+  test('duplicate product error is a short App Store message', () async {
+    const monthly = StoreProduct(
+      id: ProProducts.monthly,
+      price: r'$4.99',
+      rawPrice: 4.99,
+      currencyCode: 'USD',
+    );
+    final controller = ProController(
+      purchase: StoreKitPurchase(
+        gateway: MemoryIapGateway(
+          products: [monthly],
+          buyError: PlatformException(
+            code: 'storekit_duplicate_product_object',
+            message:
+                'There is a pending transaction for the same product identifier. '
+                'Please either wait for it to be finished or finish it manually '
+                'using `completePurchase` to avoid edge cases.',
+            details: 'scanella_pro_monthly',
+          ),
+        ),
+      ),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.subscribe(ProPlan.monthly);
+
+    expect(controller.state.error, StoreKitPurchase.pendingSheetMessage);
+    expect(controller.state.error, isNot(contains('PlatformException')));
+    expect(controller.state.error, isNot(contains('scanella_pro_monthly')));
+
+    controller.clearError();
+    expect(controller.state.error, isNull);
   });
 }

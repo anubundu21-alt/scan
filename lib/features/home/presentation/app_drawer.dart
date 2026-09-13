@@ -6,8 +6,7 @@ import 'package:scan2/core/theme/tactile.dart';
 import 'package:scan2/core/widgets/pressable_scale.dart';
 import 'package:scan2/features/library/domain/smart_folder.dart';
 
-/// Side menu: Scanella Pro, smart folders, then the few links that do
-/// not belong on Documents.
+/// Side menu: Scanella Pro, Complete features, library folders, then App.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
@@ -16,6 +15,7 @@ class AppDrawer extends StatelessWidget {
     required this.onTrash,
     required this.onHelp,
     required this.onPro,
+    required this.onFeatures,
     required this.onAllDocuments,
     required this.onSmartFolder,
     required this.proSubtitle,
@@ -27,6 +27,7 @@ class AppDrawer extends StatelessWidget {
   final VoidCallback onTrash;
   final VoidCallback onHelp;
   final VoidCallback onPro;
+  final VoidCallback onFeatures;
   final VoidCallback onAllDocuments;
   final ValueChanged<SmartFolder> onSmartFolder;
   final String proSubtitle;
@@ -53,6 +54,15 @@ class AppDrawer extends StatelessWidget {
                   selected: false,
                   onTap: onPro,
                 ),
+                const SizedBox(height: 6),
+                _DrawerTile(
+                  icon: Icons.checklist_rounded,
+                  tint: Brand.accent,
+                  title: 'Complete features',
+                  subtitle: 'Free, Pro, and prices',
+                  selected: false,
+                  onTap: onFeatures,
+                ),
                 const _DrawerSection('Library'),
                 _DrawerTile(
                   icon: Icons.folder_rounded,
@@ -62,7 +72,7 @@ class AppDrawer extends StatelessWidget {
                   selected: selectedSmartFolder == null,
                   onTap: onAllDocuments,
                 ),
-                for (final folder in SmartFolder.values) ...[
+                for (final folder in SmartFolder.inDrawer) ...[
                   const SizedBox(height: 6),
                   _DrawerTile(
                     icon: folder.icon,
@@ -102,7 +112,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.info_rounded,
                   tint: Brand.docBlue,
                   title: 'About',
-                  subtitle: 'Version and licences',
+                  subtitle: 'Version details',
                   onTap: onAbout,
                 ),
                 const SizedBox(height: 18),

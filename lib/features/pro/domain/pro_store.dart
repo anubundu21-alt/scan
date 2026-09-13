@@ -1,6 +1,7 @@
 import 'dart:ui' show Locale;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan2/features/pro/data/storekit_purchase.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
@@ -158,8 +159,26 @@ class ProController extends StateNotifier<ProState> {
     state = state.copyWith(isPro: true);
   }
 
+  /// Clears a leftover App Store error when the user picks another plan.
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(clearError: true);
+    }
+  }
+
   static String _readable(Object error) {
+    if (error is PlatformException) {
+      if (_isDuplicateProduct(error.toString()) ||
+          error.code == 'storekit_duplicate_product_object') {
+        return StoreKitPurchase.pendingSheetMessage;
+      }
+      final message = error.message?.trim();
+      if (message != null && message.isNotEmpty) return message;
+    }
     var text = error.toString();
+    if (_isDuplicateProduct(text)) {
+      return StoreKitPurchase.pendingSheetMessage;
+    }
     for (final prefix in const ['Exception: ', 'Bad state: ', 'StateError: ']) {
       if (text.startsWith(prefix)) {
         text = text.substring(prefix.length);
@@ -167,6 +186,11 @@ class ProController extends StateNotifier<ProState> {
       }
     }
     return text;
+  }
+
+  static bool _isDuplicateProduct(String text) {
+    return text.contains('storekit_duplicate_product_object') ||
+        text.contains('pending transaction for the same product');
   }
 }
 

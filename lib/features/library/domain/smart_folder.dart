@@ -13,6 +13,10 @@ enum SmartFolder {
   untagged,
   duplicates;
 
+  /// Folders that earn a drawer row. Receipts, invoices, untagged and
+  /// duplicates are unused or overlap All documents / IDs.
+  static const inDrawer = [favorites, private, ids];
+
   String get label => switch (this) {
     SmartFolder.favorites => 'Favorites',
     SmartFolder.private => 'Private',

@@ -58,13 +58,25 @@ class StoreKitPurchase implements ProPurchase {
     final product = products.first;
     final result = await _waitForResult(
       start: () async {
-        final submitted = await _gateway.buy(product);
-        if (!submitted) {
-          throw StateError('Could not start the App Store purchase.');
-        }
+        await _submitBuy(product);
       },
     );
     return result == true;
+  }
+
+  Future<void> _submitBuy(StoreProduct product) async {
+    try {
+      final submitted = await _gateway.buy(product);
+      if (!submitted) {
+        throw StateError('Could not start the App Store purchase.');
+      }
+    } catch (error) {
+      if (!_isDuplicateProduct(error)) rethrow;
+      final submitted = await _gateway.buy(product);
+      if (!submitted) {
+        throw StateError('Could not start the App Store purchase.');
+      }
+    }
   }
 
   @override
@@ -146,4 +158,14 @@ class StoreKitPurchase implements ProPurchase {
       await sub.cancel();
     }
   }
+
+  static bool _isDuplicateProduct(Object error) {
+    final text = error.toString();
+    return text.contains('storekit_duplicate_product_object') ||
+        text.contains('pending transaction for the same product');
+  }
+
+  static const pendingSheetMessage =
+      'The App Store is still finishing the last payment sheet. '
+      'Dismiss it, wait a moment, then try again.';
 }

@@ -84,6 +84,30 @@ void main() {
     expect(offer.countryName, isEmpty);
   });
 
+  test('canceled yearly then monthly still submits', () async {
+    final gateway = MemoryIapGateway(
+      products: [monthly, yearly],
+      emitOnBuy: IapStatus.canceled,
+    );
+    final store = StoreKitPurchase(gateway: gateway);
+    expect(await store.buy(ProPlan.yearly), isFalse);
+    gateway.emitOnBuy = IapStatus.purchased;
+    expect(await store.buy(ProPlan.monthly), isTrue);
+  });
+
+  test('duplicate product on first monthly tap retries and buys', () async {
+    final gateway = MemoryIapGateway(
+      products: [monthly],
+      firstBuyError: Exception(
+        'PlatformException(storekit_duplicate_product_object, '
+        'There is a pending transaction for the same product identifier, '
+        'scanella_pro_monthly)',
+      ),
+    );
+    final store = StoreKitPurchase(gateway: gateway);
+    expect(await store.buy(ProPlan.monthly), isTrue);
+  });
+
   test('restore finds an existing Apple ID purchase', () async {
     final store = StoreKitPurchase(
       gateway: MemoryIapGateway(

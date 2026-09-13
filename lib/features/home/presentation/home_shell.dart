@@ -78,6 +78,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     });
   }
 
+  void _openFeatures() {
+    _closeDrawer();
+    context.push('/features');
+  }
+
   void _openAllDocuments() {
     ref.read(smartFolderProvider.notifier).state = null;
     ref.read(openFolderIdProvider.notifier).state = null;
@@ -135,6 +140,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           context.push('/help');
         },
         onPro: _openPro,
+        onFeatures: _openFeatures,
         onAllDocuments: _openAllDocuments,
         onSmartFolder: _openSmartFolder,
         selectedSmartFolder: ref.watch(smartFolderProvider),

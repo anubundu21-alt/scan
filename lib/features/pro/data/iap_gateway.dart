@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 /// A store product we can show and buy. Tests use [MemoryIapGateway].
@@ -69,10 +70,25 @@ class PluginIapGateway implements IapGateway {
     if (_sub != null) return;
     try {
       _sub = _plugin.purchaseStream.listen(
-        (list) => _events.add(_map(list)),
+        (list) async {
+          await _finish(list);
+          if (!_events.isClosed) _events.add(_map(list));
+        },
         onError: _events.addError,
       );
     } catch (_) {}
+  }
+
+  /// StoreKit keeps a canceled or failed buy on the queue until we finish it.
+  /// The next Monthly/Yearly tap then throws `storekit_duplicate_product_object`.
+  Future<void> _finish(List<PurchaseDetails> list) async {
+    for (final item in list) {
+      if (item.status == PurchaseStatus.pending) continue;
+      if (!item.pendingCompletePurchase) continue;
+      try {
+        await _plugin.completePurchase(item);
+      } catch (_) {}
+    }
   }
 
   @override
@@ -116,9 +132,21 @@ class PluginIapGateway implements IapGateway {
   Future<bool> buy(StoreProduct product) async {
     final details = _details[product.id];
     if (details == null) return false;
-    return _plugin.buyNonConsumable(
-      purchaseParam: PurchaseParam(productDetails: details),
-    );
+    return _buy(details);
+  }
+
+  Future<bool> _buy(ProductDetails details, {bool retrying = false}) async {
+    try {
+      return await _plugin.buyNonConsumable(
+        purchaseParam: PurchaseParam(productDetails: details),
+      );
+    } on PlatformException catch (e) {
+      if (!retrying && e.code == 'storekit_duplicate_product_object') {
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        return _buy(details, retrying: true);
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -162,6 +190,8 @@ class MemoryIapGateway implements IapGateway {
     this.buySucceeds = true,
     this.emitOnBuy = IapStatus.purchased,
     this.queryError,
+    this.firstBuyError,
+    this.buyError,
   }) : products = products ?? const [];
 
   bool available;
@@ -169,6 +199,12 @@ class MemoryIapGateway implements IapGateway {
   bool buySucceeds;
   IapStatus emitOnBuy;
   Object? queryError;
+
+  /// Thrown once, then cleared, so a retry can succeed.
+  Object? firstBuyError;
+
+  /// Thrown on every buy. Used to assert the message we show the user.
+  Object? buyError;
 
   final _out = StreamController<List<IapEvent>>.broadcast();
 
@@ -187,6 +223,13 @@ class MemoryIapGateway implements IapGateway {
 
   @override
   Future<bool> buy(StoreProduct product) async {
+    final error = firstBuyError;
+    if (error != null) {
+      firstBuyError = null;
+      throw error;
+    }
+    final always = buyError;
+    if (always != null) throw always;
     if (!buySucceeds) return false;
     _out.add([IapEvent(productId: product.id, status: emitOnBuy)]);
     return true;

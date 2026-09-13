@@ -17,6 +17,7 @@ import 'package:scan2/features/library/presentation/scan_picker_screen.dart';
 import 'package:scan2/features/library/presentation/sign_pdf_screen.dart';
 import 'package:scan2/features/library/presentation/document_detail_screen.dart';
 import 'package:scan2/features/pro/presentation/coming_soon_tool_screen.dart';
+import 'package:scan2/features/pro/presentation/complete_features_screen.dart';
 import 'package:scan2/features/pro/presentation/pdf_to_word_screen.dart';
 import 'package:scan2/features/pro/presentation/word_to_pdf_screen.dart';
 import 'package:scan2/features/pro/presentation/compress_pdf_screen.dart';
@@ -43,6 +44,10 @@ void main() {
       GoRoute(path: '/camera', builder: (_, __) => const SizedBox()),
       GoRoute(path: '/trash', builder: (_, __) => const TrashScreen()),
       GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
+      GoRoute(
+        path: '/features',
+        builder: (_, __) => const CompleteFeaturesScreen(),
+      ),
       GoRoute(
         path: '/pdf/edit',
         builder: (_, __) =>
@@ -211,6 +216,44 @@ void main() {
         matching: find.text('Favorites'),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Complete features'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('All documents'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('IDs')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Receipts')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Invoices')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Untagged')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Duplicates')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Recent')),
+      findsNothing,
     );
     expect(find.byType(FilterChip), findsNothing);
 
@@ -963,6 +1006,45 @@ void main() {
     expect(
       find.descendant(of: find.byType(Drawer), matching: find.text('Private')),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('Complete features lists free, Pro, and prices', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Complete features'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppBar, 'Complete features'), findsOneWidget);
+    expect(find.text('Free features'), findsOneWidget);
+    expect(find.text('Pro features'), findsOneWidget);
+    expect(find.text('All PDF tools'), findsOneWidget);
+    expect(find.text('Unlimited scans'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Yearly'),
+      80,
+      scrollable: find.descendant(
+        of: find.byType(CompleteFeaturesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Yearly'), findsOneWidget);
+    expect(find.text('Monthly'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CompleteFeaturesScreen),
+        matching: find.text('All tools'),
+      ),
+      findsNothing,
     );
   });
 

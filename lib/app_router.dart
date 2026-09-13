@@ -24,6 +24,7 @@ import 'package:scan2/features/legal/legal_screen.dart';
 import 'package:scan2/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:scan2/features/onboarding/presentation/welcome_screen.dart';
 import 'package:scan2/features/pro/presentation/coming_soon_tool_screen.dart';
+import 'package:scan2/features/pro/presentation/complete_features_screen.dart';
 import 'package:scan2/features/settings/presentation/settings_screen.dart';
 import 'package:scan2/features/shared/providers/onboarding_provider.dart';
 import 'package:scan2/features/shared/providers/settings_provider.dart';
@@ -103,6 +104,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/trash', builder: (context, state) => const TrashScreen()),
       GoRoute(path: '/help', builder: (context, state) => const HelpScreen()),
+      GoRoute(
+        path: '/features',
+        builder: (context, state) => const CompleteFeaturesScreen(),
+      ),
       GoRoute(
         path: '/pdf/edit',
         builder: (context, state) =>
