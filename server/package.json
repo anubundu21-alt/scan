@@ -1,0 +1,13 @@
+{
+  "name": "scanella-convert-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Start and process endpoints for Scanella's PDF and Word conversion.",
+  "scripts": {
+    "test": "node --test test/handlers.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

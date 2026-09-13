@@ -1,0 +1,396 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:ui' show Locale;
+
+import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
+
+/// Scanella Pro list prices in US dollars. StoreKit replaces these when
+/// products are live; until then we convert from this base using the
+/// user's country (IP, then the device locale).
+@immutable
+class LocalizedOffer {
+  const LocalizedOffer({
+    required this.currencyCode,
+    required this.countryCode,
+    required this.countryName,
+    required this.monthly,
+    required this.yearly,
+    required this.monthlyLabel,
+    required this.yearlyLabel,
+    required this.source,
+  });
+
+  static const monthlyUsd = 4.99;
+  static const yearlyUsd = 19.99;
+
+  final String currencyCode;
+  final String countryCode;
+  final String countryName;
+  final double monthly;
+  final double yearly;
+  final String monthlyLabel;
+  final String yearlyLabel;
+
+  /// `store`, `internet`, or `device`.
+  final String source;
+
+  String get yearlyPerMonthLabel {
+    final each = yearly / 12;
+    return LocalizedPricing.formatMoney(each, currencyCode);
+  }
+
+  int get yearlySavingsPercent {
+    final full = monthly * 12;
+    if (full <= 0) return 0;
+    return (((full - yearly) / full) * 100).round();
+  }
+}
+
+@immutable
+class GeoCurrency {
+  const GeoCurrency({
+    required this.countryCode,
+    required this.currencyCode,
+    this.countryName,
+  });
+
+  final String countryCode;
+  final String currencyCode;
+  final String? countryName;
+}
+
+/// Resolves Pro prices for the current country without sending any scan.
+class LocalizedPricing {
+  const LocalizedPricing({this.locate, this.ratesFor});
+
+  /// Injected in tests. Production talks to ip-api / ipapi.
+  final Future<GeoCurrency?> Function()? locate;
+
+  /// Injected FX lookup. Production uses Frankfurter, then a static table.
+  final Future<double?> Function(String currency)? ratesFor;
+
+  Future<LocalizedOffer> resolve({Locale? locale}) async {
+    final device = _fromLocale(locale);
+    GeoCurrency? geo;
+    try {
+      geo = locate != null ? await locate!() : await lookupLocation();
+    } catch (_) {
+      geo = null;
+    }
+
+    final chosen = geo ?? device;
+    var rate = _staticRate(chosen.currencyCode);
+    if (ratesFor != null) {
+      try {
+        rate = await ratesFor!(chosen.currencyCode) ?? rate;
+      } catch (_) {}
+    } else if (chosen.currencyCode != 'USD') {
+      try {
+        rate = await lookupUsdRate(chosen.currencyCode) ?? rate;
+      } catch (_) {}
+    }
+
+    return formatOffer(
+      currencyCode: chosen.currencyCode,
+      countryCode: chosen.countryCode,
+      countryName: chosen.countryName ?? _countryName(chosen.countryCode),
+      usdToLocal: rate,
+      source: geo != null ? 'internet' : 'device',
+    );
+  }
+
+  /// Prices for Settings and the paywall.
+  ///
+  /// StoreKit often reports the USD catalogue price while the purchase
+  /// sheet is already in the customer's currency. When that happens, show
+  /// the location price so Settings matches checkout.
+  static LocalizedOffer forDisplay({
+    required LocalizedOffer located,
+    LocalizedOffer? store,
+  }) {
+    if (store == null) return located;
+    final storeCode = store.currencyCode.toUpperCase();
+    final localCode = located.currencyCode.toUpperCase();
+    if (storeCode == localCode) return store;
+    if (storeCode == 'USD' && localCode != 'USD') return located;
+    return store;
+  }
+
+  static LocalizedOffer formatOffer({
+    required String currencyCode,
+    required String countryCode,
+    required String countryName,
+    required double usdToLocal,
+    required String source,
+    double? monthly,
+    double? yearly,
+  }) {
+    final month =
+        monthly ?? _roundPrice(LocalizedOffer.monthlyUsd * usdToLocal);
+    final year = yearly ?? _roundPrice(LocalizedOffer.yearlyUsd * usdToLocal);
+    return LocalizedOffer(
+      currencyCode: currencyCode,
+      countryCode: countryCode,
+      countryName: countryName,
+      monthly: month,
+      yearly: year,
+      monthlyLabel: formatMoney(month, currencyCode),
+      yearlyLabel: formatMoney(year, currencyCode),
+      source: source,
+    );
+  }
+
+  static GeoCurrency _fromLocale(Locale? locale) {
+    final code = (locale?.countryCode ?? _deviceCountry()).toUpperCase();
+    return GeoCurrency(
+      countryCode: code,
+      currencyCode: currencyForCountry(code),
+      countryName: _countryName(code),
+    );
+  }
+
+  static String _deviceCountry() {
+    try {
+      final name = Platform.localeName; // en_GB, en-US
+      final parts = name.split(RegExp(r'[_-]'));
+      if (parts.length >= 2 && parts.last.length == 2) {
+        return parts.last.toUpperCase();
+      }
+    } catch (_) {}
+    return 'US';
+  }
+
+  /// Country from a public IP. Only country and currency — no documents.
+  static Future<GeoCurrency?> lookupLocation() async {
+    if (kIsWeb) return null;
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return null;
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final ipapi = await _getJson(client, Uri.parse('https://ipapi.co/json/'));
+      final country = (ipapi?['country_code'] as String? ?? '').toUpperCase();
+      final currency = (ipapi?['currency'] as String? ?? '').toUpperCase();
+      if (country.length == 2) {
+        return GeoCurrency(
+          countryCode: country,
+          currencyCode: currency.length == 3
+              ? currency
+              : currencyForCountry(country),
+          countryName:
+              ipapi?['country_name'] as String? ?? _countryName(country),
+        );
+      }
+    } catch (_) {}
+    try {
+      final fallback = await _getJson(
+        client,
+        Uri.parse('http://ip-api.com/json/?fields=status,country,countryCode'),
+      );
+      if (fallback?['status'] == 'success') {
+        final country = (fallback?['countryCode'] as String? ?? '')
+            .toUpperCase();
+        if (country.length == 2) {
+          return GeoCurrency(
+            countryCode: country,
+            currencyCode: currencyForCountry(country),
+            countryName:
+                fallback?['country'] as String? ?? _countryName(country),
+          );
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Future<double?> lookupUsdRate(String currency) async {
+    if (currency == 'USD') return 1;
+    if (kIsWeb) return _staticRate(currency);
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      return _staticRate(currency);
+    }
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final json = await _getJson(
+        client,
+        Uri.parse('https://api.frankfurter.app/latest?from=USD&to=$currency'),
+      );
+      final rates = json?['rates'];
+      if (rates is Map && rates[currency] is num) {
+        return (rates[currency] as num).toDouble();
+      }
+    } catch (_) {}
+    return _staticRate(currency);
+  }
+
+  static Future<Map<String, dynamic>?> _getJson(
+    HttpClient client,
+    Uri uri,
+  ) async {
+    final request = await client.getUrl(uri);
+    final response = await request.close().timeout(const Duration(seconds: 5));
+    if (response.statusCode < 200 || response.statusCode >= 300) return null;
+    final body = await response.transform(utf8.decoder).join();
+    final decoded = jsonDecode(body);
+    return decoded is Map<String, dynamic> ? decoded : null;
+  }
+
+  static String currencyForCountry(String country) {
+    return _countryCurrency[country.toUpperCase()] ?? 'USD';
+  }
+
+  static double _staticRate(String currency) => _usdRates[currency] ?? 1;
+
+  static double _roundPrice(double value) {
+    if (value >= 100) return value.roundToDouble();
+    return (value * 100).round() / 100;
+  }
+
+  static String formatMoney(double amount, String currency) {
+    try {
+      return NumberFormat.simpleCurrency(name: currency).format(amount);
+    } catch (_) {
+      return '$currency ${amount.toStringAsFixed(2)}';
+    }
+  }
+
+  static String _countryName(String code) => _countryNames[code] ?? code;
+}
+
+/// ISO 3166-1 alpha-2 → ISO 4217. Enough to cover typical App Store locales.
+const _countryCurrency = <String, String>{
+  'US': 'USD',
+  'CA': 'CAD',
+  'MX': 'MXN',
+  'GB': 'GBP',
+  'IE': 'EUR',
+  'FR': 'EUR',
+  'DE': 'EUR',
+  'ES': 'EUR',
+  'IT': 'EUR',
+  'NL': 'EUR',
+  'BE': 'EUR',
+  'AT': 'EUR',
+  'PT': 'EUR',
+  'FI': 'EUR',
+  'GR': 'EUR',
+  'LU': 'EUR',
+  'SK': 'EUR',
+  'SI': 'EUR',
+  'EE': 'EUR',
+  'LV': 'EUR',
+  'LT': 'EUR',
+  'CY': 'EUR',
+  'MT': 'EUR',
+  'HR': 'EUR',
+  'CH': 'CHF',
+  'NO': 'NOK',
+  'SE': 'SEK',
+  'DK': 'DKK',
+  'PL': 'PLN',
+  'CZ': 'CZK',
+  'HU': 'HUF',
+  'RO': 'RON',
+  'BG': 'BGN',
+  'AU': 'AUD',
+  'NZ': 'NZD',
+  'JP': 'JPY',
+  'KR': 'KRW',
+  'CN': 'CNY',
+  'HK': 'HKD',
+  'TW': 'TWD',
+  'SG': 'SGD',
+  'IN': 'INR',
+  'ID': 'IDR',
+  'MY': 'MYR',
+  'TH': 'THB',
+  'PH': 'PHP',
+  'VN': 'VND',
+  'AE': 'AED',
+  'SA': 'SAR',
+  'IL': 'ILS',
+  'TR': 'TRY',
+  'ZA': 'ZAR',
+  'NG': 'NGN',
+  'EG': 'EGP',
+  'KE': 'KES',
+  'BR': 'BRL',
+  'AR': 'ARS',
+  'CL': 'CLP',
+  'CO': 'COP',
+  'PE': 'PEN',
+  'RU': 'RUB',
+  'UA': 'UAH',
+  'PK': 'PKR',
+  'BD': 'BDT',
+};
+
+const _countryNames = <String, String>{
+  'US': 'United States',
+  'GB': 'United Kingdom',
+  'CA': 'Canada',
+  'AU': 'Australia',
+  'IN': 'India',
+  'DE': 'Germany',
+  'FR': 'France',
+  'JP': 'Japan',
+  'BR': 'Brazil',
+  'AE': 'United Arab Emirates',
+  'SG': 'Singapore',
+  'IE': 'Ireland',
+  'NL': 'Netherlands',
+  'ES': 'Spain',
+  'IT': 'Italy',
+  'MX': 'Mexico',
+  'NZ': 'New Zealand',
+  'KR': 'South Korea',
+  'ZA': 'South Africa',
+};
+
+/// Offline USD → local, used when the rate API is unreachable.
+const _usdRates = <String, double>{
+  'USD': 1,
+  'EUR': 0.86,
+  'GBP': 0.74,
+  'CAD': 1.38,
+  'AUD': 1.53,
+  'NZD': 1.67,
+  'CHF': 0.80,
+  'JPY': 147,
+  'CNY': 7.15,
+  'HKD': 7.80,
+  'SGD': 1.29,
+  'INR': 83.5,
+  'KRW': 1350,
+  'TWD': 32.2,
+  'MXN': 18.6,
+  'BRL': 5.45,
+  'SEK': 9.55,
+  'NOK': 10.1,
+  'DKK': 6.42,
+  'PLN': 3.65,
+  'CZK': 21.4,
+  'HUF': 340,
+  'RON': 4.28,
+  'BGN': 1.68,
+  'TRY': 34.2,
+  'AED': 3.67,
+  'SAR': 3.75,
+  'ILS': 3.72,
+  'ZAR': 18.2,
+  'THB': 34.0,
+  'MYR': 4.45,
+  'PHP': 56.5,
+  'IDR': 15500,
+  'VND': 25000,
+  'PKR': 278,
+  'BDT': 119,
+  'NGN': 1600,
+  'EGP': 48.5,
+  'KES': 129,
+  'ARS': 960,
+  'CLP': 940,
+  'COP': 4100,
+  'PEN': 3.75,
+  'RUB': 92,
+  'UAH': 41,
+};

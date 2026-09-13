@@ -1,0 +1,25 @@
+# Recommended Flutter lints.
+#
+# Style nits in existing camera / crop / imaging files are left as analyzer
+# infos so turning lints on does not rewrite the scanner. CI uses
+# `flutter analyze --no-fatal-infos`.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    sized_box_for_whitespace: true
+    use_key_in_widget_constructors: true

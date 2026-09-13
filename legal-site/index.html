@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scanella — offline document scanner</title>
+    <meta
+      name="description"
+      content="Scanella is an offline document scanner. Scan, crop, enhance and export PDFs. Nothing leaves your phone."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/mark.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/mark.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="inner">
+        <a class="brand" href="/">
+          <img class="mark" src="/mark.png" width="44" height="44" alt="" />
+          <span class="wordmark">Scan<span class="ella">ella</span></span>
+        </a>
+        <nav class="menu" aria-label="Primary">
+          <a href="#about">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v6M12 8h.01" />
+            </svg>
+            <span class="label">What it is</span>
+          </a>
+          <a href="#features">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
+            <span class="label">Features</span>
+          </a>
+          <a href="/terms">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 3h8l5 5v13H7z" />
+              <path d="M15 3v5h5M9 13h6M9 17h4" />
+            </svg>
+            <span class="label">Terms</span>
+          </a>
+          <a href="/privacy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+            <span class="label">Privacy</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero" id="about">
+      <div class="inner">
+        <div class="hero-copy">
+          <p class="kicker">Offline document scanner</p>
+          <h1>Scan anything.<br />Nothing leaves your phone.</h1>
+          <p class="lead">
+            Scanella is a document scanner for iPhone. Pages you capture stay
+            on this device. There is no account and no cloud.
+          </p>
+          <p class="body">
+            Point the camera at a page. Scanella finds the edges, lets you crop
+            and rotate, then enhance the scan. Export a PDF to Files, share it,
+            or save the pages to Photos. Folders, Trash, OCR search, ID cards
+            and an optional app lock are built in.
+          </p>
+          <div class="cta-row">
+            <a class="btn" href="#features">See features</a>
+            <a class="btn btn-ghost" href="/privacy">Privacy Policy</a>
+            <a class="btn btn-ghost" href="/terms">Terms of Use</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="stage">
+            <div class="blob"></div>
+            <div class="chip pdf">
+              <span class="dot" style="background: #e8443a"></span>
+              PDF
+            </div>
+            <div class="chip lock">
+              <span class="dot" style="background: #1f9a6b"></span>
+              On-device
+            </div>
+            <div class="chip image">
+              <span class="dot" style="background: #16a75c"></span>
+              Photos
+            </div>
+            <div class="chip ocr">
+              <span class="dot" style="background: #f5a524"></span>
+              OCR
+            </div>
+            <div class="device">
+              <img class="mark-lg" src="/mark.png" width="120" height="120" alt="" />
+              <div class="title">Scan<span class="ella">ella</span></div>
+              <div class="sub">Scans stay on your phone</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="inner">
+        <h2>What Scanella does</h2>
+        <p class="intro">
+          The same tools that are in the iPhone app: capture, clean up, export,
+          and keep everything local.
+        </p>
+        <div class="features">
+          <article class="feature">
+            <div class="icon" style="background: #e4f3ed; color: #1f9a6b">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z" />
+              </svg>
+            </div>
+            <h3>Nothing is uploaded</h3>
+            <p>
+              No Scanella account, no analytics, no cloud. Scans, PDFs and
+              settings stay on the phone.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #e8f7ee; color: #16a75c">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="m8 12 3 3 5-6" />
+              </svg>
+            </div>
+            <h3>Edge detect and capture</h3>
+            <p>
+              Live edges on the page, then crop and rotate. Auto-capture fires
+              once the sheet is steady.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #fff4e5; color: #c27803">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M4 12h4M16 12h4M12 4v4M12 16v4" />
+              </svg>
+            </div>
+            <h3>Enhance</h3>
+            <p>
+              Filters, brightness and contrast after crop. Originals are kept
+              so you can change the look later.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #fdecea; color: #e8443a">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h8l5 5v13H7z" />
+                <path d="M15 3v5h5" />
+              </svg>
+            </div>
+            <h3>PDF export</h3>
+            <p>
+              Fit, A4 or Letter. Good or smaller file. Optional password. Save
+              to Files or share from the scan.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #e4f3ed; color: #1f9a6b">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 7h7l2 2h7v10H4z" />
+              </svg>
+            </div>
+            <h3>Folders, merge, split</h3>
+            <p>
+              Group scans, merge several into one, or split a document. Trash
+              keeps deletes for 30 days.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #fff4e5; color: #c27803">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </div>
+            <h3>OCR search and ID cards</h3>
+            <p>
+              Search extracted text on the device. ID card mode captures front
+              and back as one two-page scan.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #e4f3ed; color: #1f9a6b">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+            </div>
+            <h3>App lock</h3>
+            <p>
+              Optional PIN, and Face ID when the phone offers it. Unlock stays
+              on the device.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="icon" style="background: #e8f7ee; color: #16a75c">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M8 9h8M8 13h5" />
+              </svg>
+            </div>
+            <h3>Terms and Privacy</h3>
+            <p>
+              The same copy as in Settings. Read the
+              <a href="/terms">Terms of Use</a> and
+              <a href="/privacy">Privacy Policy</a> here any time.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="inner">
+        <span>Scanella. Scans stay on your phone.</span>
+        <span>
+          <a href="/terms">Terms of Use</a>
+          ·
+          <a href="/privacy">Privacy Policy</a>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>

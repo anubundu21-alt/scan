@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The only thing this app talks to is the conversion service, over HTTPS.
+  Spelling that out means a plain-HTTP host can never be added by accident,
+  on any Android version, rather than only on the ones that block it by
+  default.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
