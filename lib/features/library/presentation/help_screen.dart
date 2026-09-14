@@ -33,7 +33,6 @@ class HelpScreen extends StatelessWidget {
       'Turn on App lock in Settings. Use a PIN, and Face ID when the phone '
           'offers it. Scans still never leave this device.',
     ),
-    ('ID card', 'All tools → ID card captures front and back as one two-page scan.'),
     (
       'Import from file',
       'Home → Import from file. Choose a PDF from Files — it is not scanned. '

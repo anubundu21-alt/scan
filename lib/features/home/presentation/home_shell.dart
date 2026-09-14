@@ -168,15 +168,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         ),
         child: BottomAppBar(
           padding: EdgeInsets.zero,
-          shape: const AutomaticNotchedShape(
-            RoundedRectangleBorder(),
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(Brand.radiusFab + 4),
-              ),
-            ),
-          ),
-          notchMargin: 8,
+          color: theme.brightness == Brightness.light
+              ? Colors.white
+              : scheme.surfaceContainerHigh,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           child: Row(
             children: [
               const Expanded(
@@ -245,6 +242,7 @@ class _ScanButton extends StatelessWidget {
           color: barColor,
           borderRadius: BorderRadius.circular(outerRadius),
         ),
+        clipBehavior: Clip.antiAlias,
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(innerRadius),

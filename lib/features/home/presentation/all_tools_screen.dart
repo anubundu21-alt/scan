@@ -10,7 +10,6 @@ import 'package:scan2/features/home/presentation/tool_art.dart';
 import 'package:scan2/features/ocr/domain/on_device_ocr.dart';
 import 'package:scan2/features/ocr/presentation/ocr_result_screen.dart';
 import 'package:scan2/features/pro/presentation/coming_soon_tool_screen.dart';
-import 'package:scan2/features/pro/presentation/pro_gate.dart';
 
 /// Every tool that is not one of the three home shortcuts.
 class AllToolsScreen extends ConsumerStatefulWidget {
@@ -142,8 +141,6 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
         context.push('/pdf/sign');
       case 'extract':
         await _extractText();
-      case 'id-card':
-        await _openIdCard();
       default:
         _soon(tool.title);
     }
@@ -157,12 +154,6 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
         detail: '$title is not in this version of Scanella yet.',
       ),
     );
-  }
-
-  Future<void> _openIdCard() async {
-    if (!await ensureFreeScanSlot(context, ref)) return;
-    if (!mounted) return;
-    context.go('/camera', extra: true);
   }
 
   Future<void> _extractText() async {
@@ -220,18 +211,6 @@ const _allTools = <_ToolItem>[
     ink: Color(0xFF0EA5E9),
   ),
   _ToolItem(
-    id: 'excel-pdf',
-    title: 'Excel to PDF',
-    wash: Color(0xFFE8F7EF),
-    ink: Color(0xFF15A45C),
-  ),
-  _ToolItem(
-    id: 'ppt-pdf',
-    title: 'PowerPoint to PDF',
-    wash: Color(0xFFFFF1E4),
-    ink: Color(0xFFF97316),
-  ),
-  _ToolItem(
     id: 'compress',
     title: 'Compress PDF',
     wash: Color(0xFFF1EDFF),
@@ -254,18 +233,6 @@ const _allTools = <_ToolItem>[
     title: 'Split PDF',
     wash: Color(0xFFFFE9EE),
     ink: Color(0xFFF43F5E),
-  ),
-  _ToolItem(
-    id: 'pdf-excel',
-    title: 'PDF to Excel',
-    wash: Color(0xFFE8F7EF),
-    ink: Color(0xFF15A45C),
-  ),
-  _ToolItem(
-    id: 'pdf-ppt',
-    title: 'PDF to PowerPoint',
-    wash: Color(0xFFFFF1E4),
-    ink: Color(0xFFF97316),
   ),
   _ToolItem(
     id: 'pages',
@@ -302,12 +269,6 @@ const _allTools = <_ToolItem>[
     title: 'Extract text',
     wash: Color(0xFFEDF3FF),
     ink: Color(0xFF2F6FED),
-  ),
-  _ToolItem(
-    id: 'id-card',
-    title: 'ID card',
-    wash: Color(0xFFE4F3ED),
-    ink: Color(0xFF1F9A6B),
   ),
 ];
 

@@ -413,8 +413,9 @@ void main() {
     expect(decoration.borderRadius, BorderRadius.circular(Brand.radiusFab + 4));
 
     final bar = tester.widget<BottomAppBar>(find.byType(BottomAppBar));
-    expect(bar.shape, isA<AutomaticNotchedShape>());
-    expect(bar.shape, isNot(isA<CircularNotchedRectangle>()));
+    expect(bar.shape, isNull);
+    expect(bar.color?.a, 1.0);
+    expect(decoration.color?.a, 1.0);
   });
 
   testWidgets('New folder uses solid brand green', (tester) async {
@@ -833,25 +834,16 @@ void main() {
     expect(find.text('Pages to keep'), findsNothing);
   });
 
-  testWidgets('ID card from home opens the camera route', (tester) async {
+  testWidgets('All tools does not list ID card', (tester) async {
     final router = testRouter();
     await tester.pumpWidget(app(router));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('All tools'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('ID card'),
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.ensureVisible(find.text('ID card'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('ID card'));
-    await tester.pump();
-    await tester.pumpAndSettle();
 
-    expect(router.routerDelegate.currentConfiguration.uri.path, '/camera');
+    expect(find.widgetWithText(AppBar, 'All tools'), findsOneWidget);
+    expect(find.text('ID card'), findsNothing);
   });
 
   testWidgets('Scan from camera on home opens the camera route', (tester) async {
@@ -918,10 +910,10 @@ void main() {
     expect(find.byType(AllToolsMark), findsWidgets);
     expect(find.text('Word to PDF'), findsOneWidget);
     expect(find.text('Image to PDF'), findsOneWidget);
-    expect(find.text('Excel to PDF'), findsOneWidget);
-    expect(find.text('PowerPoint to PDF'), findsOneWidget);
-    expect(find.text('PDF to Excel'), findsOneWidget);
-    expect(find.text('PDF to PowerPoint'), findsOneWidget);
+    expect(find.text('Excel to PDF'), findsNothing);
+    expect(find.text('PowerPoint to PDF'), findsNothing);
+    expect(find.text('PDF to Excel'), findsNothing);
+    expect(find.text('PDF to PowerPoint'), findsNothing);
     expect(find.text('Merge PDF'), findsOneWidget);
     expect(find.text('Split PDF'), findsOneWidget);
     expect(find.text('Compress PDF'), findsOneWidget);
@@ -933,10 +925,10 @@ void main() {
     expect(find.text('Unlock PDF'), findsOneWidget);
     expect(find.text('Extract text'), findsOneWidget);
     expect(find.text('Sign PDF'), findsOneWidget);
-    expect(find.text('ID card'), findsOneWidget);
+    expect(find.text('ID card'), findsNothing);
     expect(
       tester.getTopLeft(find.text('PDF to Word')).dy,
-      lessThan(tester.getTopLeft(find.text('Excel to PDF')).dy),
+      lessThan(tester.getTopLeft(find.text('Compress PDF')).dy),
     );
     expect(
       tester.getTopLeft(find.text('Word to PDF')).dy,
@@ -949,21 +941,20 @@ void main() {
     );
   });
 
-  testWidgets('Excel to PDF is listed and says it is not built yet', (
+  testWidgets('Excel and PowerPoint converters are not in All tools', (
     tester,
   ) async {
     final router = testRouter();
     await tester.pumpWidget(app(router));
     await tester.pumpAndSettle();
 
-    await tapHomeTool(tester, 'Excel to PDF');
+    await tester.tap(find.text('All tools'));
+    await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Excel to PDF'), findsOneWidget);
-    expect(
-      find.textContaining('not in this version of Scanella yet'),
-      findsOneWidget,
-    );
-    expect(find.text('Scanella Pro'), findsNothing);
+    expect(find.text('Excel to PDF'), findsNothing);
+    expect(find.text('PDF to Excel'), findsNothing);
+    expect(find.text('PowerPoint to PDF'), findsNothing);
+    expect(find.text('PDF to PowerPoint'), findsNothing);
   });
 
   testWidgets('PDF to JPG opens without Pro', (tester) async {
