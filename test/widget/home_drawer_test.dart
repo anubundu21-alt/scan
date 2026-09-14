@@ -825,7 +825,7 @@ void main() {
     expect(router.routerDelegate.currentConfiguration.uri.path, '/camera');
   });
 
-  testWidgets('scanning stays open while TestFlight unlocks scans', (
+  testWidgets('Scan from camera asks for Pro when weekly scans are used', (
     tester,
   ) async {
     final router = testRouter();
@@ -834,7 +834,10 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(used: ScanQuota.freeLimit),
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+            ),
           ),
         ],
       ),
@@ -845,9 +848,9 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(router.routerDelegate.currentConfiguration.uri.path, '/camera');
-    expect(find.text('Scanella Pro'), findsNothing);
-    expect(find.text(ScanQuota.usedUpTitle), findsNothing);
+    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
+    expect(find.text('See Scanella Pro'), findsOneWidget);
+    expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
   });
 
   testWidgets('All tools lists every converter in its category', (tester) async {
@@ -992,7 +995,7 @@ void main() {
 
     expect(
       find.text(
-        '${ScanQuota.freeLimit - 3} of ${ScanQuota.freeLimit} free scans left',
+        '${ScanQuota.starterLimit - 3} of ${ScanQuota.starterLimit} free scans left',
       ),
       findsOneWidget,
     );
@@ -1027,8 +1030,9 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Complete features'), findsOneWidget);
     expect(find.text('Free features'), findsOneWidget);
     expect(find.text('Pro features'), findsOneWidget);
-    expect(find.text('All PDF tools'), findsOneWidget);
+    expect(find.text('All PDF tools'), findsNWidgets(2));
     expect(find.text('Unlimited scans'), findsOneWidget);
+    expect(find.text('Advanced OCR'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Yearly'),
       80,
@@ -1073,7 +1077,7 @@ void main() {
     expect(find.text('Documents'), findsWidgets);
   });
 
-  testWidgets('scan button stays open even when free scans are used', (
+  testWidgets('scan button asks for Pro when free scans are used', (
     tester,
   ) async {
     final router = testRouter();
@@ -1082,7 +1086,10 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(used: ScanQuota.freeLimit),
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+            ),
           ),
         ],
       ),
@@ -1092,9 +1099,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.document_scanner_rounded));
     await tester.pumpAndSettle();
 
-    expect(router.routerDelegate.currentConfiguration.uri.path, '/camera');
-    expect(find.text(ScanQuota.usedUpTitle), findsNothing);
-    expect(find.text('Scanella Pro'), findsNothing);
+    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
+    expect(find.text('See Scanella Pro'), findsOneWidget);
+    expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
   });
 
   testWidgets('drawer shows used-up scans and the same popup on Pro', (
@@ -1106,7 +1113,10 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(used: ScanQuota.freeLimit),
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+            ),
           ),
         ],
       ),
@@ -1132,9 +1142,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(ScanQuota.usedUpTitle), findsOneWidget);
+    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
     expect(
-      find.textContaining('Your ${ScanQuota.freeLimit} free scans reset'),
+      find.textContaining('Your ${ScanQuota.weeklyLimit} free scans reset'),
       findsOneWidget,
     );
     expect(find.text('Not now'), findsNothing);

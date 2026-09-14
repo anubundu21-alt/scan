@@ -25,7 +25,7 @@ Future<bool> showFreeScansUsedDialog(
       return PopScope(
         canPop: false,
         child: AlertDialog(
-          title: Text(ScanQuota.usedUpTitle),
+          title: Text(quota.usedUpTitle),
           content: Text(quota.usedUpMessage),
           actions: [
             FilledButton(

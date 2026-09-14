@@ -61,12 +61,9 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Unlimited scans'), findsOneWidget);
+    expect(find.text('All PDF tools'), findsOneWidget);
+    expect(find.text('Advanced OCR'), findsOneWidget);
     expect(find.text('All tools'), findsNothing);
-    expect(find.text('Auto-save by document type'), findsOneWidget);
-    expect(
-      find.text('Passports go to Private. ID cards get a second copy in IDs.'),
-      findsOneWidget,
-    );
   });
 
   testWidgets('subscribe unlocks Pro', (tester) async {

@@ -7,20 +7,20 @@ class ProFeatureLine {
 }
 
 const freeFeatureLines = [
-  ProFeatureLine('Scan documents', '10 free scans each week'),
-  ProFeatureLine('All PDF tools', 'Convert, compress, merge, split and sign'),
-  ProFeatureLine('Extract text from one page'),
-  ProFeatureLine('Save and share PDF or JPEG'),
-  ProFeatureLine('Folders on the home list'),
+  ProFeatureLine(
+    '50 free scans for new users, then 10 every week',
+    'The first time you install Scanella, you get 50 scans. After those are '
+        'used, you get 10 free scans each week. The weekly allowance resets '
+        'the following week.',
+  ),
+  ProFeatureLine(
+    'All PDF tools',
+    'Convert, compress, merge, split and sign',
+  ),
 ];
 
 const proFeatureLines = [
   ProFeatureLine('Unlimited scans'),
-  ProFeatureLine(
-    'Auto-save by document type',
-    'Passports go to Private. ID cards get a second copy in IDs.',
-  ),
-  ProFeatureLine('Searchable PDFs and extra OCR languages'),
-  ProFeatureLine('Smart folders, favorites and private documents'),
-  ProFeatureLine('PNG, print, selected pages and batch export'),
+  ProFeatureLine('All PDF tools'),
+  ProFeatureLine('Advanced OCR'),
 ];

@@ -4,35 +4,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Free-plan allowance: [freeLimit] new documents, then a week until
-/// the count starts over.
+/// Free-plan allowance on this device.
+///
+/// A new install gets [starterLimit] scans. After those are used, the
+/// plan is [weeklyLimit] scans per week. The week starts when the last
+/// free slot is used. After [resetAfter], the weekly count returns to
+/// zero.
 ///
 /// The count is the number of documents the user created (camera, photos,
 /// PDF upload, ID card, Sign PDF upload). Merge, split, add-page, and
 /// restore do not consume another slot. Pro does not consume slots, so a
 /// leftover free allowance is still there if Pro lapses.
-///
-/// The week starts when the last free slot is used. After [resetAfter],
-/// the count returns to zero.
 @immutable
 class ScanQuota {
-  const ScanQuota({this.used = 0, this.ready = false, this.periodStartedAt});
+  const ScanQuota({
+    this.used = 0,
+    this.ready = false,
+    this.periodStartedAt,
+    this.starterDone = false,
+  });
 
-  /// Free scans per week on this device. Pro is unlimited.
-  static const freeLimit = 10;
+  /// One-time scans for a new install.
+  static const starterLimit = 50;
 
-  /// Temporary TestFlight switch: scanning does not stop for Pro.
-  static const testingUnlockScans = true;
+  /// Free scans each week after the starter pack is used.
+  static const weeklyLimit = 10;
+
+  /// Weekly cap; kept so older call sites still compile.
+  static const freeLimit = weeklyLimit;
+
+  /// Scanning stops at the free-plan cap. Pro is unlimited.
+  static const testingUnlockScans = false;
 
   static const resetAfter = Duration(days: 7);
 
   final int used;
   final bool ready;
   final DateTime? periodStartedAt;
+  final bool starterDone;
 
-  bool get canCreate => used < freeLimit;
+  int get limit => starterDone ? weeklyLimit : starterLimit;
 
-  int get remaining => (freeLimit - used).clamp(0, freeLimit);
+  bool get canCreate => used < limit;
+
+  int get remaining => (limit - used).clamp(0, limit);
 
   DateTime? get resetsAt =>
       periodStartedAt == null ? null : periodStartedAt!.add(resetAfter);
@@ -45,26 +60,39 @@ class ScanQuota {
     return DateFormat('d MMM y · h:mm a').format(at.toLocal());
   }
 
-  /// Dialog title when the free allowance is gone.
-  static String get usedUpTitle => '$freeLimit free scans used';
+  /// Dialog title when the current free allowance is gone.
+  String get usedUpTitle {
+    if (!starterDone || used >= starterLimit) {
+      return '$starterLimit free scans used';
+    }
+    return '$weeklyLimit free scans used';
+  }
 
   String get usedUpMessage {
     final when = resetsAt;
-    if (when == null) {
-      return 'Your $freeLimit free scans reset next week. '
+    if (!starterDone || used >= starterLimit) {
+      if (when == null) {
+        return 'You get $weeklyLimit free scans each week after these '
+            '$starterLimit. Scanella Pro lets you keep scanning now.';
+      }
+      return 'You get $weeklyLimit free scans on ${formatResetAt(when)}. '
           'Scanella Pro lets you keep scanning now.';
     }
-    return 'Your $freeLimit free scans reset on ${formatResetAt(when)}. '
+    if (when == null) {
+      return 'Your $weeklyLimit free scans reset next week. '
+          'Scanella Pro lets you keep scanning now.';
+    }
+    return 'Your $weeklyLimit free scans reset on ${formatResetAt(when)}. '
         'Scanella Pro lets you keep scanning now.';
   }
 
   String get freePlanLabel {
     final when = resetsAt;
     if (remaining <= 0) {
-      if (when == null) return 'All $freeLimit free scans are used';
+      if (when == null) return 'All $limit free scans are used';
       return 'Resets ${formatResetShort(when)}';
     }
-    return '$remaining of $freeLimit free scans left';
+    return '$remaining of $limit free scans left';
   }
 }
 
@@ -76,16 +104,23 @@ abstract class QuotaStore {
   Future<void> writeUsed(int used);
   Future<int> readPeriodStartMs();
   Future<void> writePeriodStartMs(int ms);
+  Future<bool> readStarterDone();
+  Future<void> writeStarterDone(bool done);
 }
 
 /// In-memory store for tests.
 class MemoryQuotaStore implements QuotaStore {
-  MemoryQuotaStore({int used = 0, int periodStartMs = 0})
-    : _used = used,
-      _periodStartMs = periodStartMs;
+  MemoryQuotaStore({
+    int used = 0,
+    int periodStartMs = 0,
+    bool starterDone = false,
+  }) : _used = used,
+       _periodStartMs = periodStartMs,
+       _starterDone = starterDone;
 
   int _used;
   int _periodStartMs;
+  bool _starterDone;
 
   @override
   Future<int> readUsed() async => _used;
@@ -98,16 +133,23 @@ class MemoryQuotaStore implements QuotaStore {
 
   @override
   Future<void> writePeriodStartMs(int ms) async => _periodStartMs = ms;
+
+  @override
+  Future<bool> readStarterDone() async => _starterDone;
+
+  @override
+  Future<void> writeStarterDone(bool done) async => _starterDone = done;
 }
 
 /// SharedPreferences plus the native Keychain / Android marker for the
-/// used count. The week start lives in prefs.
+/// used count. The week start and starter-pack flag live in prefs.
 class DeviceQuotaStore implements QuotaStore {
   DeviceQuotaStore({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel('scanella/quota');
 
   static const prefsKey = 'scanella.quota.used';
   static const periodKey = 'scanella.quota.period_start_ms';
+  static const starterDoneKey = 'scanella.quota.starter_done';
 
   final MethodChannel _channel;
 
@@ -149,6 +191,30 @@ class DeviceQuotaStore implements QuotaStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(periodKey, ms);
   }
+
+  @override
+  Future<bool> readStarterDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey(starterDoneKey)) {
+      return prefs.getBool(starterDoneKey) ?? false;
+    }
+    var native = 0;
+    try {
+      native = await _channel.invokeMethod<int>('readUsed') ?? 0;
+    } catch (_) {}
+    final existing =
+        prefs.containsKey(prefsKey) ||
+        prefs.containsKey(periodKey) ||
+        native > 0;
+    await prefs.setBool(starterDoneKey, existing);
+    return existing;
+  }
+
+  @override
+  Future<void> writeStarterDone(bool done) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(starterDoneKey, done);
+  }
 }
 
 class ScanQuotaController extends StateNotifier<ScanQuota> {
@@ -173,12 +239,29 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
 
   Future<void> _load() async {
     try {
-      final used = (await _store.readUsed()).clamp(0, ScanQuota.freeLimit);
+      var starterDone = await _store.readStarterDone();
+      var used = await _store.readUsed();
+      if (!starterDone && used >= ScanQuota.starterLimit) {
+        starterDone = true;
+        await _store.writeStarterDone(true);
+      }
+      if (!starterDone) {
+        used = used.clamp(0, ScanQuota.starterLimit);
+      } else if (used > ScanQuota.starterLimit) {
+        used = ScanQuota.weeklyLimit;
+      } else {
+        used = used.clamp(0, ScanQuota.starterLimit);
+      }
       final startMs = await _store.readPeriodStartMs();
       final started = startMs > 0
           ? DateTime.fromMillisecondsSinceEpoch(startMs)
           : null;
-      state = ScanQuota(used: used, ready: true, periodStartedAt: started);
+      state = ScanQuota(
+        used: used,
+        ready: true,
+        periodStartedAt: started,
+        starterDone: starterDone,
+      );
       await _applyWindow();
     } catch (_) {
       state = const ScanQuota(used: 0, ready: true);
@@ -189,31 +272,57 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
     final now = _now();
     var used = state.used;
     var started = state.periodStartedAt;
+    var starterDone = state.starterDone;
 
-    if (started != null && !now.isBefore(started.add(ScanQuota.resetAfter))) {
+    if (starterDone &&
+        started != null &&
+        !now.isBefore(started.add(ScanQuota.resetAfter))) {
       used = 0;
       started = null;
       await _store.writeUsed(0);
       await _store.writePeriodStartMs(0);
     }
 
-    if (used >= ScanQuota.freeLimit && started == null) {
+    if (starterDone && used >= ScanQuota.weeklyLimit && started == null) {
       started = now;
       await _store.writePeriodStartMs(started.millisecondsSinceEpoch);
     }
 
-    state = ScanQuota(used: used, ready: true, periodStartedAt: started);
+    if (!starterDone && used >= ScanQuota.starterLimit && started == null) {
+      starterDone = true;
+      started = now;
+      await _store.writeStarterDone(true);
+      await _store.writePeriodStartMs(started.millisecondsSinceEpoch);
+    }
+
+    state = ScanQuota(
+      used: used,
+      ready: true,
+      periodStartedAt: started,
+      starterDone: starterDone,
+    );
   }
 
   /// Call after a new library document is actually created.
   Future<void> recordCreated() async {
     await ensureLoaded();
-    if (state.used >= ScanQuota.freeLimit) return;
-    final next = state.used + 1;
-    final started = next >= ScanQuota.freeLimit
-        ? (state.periodStartedAt ?? _now())
-        : state.periodStartedAt;
-    state = ScanQuota(used: next, ready: true, periodStartedAt: started);
+    if (state.used >= state.limit) return;
+    var next = state.used + 1;
+    var starterDone = state.starterDone;
+    var started = state.periodStartedAt;
+    if (!starterDone && next >= ScanQuota.starterLimit) {
+      starterDone = true;
+      started = started ?? _now();
+      await _store.writeStarterDone(true);
+    } else if (starterDone && next >= ScanQuota.weeklyLimit) {
+      started = started ?? _now();
+    }
+    state = ScanQuota(
+      used: next,
+      ready: true,
+      periodStartedAt: started,
+      starterDone: starterDone,
+    );
     await _store.writeUsed(next);
     if (started != null) {
       await _store.writePeriodStartMs(started.millisecondsSinceEpoch);

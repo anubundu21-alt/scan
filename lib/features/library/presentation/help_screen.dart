@@ -104,10 +104,12 @@ class HelpScreen extends StatelessWidget {
     ),
     (
       'Free scans',
-      'The free plan is ${ScanQuota.freeLimit} new documents. A scan is a '
-          'document you capture or import. Editing, merging, or restoring '
-          'does not use another. After the last free scan, the count resets '
-          'after one week. Scanella Pro removes the limit.',
+      'The first time you install Scanella, the free plan includes '
+          '${ScanQuota.starterLimit} scans. After those are used, you get '
+          '${ScanQuota.weeklyLimit} free scans each week. The weekly count '
+          'resets after one week. A scan is a document you capture or '
+          'import. Editing, merging, or restoring does not use another. '
+          'Scanella Pro removes the limit.',
     ),
     (
       'Private documents',

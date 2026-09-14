@@ -49,9 +49,13 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Complete features'), findsOneWidget);
     expect(find.text('Free features'), findsOneWidget);
     expect(find.text('Pro features'), findsOneWidget);
-    expect(find.text('Scan documents'), findsOneWidget);
-    expect(find.text('All PDF tools'), findsOneWidget);
+    expect(
+      find.text('50 free scans for new users, then 10 every week'),
+      findsOneWidget,
+    );
+    expect(find.text('All PDF tools'), findsNWidgets(2));
     expect(find.text('Unlimited scans'), findsOneWidget);
+    expect(find.text('Advanced OCR'), findsOneWidget);
     expect(find.text('All tools'), findsNothing);
     await tester.ensureVisible(find.text('Monthly'));
     await tester.pumpAndSettle();
