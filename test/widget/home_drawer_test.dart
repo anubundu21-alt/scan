@@ -30,6 +30,7 @@ import 'package:scan2/features/settings/presentation/settings_screen.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/pro/domain/scan_quota.dart';
+import 'package:scan2/features/pro/presentation/pro_paywall.dart';
 import 'package:scan2/features/shared/providers/db_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1154,6 +1155,75 @@ void main() {
 
     expect(find.text('Go Pro'), findsOneWidget);
     expect(find.byTooltip('Close'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('Pro drawer does not show weekly reset counts', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(
+      app(
+        router,
+        extra: [
+          ...withPro(),
+          quotaStoreProvider.overrideWithValue(
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Scanella Pro is on'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.textContaining('Resets'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.textContaining('free scans'),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Scanella Pro'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Go Pro'), findsOneWidget);
+    expect(find.textContaining('free scans reset'), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text('You have Scanella Pro'),
+      80,
+      scrollable: find.descendant(
+        of: find.byType(ProPaywall),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('You have Scanella Pro'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();

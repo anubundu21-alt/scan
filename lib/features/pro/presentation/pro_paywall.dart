@@ -43,6 +43,7 @@ class _ProPaywallState extends ConsumerState<ProPaywall> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final quota = ref.watch(scanQuotaProvider);
+    final isPro = ref.watch(proProvider).isPro;
     final height = MediaQuery.sizeOf(context).height;
 
     return SafeArea(
@@ -64,7 +65,7 @@ class _ProPaywallState extends ConsumerState<ProPaywall> {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                 children: [
                   const _GoProBanner(),
-                  if (!quota.canCreate) ...[
+                  if (!isPro && !quota.canCreate) ...[
                     const SizedBox(height: 12),
                     Text(
                       quota.usedUpMessage,
@@ -142,7 +143,7 @@ class _GoProBanner extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE7F6EE), Color(0xFFF4FBF7)],
+          colors: [Color(0xFFB6E4CE), Color(0xFFD4F0E2)],
         ),
       ),
       child: Column(
@@ -189,7 +190,7 @@ class _GoProBanner extends StatelessWidget {
                 child: _HeroChip(
                   icon: Icons.all_inclusive_rounded,
                   color: Color(0xFF1F9A6B),
-                  wash: Color(0xFFE4F3ED),
+                  wash: Color(0xFFF4FBF7),
                   label: 'Unlimited scans',
                 ),
               ),
@@ -198,7 +199,7 @@ class _GoProBanner extends StatelessWidget {
                 child: _HeroChip(
                   icon: Icons.document_scanner_outlined,
                   color: Color(0xFF7B61FF),
-                  wash: Color(0xFFF0ECFF),
+                  wash: Color(0xFFF7F4FF),
                   label: 'Advanced OCR',
                 ),
               ),
@@ -207,7 +208,7 @@ class _GoProBanner extends StatelessWidget {
                 child: _HeroChip(
                   icon: Icons.picture_as_pdf_outlined,
                   color: Color(0xFFE85A7A),
-                  wash: Color(0xFFFDE8EE),
+                  wash: Color(0xFFFFF4F7),
                   label: 'All PDF tools',
                 ),
               ),
@@ -277,7 +278,7 @@ class _ScanPapersArt extends StatelessWidget {
             child: Transform.rotate(
               angle: 0.22,
               child: _paper(
-                fill: const Color(0xFFCDEBD9),
+                fill: const Color(0xFF7FC9A3),
                 width: 52,
                 height: 66,
               ),

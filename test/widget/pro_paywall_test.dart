@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
+import 'package:scan2/features/pro/domain/scan_quota.dart';
 import 'package:scan2/features/pro/presentation/pro_paywall.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -200,5 +201,86 @@ void main() {
     expect(find.textContaining('Ready to Submit'), findsOneWidget);
     expect(find.textContaining('Add auto-renewable'), findsNothing);
     expect(find.textContaining('Bad state'), findsNothing);
+  });
+
+  testWidgets('paywall shows weekly reset only for free users', (tester) async {
+    tester.view.physicalSize = const Size(400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          quotaStoreProvider.overrideWithValue(
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+            ),
+          ),
+          proProvider.overrideWith(
+            (ref) => ProController(
+              purchase: FakeProPurchase(),
+              pricing: LocalizedPricing(
+                locate: () async => const GeoCurrency(
+                  countryCode: 'US',
+                  currencyCode: 'USD',
+                  countryName: 'United States',
+                ),
+                ratesFor: (_) async => 1,
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(theme: AppTheme.light, home: const ProPaywall()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Your ${ScanQuota.weeklyLimit} free scans reset'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('paywall hides weekly reset for Pro', (tester) async {
+    tester.view.physicalSize = const Size(400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          quotaStoreProvider.overrideWithValue(
+            MemoryQuotaStore(
+              used: ScanQuota.weeklyLimit,
+              starterDone: true,
+              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+            ),
+          ),
+          proProvider.overrideWith(
+            (ref) => ProController(
+              purchase: FakeProPurchase(entitled: true),
+              pricing: LocalizedPricing(
+                locate: () async => const GeoCurrency(
+                  countryCode: 'US',
+                  currencyCode: 'USD',
+                  countryName: 'United States',
+                ),
+                ratesFor: (_) async => 1,
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(theme: AppTheme.light, home: const ProPaywall()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('You have Scanella Pro'), findsOneWidget);
+    expect(find.textContaining('free scans reset'), findsNothing);
+    expect(find.textContaining('Scanella Pro lets you keep scanning'), findsNothing);
   });
 }
