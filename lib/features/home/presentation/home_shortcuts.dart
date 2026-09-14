@@ -34,7 +34,7 @@ class HomeShortcuts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       child: Column(
         children: [
           IntrinsicHeight(
@@ -74,7 +74,7 @@ class HomeShortcuts extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _AllToolsRow(onPressed: onAllTools),
         ],
       ),

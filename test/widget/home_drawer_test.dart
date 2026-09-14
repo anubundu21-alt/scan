@@ -366,12 +366,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('Scan me'), findsOneWidget);
+    expect(find.text('Scan me'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byTooltip('Scan me'),
         matching: find.text('Scan me'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(
@@ -379,6 +380,19 @@ void main() {
         matching: find.byIcon(Icons.document_scanner_rounded),
       ),
       findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.text('Scan me')).dy,
+      greaterThan(
+        tester
+            .getBottomLeft(
+              find.descendant(
+                of: find.byTooltip('Scan me'),
+                matching: find.byIcon(Icons.document_scanner_rounded),
+              ),
+            )
+            .dy,
+      ),
     );
   });
 
@@ -545,6 +559,10 @@ void main() {
     expect(photosRect.top, closeTo(cameraRect.top, 0.5));
     expect(photosRect.bottom, closeTo(fileRect.bottom, 0.5));
     expect(photosRect.bottom, closeTo(cameraRect.bottom, 0.5));
+    expect(
+      tester.getTopLeft(find.text('All tools')).dy - photosRect.bottom,
+      greaterThan(24),
+    );
     expect(HomeHeroArt.edgeNavy, const Color(0xFF101D41));
     final heroFill = tester
         .widgetList<Container>(find.byType(Container))

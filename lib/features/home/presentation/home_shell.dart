@@ -186,7 +186,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   selected: true,
                 ),
               ),
-              const SizedBox(width: 84),
+              SizedBox(
+                width: 84,
+                child: _ScanMeLabel(onPressed: () => _startScan()),
+              ),
               Expanded(
                 child: _NavItem(
                   icon: Icons.tune_outlined,
@@ -262,25 +265,42 @@ class _ScanButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.document_scanner_rounded,
-                size: 22,
-                color: scheme.onPrimary,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'Scan me',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onPrimary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
-              ),
-            ],
+          child: Center(
+            child: Icon(
+              Icons.document_scanner_rounded,
+              size: 28,
+              color: scheme.onPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanMeLabel extends StatelessWidget {
+  const _ScanMeLabel({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: PressableScale(
+          onPressed: onPressed,
+          haptic: AppHaptic.impactMedium,
+          overlay: false,
+          minSize: 0,
+          child: Text(
+            'Scan me',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),
