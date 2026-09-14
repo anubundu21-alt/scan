@@ -227,6 +227,7 @@ class _ScanButton extends StatelessWidget {
     const outerRadius = Brand.radiusFab + _pad;
 
     return PressableScale(
+      tooltip: 'Scan me',
       onPressed: onPressed,
       haptic: AppHaptic.impactMedium,
       // Heavier travel than a flat tile: this one is raised, so it should
@@ -261,12 +262,25 @@ class _ScanButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Center(
-            child: Icon(
-              Icons.document_scanner_rounded,
-              size: 28,
-              color: scheme.onPrimary,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.document_scanner_rounded,
+                size: 22,
+                color: scheme.onPrimary,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Scan me',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onPrimary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -360,6 +360,28 @@ void main() {
     expect(find.textContaining('does not have a server'), findsOneWidget);
   });
 
+  testWidgets('scan button shows Scan me under the scanner', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Scan me'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byTooltip('Scan me'),
+        matching: find.text('Scan me'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byTooltip('Scan me'),
+        matching: find.byIcon(Icons.document_scanner_rounded),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('scan button is a rounded square, not a circle', (tester) async {
     final router = testRouter();
     await tester.pumpWidget(app(router));
@@ -1028,9 +1050,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Complete features'), findsOneWidget);
-    expect(find.text('Free features'), findsOneWidget);
-    expect(find.text('Pro features'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Choose your plan'), findsOneWidget);
+    expect(find.text('Free plan'), findsOneWidget);
+    expect(find.text('Pro plan'), findsOneWidget);
     expect(find.text('All PDF tools'), findsNWidgets(2));
     expect(find.text('Unlimited scans'), findsOneWidget);
     expect(find.text('Advanced OCR'), findsOneWidget);

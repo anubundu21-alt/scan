@@ -46,16 +46,22 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Complete features'), findsOneWidget);
-    expect(find.text('Free features'), findsOneWidget);
-    expect(find.text('Pro features'), findsOneWidget);
-    expect(
-      find.text('50 free scans for new users, then 10 every week'),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(AppBar, 'Choose your plan'), findsOneWidget);
+    expect(find.text('Scan, organize and do more with Scanella'), findsOneWidget);
+    expect(find.text('Free plan'), findsOneWidget);
+    expect(find.text('Pro plan'), findsOneWidget);
+    expect(find.text('Get started for free'), findsOneWidget);
+    expect(find.text('Unlock the full power'), findsOneWidget);
+    expect(find.text('50 free scans for new users'), findsOneWidget);
+    expect(find.text('Then 10 free scans every week'), findsOneWidget);
+    expect(find.text('Free limitations'), findsOneWidget);
+    expect(find.text('Limited to 50 scans at start'), findsOneWidget);
+    expect(find.text('After that, 10 scans weekly'), findsOneWidget);
     expect(find.text('All PDF tools'), findsNWidgets(2));
     expect(find.text('Unlimited scans'), findsOneWidget);
     expect(find.text('Advanced OCR'), findsOneWidget);
+    expect(find.text('Extract text from scans'), findsOneWidget);
+    expect(find.text('More export options'), findsOneWidget);
     expect(find.text('All tools'), findsNothing);
     await tester.ensureVisible(find.text('Monthly'));
     await tester.pumpAndSettle();

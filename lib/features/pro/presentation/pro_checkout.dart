@@ -100,13 +100,7 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Payment uses your Apple ID. Scanella never sees your card.',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.labelSmall,
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         TextButton(
           onPressed: pro.busy
               ? null
@@ -118,6 +112,11 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
               fontWeight: FontWeight.w700,
             ),
           ),
+        ),
+        Text(
+          'Payment uses your Apple ID. Scanella never sees your card.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.labelSmall,
         ),
       ],
     );
