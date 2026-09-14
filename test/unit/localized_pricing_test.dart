@@ -31,8 +31,8 @@ void main() {
 
     expect(offer.currencyCode, 'GBP');
     expect(offer.countryName, 'United Kingdom');
-    expect(offer.monthly, closeTo(3.69, 0.02));
-    expect(offer.yearly, closeTo(14.79, 0.02));
+    expect(offer.monthly, 3.99);
+    expect(offer.yearly, 14.99);
     expect(offer.monthlyLabel, contains('£'));
   });
 
@@ -47,8 +47,8 @@ void main() {
     ).resolve();
 
     expect(offer.currencyCode, 'INR');
-    expect(offer.monthly, closeTo(416.67, 0.5));
-    expect(offer.yearly, closeTo(1669.17, 1));
+    expect(offer.monthly, 416.99);
+    expect(offer.yearly, 1669.99);
   });
 
   test('USD store prices yield to a non-US location', () {
@@ -103,6 +103,21 @@ void main() {
     expect(offer.currencyCode, 'EUR');
     expect(offer.source, 'device');
     expect(offer.monthlyLabel, contains('€'));
+  });
+
+  test('Poland charm-prices zloty to .99 endings', () {
+    final offer = LocalizedPricing.formatOffer(
+      currencyCode: 'PLN',
+      countryCode: 'PL',
+      countryName: 'Poland',
+      usdToLocal: 3.71,
+      source: 'internet',
+    );
+
+    expect(offer.monthly, 18.99);
+    expect(offer.yearly, 74.99);
+    expect(offer.monthlyLabel, contains('18.99'));
+    expect(offer.yearlyLabel, contains('74.99'));
   });
 }
 

@@ -47,10 +47,8 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           selected: _plan == ProPlan.yearly,
           title: 'Yearly',
           price: offer.yearlyLabel,
-          detail: pro.storeProductsReady
-              ? '${offer.yearlyPerMonthLabel} / month · save '
-                    '${offer.yearlySavingsPercent}%'
-              : 'Estimated · ${offer.yearlyPerMonthLabel} / month',
+          detail: '${offer.yearlyPerMonthLabel} / month · save '
+              '${offer.yearlySavingsPercent}%',
           badge: 'Best value',
           onTap: () => _select(ProPlan.yearly),
         ),
@@ -59,9 +57,7 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           selected: _plan == ProPlan.monthly,
           title: 'Monthly',
           price: offer.monthlyLabel,
-          detail: pro.storeProductsReady
-              ? 'Cancel any time'
-              : 'Estimated · Cancel any time',
+          detail: 'Cancel any time',
           onTap: () => _select(ProPlan.monthly),
         ),
         if (pro.error != null) ...[
@@ -74,24 +70,34 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           ),
         ],
         const SizedBox(height: 18),
-        FilledButton(
-          onPressed: pro.busy || pro.isPro
-              ? null
-              : () async {
-                  AppHaptics.selection();
-                  final ok = await ref
-                      .read(proProvider.notifier)
-                      .subscribe(_plan);
-                  if (ok && context.mounted) widget.onSubscribed?.call();
-                },
-          child: Text(
-            pro.isPro
-                ? 'You have Scanella Pro'
-                : !pro.storeProductsReady
-                ? 'Try App Store'
-                : _plan == ProPlan.yearly
-                ? 'Subscribe yearly · ${offer.yearlyLabel}'
-                : 'Subscribe monthly · ${offer.monthlyLabel}',
+        SizedBox(
+          height: Brand.buttonHeight,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Brand.accent,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Brand.accent.withValues(alpha: 0.45),
+              disabledForegroundColor: Colors.white,
+              textStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Brand.radiusButton),
+              ),
+            ),
+            onPressed: pro.busy || pro.isPro
+                ? null
+                : () async {
+                    AppHaptics.selection();
+                    final ok = await ref
+                        .read(proProvider.notifier)
+                        .subscribe(_plan);
+                    if (ok && context.mounted) widget.onSubscribed?.call();
+                  },
+            child: Text(
+              pro.isPro ? 'You have Scanella Pro' : 'Upgrade Now',
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -105,7 +111,13 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           onPressed: pro.busy
               ? null
               : () => ref.read(proProvider.notifier).restorePurchases(),
-          child: const Text('Restore purchases'),
+          child: Text(
+            'Restore purchases',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: Brand.accent,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ],
     );

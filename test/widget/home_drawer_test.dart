@@ -1069,11 +1069,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsOneWidget);
+    expect(find.text('Go Pro'), findsOneWidget);
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsNothing);
+    expect(find.text('Go Pro'), findsNothing);
     expect(find.text('Documents'), findsWidgets);
   });
 
@@ -1152,13 +1152,13 @@ void main() {
     await tester.tap(find.text('See Scanella Pro'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsOneWidget);
+    expect(find.text('Go Pro'), findsOneWidget);
     expect(find.byTooltip('Close'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsNothing);
+    expect(find.text('Go Pro'), findsNothing);
     expect(find.text('Documents'), findsWidgets);
   });
 }

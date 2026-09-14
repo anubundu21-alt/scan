@@ -66,6 +66,6 @@ void main() {
 
     await tester.tap(find.text('Monthly'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Subscribe monthly'), findsOneWidget);
+    expect(find.text('Upgrade Now'), findsOneWidget);
   });
 }

@@ -20,7 +20,16 @@ const freeFeatureLines = [
 ];
 
 const proFeatureLines = [
-  ProFeatureLine('Unlimited scans'),
-  ProFeatureLine('All PDF tools'),
-  ProFeatureLine('Advanced OCR'),
+  ProFeatureLine(
+    'Unlimited scans',
+    'Scan as many documents as you need.',
+  ),
+  ProFeatureLine(
+    'Advanced OCR',
+    'Searchable PDFs with extra OCR languages.',
+  ),
+  ProFeatureLine(
+    'All PDF tools',
+    'Convert, compress, merge, split, sign and more.',
+  ),
 ];

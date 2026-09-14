@@ -127,8 +127,11 @@ class LocalizedPricing {
     double? yearly,
   }) {
     final month =
-        monthly ?? _roundPrice(LocalizedOffer.monthlyUsd * usdToLocal);
-    final year = yearly ?? _roundPrice(LocalizedOffer.yearlyUsd * usdToLocal);
+        monthly ??
+        charmPrice(LocalizedOffer.monthlyUsd * usdToLocal, currencyCode);
+    final year =
+        yearly ??
+        charmPrice(LocalizedOffer.yearlyUsd * usdToLocal, currencyCode);
     return LocalizedOffer(
       currencyCode: currencyCode,
       countryCode: countryCode,
@@ -240,10 +243,50 @@ class LocalizedPricing {
 
   static double _staticRate(String currency) => _usdRates[currency] ?? 1;
 
-  static double _roundPrice(double value) {
-    if (value >= 100) return value.roundToDouble();
-    return (value * 100).round() / 100;
+  /// App Store-style charm prices: 4.99, 18.99, 74.99 — not 18.62.
+  static double charmPrice(double value, String currency) {
+    if (value <= 0) {
+      return _zeroDecimalCurrencies.contains(currency.toUpperCase())
+          ? 1
+          : 0.99;
+    }
+    if (_zeroDecimalCurrencies.contains(currency.toUpperCase())) {
+      if (value >= 1000) {
+        return (((value.ceil() + 99) ~/ 100) * 100 - 1).toDouble();
+      }
+      if (value >= 100) {
+        return (((value.ceil() + 9) ~/ 10) * 10 - 1).toDouble();
+      }
+      return value.roundToDouble();
+    }
+    final whole = value.floor();
+    var charm = whole + 0.99;
+    if (value > charm + 1e-9) charm = whole + 1.99;
+    return (charm * 100).round() / 100;
   }
+
+  static const _zeroDecimalCurrencies = {
+    'BIF',
+    'CLP',
+    'DJF',
+    'GNF',
+    'ISK',
+    'JPY',
+    'KMF',
+    'KRW',
+    'PYG',
+    'RWF',
+    'UGX',
+    'VND',
+    'VUV',
+    'XAF',
+    'XOF',
+    'XPF',
+    'HUF',
+    'IDR',
+    'TWD',
+    'COP',
+  };
 
   static String formatMoney(double amount, String currency) {
     try {

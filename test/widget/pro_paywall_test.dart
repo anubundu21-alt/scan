@@ -43,30 +43,34 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsOneWidget);
-    expect(find.byType(ProMark), findsOneWidget);
+    expect(find.text('Go Pro'), findsOneWidget);
+    expect(find.byType(ProMark), findsWidgets);
     expect(find.textContaining('United Kingdom'), findsNothing);
     expect(find.textContaining('Prices in'), findsNothing);
     expect(find.textContaining('Poland'), findsNothing);
     expect(find.textContaining('reinstall'), findsNothing);
-    expect(find.textContaining('Apple ID'), findsOneWidget);
+    expect(find.textContaining('Apple ID'), findsWidgets);
     expect(find.text('Yearly'), findsOneWidget);
     expect(find.text('Monthly'), findsOneWidget);
     expect(find.text(offer.yearlyLabel), findsWidgets);
     expect(find.text(offer.monthlyLabel), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Unlimited scans'),
+      find.text('Upgrade Now'),
       80,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Unlimited scans'), findsOneWidget);
-    expect(find.text('All PDF tools'), findsOneWidget);
-    expect(find.text('Advanced OCR'), findsOneWidget);
+    expect(find.text('Unlimited scans'), findsWidgets);
+    expect(find.text('All PDF tools'), findsWidgets);
+    expect(find.text('Advanced OCR'), findsWidgets);
     expect(find.text('All tools'), findsNothing);
   });
 
   testWidgets('subscribe unlocks Pro', (tester) async {
+    tester.view.physicalSize = const Size(400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final offer = LocalizedPricing.formatOffer(
       currencyCode: 'USD',
       countryCode: 'US',
@@ -107,7 +111,15 @@ void main() {
     await tester.tap(find.text('Open pro'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.textContaining('Subscribe'));
+    await tester.scrollUntilVisible(
+      find.text('Upgrade Now'),
+      80,
+      scrollable: find.descendant(
+        of: find.byType(ProPaywall),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(find.text('Upgrade Now'));
     await tester.pumpAndSettle();
 
     expect(find.text('Scanella Pro'), findsNothing);
@@ -147,13 +159,13 @@ void main() {
     await tester.tap(find.text('Open pro'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsOneWidget);
+    expect(find.text('Go Pro'), findsOneWidget);
     expect(find.byTooltip('Close'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanella Pro'), findsNothing);
+    expect(find.text('Go Pro'), findsNothing);
     expect(find.text('Open pro'), findsOneWidget);
   });
 
@@ -182,8 +194,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Try App Store'), findsOneWidget);
-    expect(find.textContaining('Estimated'), findsWidgets);
+    expect(find.text('Upgrade Now'), findsOneWidget);
+    expect(find.textContaining('Estimated'), findsNothing);
     expect(find.textContaining('Reinstalling TestFlight will not fix this'), findsOneWidget);
     expect(find.textContaining('Ready to Submit'), findsOneWidget);
     expect(find.textContaining('Add auto-renewable'), findsNothing);
