@@ -4,6 +4,7 @@ import 'dart:ui' show Locale;
 
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:scan2/features/pro/domain/monthly_starting_prices.dart';
 
 /// Scanella Pro list prices in US dollars. StoreKit replaces these when
 /// products are live; until then we convert from this base using the
@@ -21,7 +22,7 @@ class LocalizedOffer {
     required this.source,
   });
 
-  static const monthlyUsd = 4.99;
+  static const monthlyUsd = 2.99;
   static const yearlyUsd = 19.99;
 
   final String currencyCode;
@@ -80,23 +81,26 @@ class LocalizedPricing {
     }
 
     final chosen = geo ?? device;
-    var rate = _staticRate(chosen.currencyCode);
+    final list = StorefrontPrice.monthly(chosen.countryCode);
+    final currency = list?.currencyCode ?? chosen.currencyCode;
+    var rate = _staticRate(currency);
     if (ratesFor != null) {
       try {
-        rate = await ratesFor!(chosen.currencyCode) ?? rate;
+        rate = await ratesFor!(currency) ?? rate;
       } catch (_) {}
-    } else if (chosen.currencyCode != 'USD') {
+    } else if (currency != 'USD') {
       try {
-        rate = await lookupUsdRate(chosen.currencyCode) ?? rate;
+        rate = await lookupUsdRate(currency) ?? rate;
       } catch (_) {}
     }
 
     return formatOffer(
-      currencyCode: chosen.currencyCode,
+      currencyCode: currency,
       countryCode: chosen.countryCode,
       countryName: chosen.countryName ?? _countryName(chosen.countryCode),
       usdToLocal: rate,
       source: geo != null ? 'internet' : 'device',
+      monthly: list?.amount,
     );
   }
 
@@ -126,20 +130,25 @@ class LocalizedPricing {
     double? monthly,
     double? yearly,
   }) {
+    final list = StorefrontPrice.monthly(countryCode);
+    final currency = monthly == null && list != null
+        ? list.currencyCode
+        : currencyCode;
     final month =
         monthly ??
-        charmPrice(LocalizedOffer.monthlyUsd * usdToLocal, currencyCode);
+        list?.amount ??
+        charmPrice(LocalizedOffer.monthlyUsd * usdToLocal, currency);
     final year =
         yearly ??
-        charmPrice(LocalizedOffer.yearlyUsd * usdToLocal, currencyCode);
+        charmPrice(LocalizedOffer.yearlyUsd * usdToLocal, currency);
     return LocalizedOffer(
-      currencyCode: currencyCode,
+      currencyCode: currency,
       countryCode: countryCode,
       countryName: countryName,
       monthly: month,
       yearly: year,
-      monthlyLabel: formatMoney(month, currencyCode),
-      yearlyLabel: formatMoney(year, currencyCode),
+      monthlyLabel: formatMoney(month, currency),
+      yearlyLabel: formatMoney(year, currency),
       source: source,
     );
   }

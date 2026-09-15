@@ -11,12 +11,12 @@ void main() {
     ).resolve(locale: const Locale('en', 'US'));
 
     expect(offer.currencyCode, 'USD');
-    expect(offer.monthly, 4.99);
+    expect(offer.monthly, 2.99);
     expect(offer.yearly, 19.99);
-    expect(offer.monthlyLabel, contains('4.99'));
+    expect(offer.monthlyLabel, contains('2.99'));
     expect(offer.yearlyLabel, contains('19.99'));
     expect(offer.source, 'internet');
-    expect(offer.yearlySavingsPercent, greaterThan(60));
+    expect(offer.yearlySavingsPercent, greaterThan(40));
   });
 
   test('UK converts to pounds from the connection', () async {
@@ -31,7 +31,7 @@ void main() {
 
     expect(offer.currencyCode, 'GBP');
     expect(offer.countryName, 'United Kingdom');
-    expect(offer.monthly, 3.99);
+    expect(offer.monthly, 2.99);
     expect(offer.yearly, 14.99);
     expect(offer.monthlyLabel, contains('£'));
   });
@@ -47,7 +47,7 @@ void main() {
     ).resolve();
 
     expect(offer.currencyCode, 'INR');
-    expect(offer.monthly, 416.99);
+    expect(offer.monthly, 299);
     expect(offer.yearly, 1669.99);
   });
 
@@ -71,6 +71,7 @@ void main() {
     expect(shown.currencyCode, 'INR');
     expect(shown.source, 'internet');
     expect(shown.monthlyLabel, isNot(contains(r'$4.99')));
+    expect(shown.monthlyLabel, isNot(contains(r'$2.99')));
   });
 
   test('store prices are kept when they already match the location', () {
@@ -102,10 +103,11 @@ void main() {
 
     expect(offer.currencyCode, 'EUR');
     expect(offer.source, 'device');
+    expect(offer.monthly, 2.99);
     expect(offer.monthlyLabel, contains('€'));
   });
 
-  test('Poland charm-prices zloty to .99 endings', () {
+  test('Poland uses App Store monthly starting price', () {
     final offer = LocalizedPricing.formatOffer(
       currencyCode: 'PLN',
       countryCode: 'PL',
@@ -114,9 +116,9 @@ void main() {
       source: 'internet',
     );
 
-    expect(offer.monthly, 18.99);
+    expect(offer.monthly, 14.99);
     expect(offer.yearly, 74.99);
-    expect(offer.monthlyLabel, contains('18.99'));
+    expect(offer.monthlyLabel, contains('14.99'));
     expect(offer.yearlyLabel, contains('74.99'));
   });
 }
