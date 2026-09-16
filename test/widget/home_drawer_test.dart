@@ -25,6 +25,7 @@ import 'package:scan2/features/pro/presentation/merge_pdf_screen.dart';
 import 'package:scan2/features/pro/presentation/split_pdf_screen.dart';
 import 'package:scan2/features/pro/presentation/pdf_to_image_screen.dart';
 import 'package:scan2/features/pro/presentation/images_to_pdf_screen.dart';
+import 'package:scan2/features/pro/presentation/pdf_page_tool_screens.dart';
 import 'package:scan2/features/library/presentation/trash_screen.dart';
 import 'package:scan2/features/settings/presentation/settings_screen.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
@@ -68,6 +69,16 @@ void main() {
         path: '/pdf/from-images',
         builder: (_, __) => const ImagesToPdfScreen(),
       ),
+      GoRoute(path: '/pdf/rotate', builder: (_, __) => const PdfRotateScreen()),
+      GoRoute(
+        path: '/pdf/pages',
+        builder: (_, __) => const PdfPageNumbersScreen(),
+      ),
+      GoRoute(
+        path: '/pdf/watermark',
+        builder: (_, __) => const PdfWatermarkScreen(),
+      ),
+      GoRoute(path: '/pdf/unlock', builder: (_, __) => const PdfUnlockScreen()),
       GoRoute(path: '/tools', builder: (_, __) => const AllToolsScreen()),
       GoRoute(
         path: '/tools/unavailable',
@@ -1002,6 +1013,54 @@ void main() {
 
     expect(find.widgetWithText(AppBar, 'Image to PDF'), findsOneWidget);
     expect(find.text('Choose photos'), findsOneWidget);
+    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+  });
+
+  testWidgets('Rotate PDF opens without Pro', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    await tapHomeTool(tester, 'Rotate PDF');
+
+    expect(find.widgetWithText(AppBar, 'Rotate PDF'), findsOneWidget);
+    expect(find.text('90°'), findsOneWidget);
+    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+  });
+
+  testWidgets('Page numbers opens without Pro', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    await tapHomeTool(tester, 'Page numbers');
+
+    expect(find.widgetWithText(AppBar, 'Page numbers'), findsOneWidget);
+    expect(find.textContaining('1 / n'), findsOneWidget);
+    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+  });
+
+  testWidgets('Watermark opens without Pro', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    await tapHomeTool(tester, 'Watermark');
+
+    expect(find.widgetWithText(AppBar, 'Watermark'), findsOneWidget);
+    expect(find.text('CONFIDENTIAL'), findsWidgets);
+    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+  });
+
+  testWidgets('Unlock PDF opens without Pro', (tester) async {
+    final router = testRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pumpAndSettle();
+
+    await tapHomeTool(tester, 'Unlock PDF');
+
+    expect(find.widgetWithText(AppBar, 'Unlock PDF'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
     expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
   });
 

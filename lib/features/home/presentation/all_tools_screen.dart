@@ -137,6 +137,14 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
         context.push('/pdf/split');
       case 'jpg':
         context.push('/pdf/images');
+      case 'pages':
+        context.push('/pdf/pages');
+      case 'watermark':
+        context.push('/pdf/watermark');
+      case 'rotate':
+        context.push('/pdf/rotate');
+      case 'unlock':
+        context.push('/pdf/unlock');
       case 'sign':
         context.push('/pdf/sign');
       case 'extract':

@@ -236,6 +236,20 @@ private enum ScanellaPdfPlugin {
           return
         }
         renderPage(data: data, index: index, dpi: dpi, result: result)
+      case "unlock":
+        let map = call.arguments as? [String: Any]
+        guard let data = bytes(from: map) else {
+          result(
+            FlutterError(
+              code: "bad_pdf",
+              message: "That PDF could not be read.",
+              details: nil
+            )
+          )
+          return
+        }
+        let password = map?["password"] as? String ?? ""
+        unlock(data: data, password: password, result: result)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -540,6 +554,102 @@ private enum ScanellaPdfPlugin {
       Int((g * 255).rounded()),
       Int((b * 255).rounded())
     )
+  }
+
+  static func unlock(
+    data: Data,
+    password: String,
+    result: @escaping FlutterResult
+  ) {
+    DispatchQueue.global(qos: .userInitiated).async {
+      guard let document = PDFDocument(data: data) else {
+        finish(
+          result,
+          FlutterError(
+            code: "bad_pdf",
+            message: "That PDF could not be read.",
+            details: nil
+          )
+        )
+        return
+      }
+      if document.isLocked {
+        if !document.unlock(withPassword: password) {
+          finish(
+            result,
+            FlutterError(
+              code: "wrong_password",
+              message:
+                "Could not open this locked PDF. Check the password and try again.",
+              details: nil
+            )
+          )
+          return
+        }
+      }
+      guard let unlocked = rewriteUnlocked(document), unlocked.count > 5 else {
+        finish(
+          result,
+          FlutterError(
+            code: "bad_pdf",
+            message: "That PDF could not be unlocked.",
+            details: nil
+          )
+        )
+        return
+      }
+      finish(result, FlutterStandardTypedData(bytes: unlocked))
+    }
+  }
+
+  /// Pages from [document] into a new file with no Encrypt dictionary.
+  static func rewriteUnlocked(_ document: PDFDocument) -> Data? {
+    let copied = PDFDocument()
+    for i in 0..<document.pageCount {
+      guard let page = document.page(at: i) else { continue }
+      if let clone = page.copy() as? PDFPage {
+        copied.insert(clone, at: copied.pageCount)
+      }
+    }
+    if let data = copied.dataRepresentation(), !containsEncrypt(data) {
+      return data
+    }
+    return drawUnlocked(document)
+  }
+
+  static func containsEncrypt(_ data: Data) -> Bool {
+    guard let text = String(data: data, encoding: .isoLatin1) else {
+      return false
+    }
+    return text.contains("/Encrypt")
+  }
+
+  static func drawUnlocked(_ document: PDFDocument) -> Data? {
+    let data = NSMutableData()
+    UIGraphicsBeginPDFContextToData(data, .zero, nil)
+    defer { UIGraphicsEndPDFContext() }
+    for i in 0..<document.pageCount {
+      guard let page = document.page(at: i) else { continue }
+      let media = page.bounds(for: .mediaBox)
+      var width = media.width
+      var height = media.height
+      let rotation = ((page.rotation % 360) + 360) % 360
+      if rotation == 90 || rotation == 270 {
+        swap(&width, &height)
+      }
+      if width < 1 { width = 612 }
+      if height < 1 { height = 792 }
+      let pageRect = CGRect(x: 0, y: 0, width: width, height: height)
+      UIGraphicsBeginPDFPageWithInfo(pageRect, nil)
+      guard let ctx = UIGraphicsGetCurrentContext() else { continue }
+      ctx.saveGState()
+      ctx.translateBy(x: 0, y: pageRect.height)
+      ctx.scaleBy(x: 1, y: -1)
+      page.draw(with: .mediaBox, to: ctx)
+      ctx.restoreGState()
+    }
+    guard data.length > 5 else { return nil }
+    return data as Data
   }
 
   static func renderPage(

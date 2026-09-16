@@ -17,6 +17,7 @@ import 'package:scan2/features/pro/presentation/split_pdf_screen.dart';
 import 'package:scan2/features/pro/presentation/word_to_pdf_screen.dart';
 import 'package:scan2/features/pro/presentation/pdf_to_image_screen.dart';
 import 'package:scan2/features/pro/presentation/images_to_pdf_screen.dart';
+import 'package:scan2/features/pro/presentation/pdf_page_tool_screens.dart';
 import 'package:scan2/features/home/presentation/all_tools_screen.dart';
 import 'package:scan2/features/home/presentation/home_shell.dart';
 import 'package:scan2/features/legal/legal_copy.dart';
@@ -144,6 +145,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pdf/from-images',
         builder: (context, state) => const ImagesToPdfScreen(),
+      ),
+      GoRoute(
+        path: '/pdf/rotate',
+        builder: (context, state) => const PdfRotateScreen(),
+      ),
+      GoRoute(
+        path: '/pdf/pages',
+        builder: (context, state) => const PdfPageNumbersScreen(),
+      ),
+      GoRoute(
+        path: '/pdf/watermark',
+        builder: (context, state) => const PdfWatermarkScreen(),
+      ),
+      GoRoute(
+        path: '/pdf/unlock',
+        builder: (context, state) => const PdfUnlockScreen(),
       ),
       GoRoute(
         path: '/tools',

@@ -91,6 +91,29 @@ class HelpScreen extends StatelessWidget {
           'this device.',
     ),
     (
+      'Rotate PDF',
+      'All tools → Rotate PDF. Choose 90°, 180° or 270° clockwise, then pick '
+          'a PDF. Every page is turned. Runs on this device.',
+    ),
+    (
+      'Page numbers',
+      'All tools → Page numbers. Pick a PDF and each page is stamped 1 / n '
+          'at the bottom. Runs on this device.',
+    ),
+    (
+      'Watermark',
+      'All tools → Watermark. Type the stamp (CONFIDENTIAL is the default), '
+          'pick a PDF, and the text is drawn across every page. Runs on this '
+          'device.',
+    ),
+    (
+      'Unlock PDF',
+      'All tools → Unlock PDF. Enter the password the file asks for to open, '
+          'pick the PDF, and share a copy that opens without it. Runs on this '
+          'device. Restriction-only locks (no open password) are removed the '
+          'same way.',
+    ),
+    (
       'Scanella Pro',
       'Menu → Scanella Pro, or Settings → Scanella Pro. Payment goes '
           'through the App Store and your Apple ID — not a card form in the '
