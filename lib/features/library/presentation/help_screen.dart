@@ -92,8 +92,8 @@ class HelpScreen extends StatelessWidget {
     ),
     (
       'Rotate PDF',
-      'All tools → Rotate PDF. Choose 90°, 180° or 270° clockwise, then pick '
-          'a PDF. Every page is turned. Runs on this device.',
+      'All tools → Rotate PDF. Pick a PDF, turn the pages on screen, then '
+          'tap Download when it looks right. Runs on this device.',
     ),
     (
       'Page numbers',

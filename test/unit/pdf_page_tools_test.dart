@@ -55,6 +55,21 @@ void main() {
       expect(sample.b.toInt(), lessThan(80));
     });
 
+    test('buildRotatedPdf bakes live turns into the saved JPEG', () async {
+      final jpeg = solidJpeg(width: 120, height: 60);
+      const tools = PdfPageTools();
+      final unmoved = await tools.buildRotatedPdf([jpeg], quarterTurns: 0);
+      final original = img.decodeImage(firstJpegIn(unmoved)!)!;
+      expect(original.width, greaterThan(original.height));
+
+      final turned = await tools.buildRotatedPdf([jpeg], quarterTurns: 1);
+      final rotated = img.decodeImage(firstJpegIn(turned)!)!;
+      expect(rotated.width, lessThan(rotated.height));
+      final sample = rotated.getPixel(rotated.width ~/ 2, rotated.height ~/ 2);
+      expect(sample.r.toInt(), greaterThan(150));
+      expect(sample.g.toInt(), lessThan(80));
+    });
+
     test('page numbers burn 1 / 2 into the bottom of each page', () async {
       final a = solidJpeg(width: 240, height: 320, r: 230, g: 230, b: 230);
       final b = solidJpeg(width: 240, height: 320, r: 230, g: 230, b: 230);

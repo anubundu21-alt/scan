@@ -1024,7 +1024,8 @@ void main() {
     await tapHomeTool(tester, 'Rotate PDF');
 
     expect(find.widgetWithText(AppBar, 'Rotate PDF'), findsOneWidget);
-    expect(find.text('90°'), findsOneWidget);
+    expect(find.text('Choose a PDF'), findsOneWidget);
+    expect(find.text('Download'), findsNothing);
     expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
   });
 

@@ -23,17 +23,29 @@ class PdfPageTools {
   /// the file without a lock, then a raster rebuild if that is missing.
   final Future<Uint8List> Function(Uint8List pdf, String password)? unlockPdf;
 
+  Future<List<Uint8List>> rasterPages(Uint8List pdfBytes) => _pages(pdfBytes);
+
   Future<Uint8List> rotate(
     Uint8List pdfBytes, {
     int quarterTurns = 1,
   }) async {
-    final turns = quarterTurns % 4;
-    if (turns == 0) {
-      throw StateError('Choose how far to turn the pages.');
-    }
     final pages = await _pages(pdfBytes);
+    return buildRotatedPdf(pages, quarterTurns: quarterTurns);
+  }
+
+  /// Bake [quarterTurns] into already-rastered pages. Zero turns writes the
+  /// preview as it is, so Download is honest when the user never rotated.
+  Future<Uint8List> buildRotatedPdf(
+    List<Uint8List> pages, {
+    required int quarterTurns,
+  }) async {
+    if (pages.isEmpty) {
+      throw StateError('That PDF has no pages that could be read.');
+    }
+    final turns = quarterTurns % 4;
     return convert.imagesToPdf([
-      for (final page in pages) rotateEncoded(page, quarterTurns: turns),
+      for (final page in pages)
+        turns == 0 ? page : rotateEncoded(page, quarterTurns: turns),
     ]);
   }
 
