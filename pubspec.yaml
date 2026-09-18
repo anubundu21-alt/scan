@@ -1,7 +1,7 @@
 name: scan2
 description: "Scanella — an offline document scanner with live edge detection, auto-capture, perspective correction and scan filters."
 publish_to: 'none'
-version: 1.5.83+844
+version: 1.5.84+845
 
 environment:
   sdk: '^3.12.0'

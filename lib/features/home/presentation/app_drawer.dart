@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scan2/core/branding.dart';
 import 'package:scan2/core/haptics/app_haptics.dart';
 import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
@@ -14,6 +15,7 @@ class AppDrawer extends StatelessWidget {
     required this.onAbout,
     required this.onTrash,
     required this.onHelp,
+    required this.onContact,
     required this.onPro,
     required this.onFeatures,
     required this.onAllDocuments,
@@ -26,6 +28,7 @@ class AppDrawer extends StatelessWidget {
   final VoidCallback onAbout;
   final VoidCallback onTrash;
   final VoidCallback onHelp;
+  final VoidCallback onContact;
   final VoidCallback onPro;
   final VoidCallback onFeatures;
   final VoidCallback onAllDocuments;
@@ -106,6 +109,14 @@ class AppDrawer extends StatelessWidget {
                   title: 'Help',
                   subtitle: 'Camera, PDFs, lock',
                   onTap: onHelp,
+                ),
+                const SizedBox(height: 6),
+                _DrawerTile(
+                  icon: Icons.mail_rounded,
+                  tint: Brand.docBlue,
+                  title: 'Contact us',
+                  subtitle: AppIdentity.supportEmail,
+                  onTap: onContact,
                 ),
                 const SizedBox(height: 6),
                 _DrawerTile(

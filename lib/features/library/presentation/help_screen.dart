@@ -149,10 +149,10 @@ class HelpScreen extends StatelessWidget {
     ),
     (
       'Still stuck',
-      'Write to ${AppIdentity.supportEmail}. Settings → Contact support copies '
-          'the address. Tell us the iOS version and what you tapped before it '
-          'went wrong — we cannot see your scans, so the description is all we '
-          'have to go on.',
+      'Write to ${AppIdentity.supportEmail}. Menu → Contact us, or '
+          'Settings → Contact us, copies the address. Tell us the iOS '
+          'version and what you tapped before it went wrong — we cannot see '
+          'your scans, so the description is all we have to go on.',
     ),
   ];
 

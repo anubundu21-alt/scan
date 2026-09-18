@@ -47,6 +47,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     });
   }
 
+  void _contactUs() {
+    _closeDrawer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      copySupportEmail(context);
+    });
+  }
+
   Future<void> _startScan({bool idCard = false}) async {
     if (!await ensureFreeScanSlot(context, ref)) return;
     if (!mounted) return;
@@ -139,6 +147,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           _closeDrawer();
           context.push('/help');
         },
+        onContact: _contactUs,
         onPro: _openPro,
         onFeatures: _openFeatures,
         onAllDocuments: _openAllDocuments,

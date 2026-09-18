@@ -301,7 +301,7 @@ class SettingsScreen extends ConsumerWidget {
                 _InfoRow(
                   icon: Icons.mail_rounded,
                   tint: Brand.accent,
-                  title: 'Contact support',
+                  title: 'Contact us',
                   subtitle: AppIdentity.supportEmail,
                   onTap: () => copySupportEmail(context),
                 ),
