@@ -40,3 +40,10 @@ Use these URLs in the store forms:
 
 - Privacy Policy: `https://canela.vercel.app/privacy`
 - Terms of Use: `https://canela.vercel.app/terms`
+- Support email: `support@scanella.com`
+
+The support address also appears in the footer of every page here, in the
+Privacy "Questions" and Terms "Contact" sections, and in the app (Settings →
+Contact support, Help → Still stuck, About). It is defined once in
+`lib/core/branding.dart` as `AppIdentity.supportEmail`; change it there and in
+these three pages together.

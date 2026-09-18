@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scan2/core/branding.dart';
+import 'package:scan2/features/legal/legal_copy.dart';
 
 void main() {
   test('Vercel legal pages exist and match the in-app copy', () {
@@ -33,5 +34,29 @@ void main() {
     expect(privacy, contains('does not have a server'));
     expect(AppIdentity.termsUrl, 'https://canela.vercel.app/terms');
     expect(AppIdentity.privacyUrl, 'https://canela.vercel.app/privacy');
+  });
+
+  test('every legal page offers the support address', () {
+    const email = 'support@scanella.com';
+    const link = 'mailto:$email';
+    expect(AppIdentity.supportEmail, email);
+
+    for (final path in [
+      'legal-site/index.html',
+      'legal-site/terms/index.html',
+      'legal-site/privacy/index.html',
+    ]) {
+      final page = File(path).readAsStringSync();
+      expect(page, contains(link), reason: '$path has no mailto link');
+      expect(page, contains(email), reason: '$path does not show the address');
+    }
+  });
+
+  test('in-app Terms and Privacy carry the support address', () {
+    String bodies(LegalDocument document) =>
+        LegalCopy.sections(document).map((s) => s.body).join('\n');
+
+    expect(bodies(LegalDocument.terms), contains(AppIdentity.supportEmail));
+    expect(bodies(LegalDocument.privacy), contains(AppIdentity.supportEmail));
   });
 }

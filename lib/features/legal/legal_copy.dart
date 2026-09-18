@@ -1,3 +1,5 @@
+import 'package:scan2/core/branding.dart';
+
 /// In-app Terms and Privacy copy. These pages are the real documents, not
 /// placeholders that wait on a website.
 class LegalSection {
@@ -89,6 +91,14 @@ class LegalCopy {
           'version of Scanella is the agreement that applies while you use '
           'it.',
     ),
+    LegalSection(
+      heading: 'Contact',
+      body:
+          'Questions about these terms, a billing problem, or anything else '
+          'about the app: write to ${AppIdentity.supportEmail}. Refunds for a '
+          'subscription are handled by Apple or Google, not by us, but we can '
+          'point you at the right form.',
+    ),
   ];
 
   static const _privacy = [
@@ -141,7 +151,9 @@ class LegalCopy {
       body:
           'Because nothing is sent to us, there is no personal data on a '
           'Scanella server to access, correct, or delete. Removing the app '
-          'deletes the on-device library.',
+          'deletes the on-device library. If you want to ask about this '
+          'policy, or about anything the app does with your pages, write to '
+          '${AppIdentity.supportEmail} and a person will answer.',
     ),
   ];
 }

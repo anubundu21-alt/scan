@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:scan2/core/branding.dart';
 import 'package:scan2/core/haptics/app_haptics.dart';
 import 'package:scan2/core/theme/tactile.dart';
 import 'package:scan2/core/widgets/pressable_scale.dart';
@@ -37,6 +39,23 @@ Future<void> showScanellaAbout(BuildContext context) async {
   );
 }
 
+/// Put the support address on the clipboard and say so.
+///
+/// Copying rather than opening a mail app: there is no url_launcher here, and
+/// a phone without a mail account set up would swallow the tap silently.
+Future<void> copySupportEmail(BuildContext context) async {
+  await Clipboard.setData(const ClipboardData(text: AppIdentity.supportEmail));
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(
+        content: Text('${AppIdentity.supportEmail} copied'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+}
+
 /// Name, mark, version, and the on-device promise. No licence catalogue.
 class ScanellaAboutScreen extends StatelessWidget {
   const ScanellaAboutScreen({super.key, required this.version});
@@ -69,6 +88,12 @@ class ScanellaAboutScreen extends StatelessWidget {
               ],
               const SizedBox(height: 14),
               Text(legalese, textAlign: TextAlign.center, style: muted),
+              const SizedBox(height: 14),
+              Text(
+                AppIdentity.supportEmail,
+                textAlign: TextAlign.center,
+                style: muted,
+              ),
             ],
           ),
         ),
@@ -271,6 +296,14 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Privacy Policy',
                   subtitle: 'What stays on this device',
                   onTap: () => context.push('/legal/privacy'),
+                ),
+                const Divider(indent: 68, endIndent: 16),
+                _InfoRow(
+                  icon: Icons.mail_rounded,
+                  tint: Brand.accent,
+                  title: 'Contact support',
+                  subtitle: AppIdentity.supportEmail,
+                  onTap: () => copySupportEmail(context),
                 ),
                 const Divider(indent: 68, endIndent: 16),
                 _InfoRow(

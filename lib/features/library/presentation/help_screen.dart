@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scan2/core/branding.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/pro/domain/scan_quota.dart';
 
@@ -145,6 +146,13 @@ class HelpScreen extends StatelessWidget {
       'Menu → IDs lists identity cards. Scanella Pro reads a new scan and '
           'saves a second copy there when it is an ID card. Passports go to '
           'Private instead.',
+    ),
+    (
+      'Still stuck',
+      'Write to ${AppIdentity.supportEmail}. Settings → Contact support copies '
+          'the address. Tell us the iOS version and what you tapped before it '
+          'went wrong — we cannot see your scans, so the description is all we '
+          'have to go on.',
     ),
   ];
 
