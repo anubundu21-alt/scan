@@ -42,6 +42,18 @@ Use these URLs in the store forms:
 - Terms of Use: `https://canela.vercel.app/terms`
 - Support email: `support@scanella.com`
 
+## Store badges
+
+`app-store-badge.svg` is Apple's own artwork. The Google Play badge is not in
+the repo yet: download the English badge from
+<https://play.google.com/intl/en_us/badges> and save it as
+`google-play-badge.png` here. It then appears next to the App Store badge with
+no code change — until it exists, an `onerror` on the `<img>` removes it so the
+page never shows a broken image.
+
+Neither store allows a redrawn badge, so use their supplied files unmodified.
+Neither badge is a link yet; wrap each in an `<a>` once the listings are live.
+
 The support address also appears in the footer of every page here, in the
 Privacy "Questions" and Terms "Contact" sections, and in the app (Settings →
 Contact support, Help → Still stuck, About). It is defined once in

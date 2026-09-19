@@ -119,16 +119,31 @@
               <div class="sub">Scans stay on your phone</div>
             </div>
           </div>
-          <!-- Apple's own badge artwork, shown only. Wrap it in a link to the
-               App Store listing when there is one. -->
-          <p class="store-badge">
+          <!-- Store badges, shown only. Wrap each in a link to its listing
+               when there is one. Both are the stores' own artwork: neither
+               Apple nor Google allows a redrawn badge.
+
+               google-play-badge.png is not in the repo yet — take the English
+               badge from play.google.com/intl/en_us/badges and drop it in
+               beside this file. Until then onerror removes it, so the row
+               shows the App Store badge alone rather than a broken image. -->
+          <div class="store-badges">
             <img
+              class="badge-apple"
               src="/app-store-badge.svg"
               width="120"
               height="40"
               alt="Download on the App Store"
             />
-          </p>
+            <img
+              class="badge-play"
+              src="/google-play-badge.png"
+              width="646"
+              height="250"
+              alt="Get it on Google Play"
+              onerror="this.remove()"
+            />
+          </div>
         </div>
       </div>
     </section>
