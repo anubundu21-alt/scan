@@ -10,13 +10,16 @@ class AppSettings {
     this.autoCapture = true,
     this.defaultFilter = ScanFilter.magic,
     this.shutterSound = true,
-    this.useInAppCamera = false,
   });
 
   final ThemeMode themeMode;
 
   /// Release the shutter automatically once the page is recognised and still.
-  /// On by default: it is the reason to use a scanner rather than the camera.
+  ///
+  /// Only CameraScreen reads this and the shutter sound below. That screen is
+  /// off the router now — the platform scanner is the one capture path — so
+  /// both sit at their defaults with no switch in Settings to change them.
+  /// They stay because CameraScreen still has to compile.
   final bool autoCapture;
 
   /// Filter pre-selected for freshly captured pages.
@@ -24,27 +27,17 @@ class AppSettings {
 
   final bool shutterSound;
 
-  /// Capture with Scan2's own camera instead of the platform scanner.
-  ///
-  /// Off by default. The platform scanner (VisionKit / ML Kit) detects edges
-  /// noticeably better than the in-app geometric detector, particularly on
-  /// small documents and patterned surfaces. The in-app camera stays available
-  /// for anyone who wants its batch strip and live overlay.
-  final bool useInAppCamera;
-
   AppSettings copyWith({
     ThemeMode? themeMode,
     bool? autoCapture,
     ScanFilter? defaultFilter,
     bool? shutterSound,
-    bool? useInAppCamera,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       autoCapture: autoCapture ?? this.autoCapture,
       defaultFilter: defaultFilter ?? this.defaultFilter,
       shutterSound: shutterSound ?? this.shutterSound,
-      useInAppCamera: useInAppCamera ?? this.useInAppCamera,
     );
   }
 }
@@ -63,7 +56,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   static const _autoCaptureKey = 'settings.autoCapture';
   static const _filterKey = 'settings.defaultFilter';
   static const _shutterKey = 'settings.shutterSound';
-  static const _inAppCameraKey = 'settings.useInAppCamera';
 
   SharedPreferences? _prefs;
 
@@ -84,7 +76,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
             ? ScanFilter.values[filterIndex]
             : ScanFilter.magic,
         shutterSound: prefs.getBool(_shutterKey) ?? true,
-        useInAppCamera: prefs.getBool(_inAppCameraKey) ?? false,
       );
     } catch (e) {
       debugPrint('Settings unavailable, using defaults: $e');
@@ -109,11 +100,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setShutterSound(bool value) {
     state = state.copyWith(shutterSound: value);
     _prefs?.setBool(_shutterKey, value);
-  }
-
-  void setUseInAppCamera(bool value) {
-    state = state.copyWith(useInAppCamera: value);
-    _prefs?.setBool(_inAppCameraKey, value);
   }
 }
 

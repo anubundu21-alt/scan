@@ -12,6 +12,15 @@ edit stays reversible. Nothing leaves the device.
 
 ## How it works
 
+> **Capture path.** Scanning goes through the platform scanner (VisionKit on
+> iOS, ML Kit on Android) via `NativeScanScreen`. It finds edges more reliably
+> than the in-app detector, especially on small or patterned pages. The in-app
+> camera (`CameraScreen`, `DocumentEdgeTracker`, `DetectionWorker`) is still in
+> the tree and still tested, but nothing routes to it — the Settings switch
+> that used to reach it is gone. The two sections below describe that code.
+> `QuadDetector` itself is *not* camera-only: crop, import and the native scan
+> path all use it.
+
 ### Edge detection
 
 `DocumentQuadDetector` is a pure-Dart, line-based detector — no OpenCV, no ML

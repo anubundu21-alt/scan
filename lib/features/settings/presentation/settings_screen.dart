@@ -132,43 +132,6 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
 
-            const _SectionLabel('Scanning'),
-            _Group(
-              children: [
-                _SwitchRow(
-                  icon: Icons.document_scanner_rounded,
-                  tint: Brand.docBlue,
-                  title: 'Use the in-app camera',
-                  subtitle:
-                      'Off uses the system scanner, which finds edges '
-                      'best. On adds a live overlay and batch strip.',
-                  value: settings.useInAppCamera,
-                  onChanged: notifier.setUseInAppCamera,
-                ),
-                _SwitchRow(
-                  icon: Icons.motion_photos_auto_rounded,
-                  tint: Brand.accent,
-                  title: 'Auto-capture',
-                  subtitle: 'Shoots once the page is steady.',
-                  value: settings.autoCapture,
-                  // Only meaningful for the in-app camera.
-                  onChanged: settings.useInAppCamera
-                      ? notifier.setAutoCapture
-                      : null,
-                ),
-                _SwitchRow(
-                  icon: Icons.volume_up_rounded,
-                  tint: Brand.amber,
-                  title: 'Shutter sound',
-                  value: settings.shutterSound,
-                  onChanged: settings.useInAppCamera
-                      ? notifier.setShutterSound
-                      : null,
-                  last: true,
-                ),
-              ],
-            ),
-
             const _SectionLabel('Default enhancement'),
             _Group(
               children: [
