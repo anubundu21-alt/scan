@@ -45,11 +45,26 @@ void main() {
       'legal-site/index.html',
       'legal-site/terms/index.html',
       'legal-site/privacy/index.html',
+      'legal-site/contact/index.html',
     ]) {
       final page = File(path).readAsStringSync();
       expect(page, contains(link), reason: '$path has no mailto link');
       expect(page, contains(email), reason: '$path does not show the address');
+      expect(
+        page,
+        contains('href="/contact"'),
+        reason: '$path does not link the Contact page',
+      );
+      expect(
+        page,
+        contains('All rights reserved'),
+        reason: '$path has no copyright line',
+      );
     }
+
+    final contact = File('legal-site/contact/index.html').readAsStringSync();
+    expect(contact, contains('<title>Contact — Scanella</title>'));
+    expect(contact, contains('Write to us'));
   });
 
   test('in-app Terms and Privacy carry the support address', () {

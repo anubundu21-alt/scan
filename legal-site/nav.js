@@ -5,6 +5,17 @@
 // The panel is only wired up when this runs: without JavaScript the stylesheet
 // leaves the plain row of links in place, so the pages stay navigable.
 (function () {
+  // The footer year is written into the HTML so it is right without script;
+  // this keeps it right in January without anyone redeploying. It runs before
+  // the menu wiring so a header that is missing cannot skip it.
+  var year = String(new Date().getFullYear());
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-year]'),
+    function (slot) {
+      slot.textContent = year;
+    }
+  );
+
   var header = document.querySelector('.site-header');
   if (!header) return;
 
@@ -42,7 +53,7 @@
 
   // Widening past the breakpoint shows the full row again; leaving the panel
   // flagged open would then mean a stray aria-expanded on a hidden button.
-  var wide = window.matchMedia('(min-width: 901px)');
+  var wide = window.matchMedia('(min-width: 1101px)');
   var onWidth = function (event) {
     if (event.matches) setOpen(false);
   };

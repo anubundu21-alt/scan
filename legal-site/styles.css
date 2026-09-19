@@ -2,6 +2,8 @@
   --accent: #1f9a6b;
   --accent-dark: #187a55;
   --accent-bright: #3bb888;
+  --accent-wash: #e4f3ed;
+  --accent-tint: #bce1d3;
   --ink: #0b1b3f;
   --ink-soft: #16264d;
   --grey: #6b7385;
@@ -360,6 +362,17 @@ h1 {
   bottom: 2rem;
 }
 
+.card .contact-email {
+  display: inline-block;
+  margin: 1.1rem 0 0;
+  padding: 0.7rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--accent-wash);
+  font-size: 1.15rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .section {
   padding: 1.75rem 0 4.5rem;
 }
@@ -465,9 +478,26 @@ h1 {
 
 .site-footer .inner {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.site-footer .tagline,
+.site-footer .copyright {
+  margin: 0;
+}
+
+.site-footer .copyright {
+  font-size: 0.9rem;
 }
 
 .site-footer a {
@@ -514,31 +544,8 @@ h1 {
     bottom: 1rem;
     top: auto;
   }
-}
 
-@media (max-width: 900px) {
-  html {
-    font-size: 112.5%;
-  }
-
-  .site-header .inner,
-  .hero .inner,
-  .section .inner,
-  .site-footer .inner,
-  .doc {
-    width: min(var(--max), calc(100% - 2rem));
-  }
-
-  .hero .inner,
-  .features {
-    grid-template-columns: 1fr;
-  }
-
-  h1 {
-    font-size: 2.4rem;
-  }
-
-  /* Four icon links did not fit beside the wordmark — the last one fell off
+  /* Five labelled links do not fit beside the wordmark — the last fell off
      the right edge — so they collapse behind the Menu button and open as a
      panel, each with its icon and its name. */
   .js .nav-toggle {
@@ -589,6 +596,30 @@ h1 {
   .menu a span.label {
     display: none;
   }
+}
+
+@media (max-width: 900px) {
+  html {
+    font-size: 112.5%;
+  }
+
+  .site-header .inner,
+  .hero .inner,
+  .section .inner,
+  .site-footer .inner,
+  .doc {
+    width: min(var(--max), calc(100% - 2rem));
+  }
+
+  .hero .inner,
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+  }
+
 
   .hero-art {
     min-height: 20rem;
