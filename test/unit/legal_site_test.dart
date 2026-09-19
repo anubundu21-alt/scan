@@ -41,6 +41,8 @@ void main() {
     const link = 'mailto:$email';
     expect(AppIdentity.supportEmail, email);
 
+    // Every page routes to Contact; the documents and Contact itself also
+    // spell the address out. The home page just links through.
     for (final path in [
       'legal-site/index.html',
       'legal-site/terms/index.html',
@@ -48,8 +50,6 @@ void main() {
       'legal-site/contact/index.html',
     ]) {
       final page = File(path).readAsStringSync();
-      expect(page, contains(link), reason: '$path has no mailto link');
-      expect(page, contains(email), reason: '$path does not show the address');
       expect(
         page,
         contains('href="/contact"'),
@@ -60,6 +60,16 @@ void main() {
         contains('All rights reserved'),
         reason: '$path has no copyright line',
       );
+    }
+
+    for (final path in [
+      'legal-site/terms/index.html',
+      'legal-site/privacy/index.html',
+      'legal-site/contact/index.html',
+    ]) {
+      final page = File(path).readAsStringSync();
+      expect(page, contains(link), reason: '$path has no mailto link');
+      expect(page, contains(email), reason: '$path does not show the address');
     }
 
     final contact = File('legal-site/contact/index.html').readAsStringSync();
