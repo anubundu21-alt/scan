@@ -312,21 +312,12 @@ h1 {
   margin-top: 1.5rem;
 }
 
+/* Both files are the badge artwork edge to edge, with no padding baked in,
+   so matching their heights lines them up. */
 .store-badges img {
-  height: auto;
+  height: 3rem;
+  width: auto;
   max-width: 100%;
-}
-
-.badge-apple {
-  width: 9rem;
-}
-
-/* Google's badge ships with its clear space baked into the artwork, so it
-   needs a wider box than Apple's to read as the same height, and a negative
-   margin to keep the gap between the two even. */
-.badge-play {
-  width: 11.6rem;
-  margin: -0.8rem -0.9rem;
 }
 
 .chip {

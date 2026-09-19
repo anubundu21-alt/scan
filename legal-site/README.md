@@ -44,14 +44,15 @@ Use these URLs in the store forms:
 
 ## Store badges
 
-`app-store-badge.svg` is Apple's own artwork. The Google Play badge is not in
-the repo yet: download the English badge from
-<https://play.google.com/intl/en_us/badges> and save it as
-`google-play-badge.png` here. It then appears next to the App Store badge with
-no code change — until it exists, an `onerror` on the `<img>` removes it so the
-page never shows a broken image.
-
+Both files are the stores' own artwork: `app-store-badge.svg` from
+developer.apple.com, `google-play-badge.png` from developer.android.com.
 Neither store allows a redrawn badge, so use their supplied files unmodified.
+
+The Play badge is Google's **legacy** asset — the current one is generated at
+<https://play.google.com/intl/en_us/badges> and is not served as a plain file.
+Swapping it in is a straight file replacement: the row sizes badges by height,
+so a different aspect ratio needs no CSS change. The newer file is also higher
+resolution, which this 172x60 one is not.
 Neither badge is a link yet; wrap each in an `<a>` once the listings are live.
 
 The support address also appears in the footer of every page here, in the

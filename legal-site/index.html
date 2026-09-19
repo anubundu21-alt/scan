@@ -123,10 +123,11 @@
                when there is one. Both are the stores' own artwork: neither
                Apple nor Google allows a redrawn badge.
 
-               google-play-badge.png is not in the repo yet — take the English
-               badge from play.google.com/intl/en_us/badges and drop it in
-               beside this file. Until then onerror removes it, so the row
-               shows the App Store badge alone rather than a broken image. -->
+               The Play badge is Google's legacy asset from
+               developer.android.com, which is the one still served as a file.
+               Replacing it with the current badge from
+               play.google.com/intl/en_us/badges is a straight file swap —
+               the row matches badges on height, so nothing else changes. -->
           <div class="store-badges">
             <img
               class="badge-apple"
@@ -138,10 +139,9 @@
             <img
               class="badge-play"
               src="/google-play-badge.png"
-              width="646"
-              height="250"
+              width="172"
+              height="60"
               alt="Get it on Google Play"
-              onerror="this.remove()"
             />
           </div>
         </div>
