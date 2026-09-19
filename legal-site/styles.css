@@ -366,11 +366,21 @@ h1 {
   display: inline-block;
   margin: 1.1rem 0 0;
   padding: 0.7rem 1rem;
+  border: 1px solid var(--outline);
   border-radius: 0.75rem;
-  background: var(--accent-wash);
-  font-size: 1.15rem;
-  font-weight: 700;
+  background: var(--canvas);
+  font-size: 1.1rem;
+  font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+.card .contact-email a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.card .contact-email a:hover {
+  text-decoration: underline;
 }
 
 .section {
