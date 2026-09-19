@@ -301,6 +301,19 @@ h1 {
   margin-top: 0.4rem;
 }
 
+/* Apple asks for clear space around the badge and a floor on its size, so
+   it sits on its own line under the stage rather than beside anything. */
+.store-badge {
+  margin: 1.5rem 0 0;
+  text-align: center;
+}
+
+.store-badge img {
+  width: 9rem;
+  height: auto;
+  max-width: 100%;
+}
+
 .chip {
   position: absolute;
   display: flex;
