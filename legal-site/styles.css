@@ -129,6 +129,34 @@ a {
   flex: none;
 }
 
+/* Only the phone layout uses this, and only once nav.js has run: without it
+   the row of links stays where it is and a button that opens nothing would
+   be a dead end. */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--outline);
+  background: #fff;
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nav-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+.nav-toggle:hover {
+  color: var(--accent);
+}
+
 .hero {
   padding: 4.5rem 0 2.5rem;
 }
@@ -491,6 +519,54 @@ h1 {
     font-size: 2.4rem;
   }
 
+  /* Four icon links did not fit beside the wordmark — the last one fell off
+     the right edge — so they collapse behind the Menu button and open as a
+     panel, each with its icon and its name. */
+  .js .nav-toggle {
+    display: inline-flex;
+  }
+
+  .js .site-header .inner {
+    position: relative;
+  }
+
+  .js .menu {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    top: calc(100% - 0.35rem);
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    min-width: 13rem;
+    max-width: calc(100vw - 2rem);
+    padding: 0.4rem;
+    background: #fff;
+    border: 1px solid var(--outline);
+    border-radius: 1rem;
+    box-shadow: 0 1rem 2.5rem rgb(11 27 63 / 14%);
+  }
+
+  .js .site-header[data-open='true'] .menu {
+    display: flex;
+  }
+
+  .js .site-header[data-open='true'] .nav-toggle {
+    color: var(--accent);
+    border-color: var(--accent-tint);
+  }
+
+  .js .menu a {
+    justify-content: flex-start;
+    padding: 0.75rem 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .js .menu a span.label {
+    display: inline;
+  }
+
   .menu a span.label {
     display: none;
   }
@@ -518,5 +594,17 @@ h1 {
 
   .device .title {
     font-size: 1.6rem;
+  }
+}
+
+/* A 320px phone cannot take the wordmark and a labelled button side by side,
+   so the button drops to its icon. aria-label still names it. */
+@media (max-width: 400px) {
+  .nav-toggle span {
+    display: none;
+  }
+
+  .nav-toggle {
+    padding: 0.6rem;
   }
 }

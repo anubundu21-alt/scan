@@ -17,6 +17,7 @@
     <link rel="icon" href="/mark.png" type="image/png" />
     <link rel="apple-touch-icon" href="/mark.png" />
     <link rel="stylesheet" href="/styles.css" />
+    <script>document.documentElement.classList.add('js');</script>
   </head>
   <body>
     <header class="site-header">
@@ -25,7 +26,19 @@
           <img class="mark" src="/mark.png" width="44" height="44" alt="" />
           <span class="wordmark">Scan<span class="ella">ella</span></span>
         </a>
-        <nav class="menu" aria-label="Primary">
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-menu"
+          aria-label="Menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          <span>Menu</span>
+        </button>
+        <nav class="menu" id="site-menu" aria-label="Primary">
           <a href="/#about">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="9" />
@@ -137,5 +150,6 @@
         </span>
       </div>
     </footer>
+    <script src="/nav.js" defer></script>
   </body>
 </html>
