@@ -54,59 +54,98 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       data: AppTheme.light,
       child: Scaffold(
         backgroundColor: Brand.canvas,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 4, 20, 0),
-                  child: TextButton(
-                    onPressed: _finish,
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        color: Brand.accent,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
+        body: Stack(
+          children: [
+            // A green wash behind the top of the page, from the design pack.
+            // It sits outside the SafeArea so the colour carries up under the
+            // status bar instead of stopping at a hard line below it.
+            const Positioned.fill(child: _TopWash()),
+            SafeArea(
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 4, 20, 0),
+                      child: TextButton(
+                        onPressed: _finish,
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            color: Brand.accent,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: _pages.length,
-                  onPageChanged: (index) => setState(() => _page = index),
-                  itemBuilder: (context, index) =>
-                      _OnboardingPage(page: _pages[index]),
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 0; i < _pages.length; i++)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: i == _page ? 10 : 9,
-                      height: i == _page ? 10 : 9,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i == _page ? Brand.accent : Brand.outline,
-                      ),
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _controller,
+                      itemCount: _pages.length,
+                      onPageChanged: (index) => setState(() => _page = index),
+                      itemBuilder: (context, index) =>
+                          _OnboardingPage(page: _pages[index]),
                     ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < _pages.length; i++)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: i == _page ? 10 : 9,
+                          height: i == _page ? 10 : 9,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: i == _page ? Brand.accent : Brand.outline,
+                          ),
+                        ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 10),
+                    child: BrandButton(
+                      label: _page == _pages.length - 1
+                          ? 'Get Started'
+                          : 'Next',
+                      onPressed: _next,
+                    ),
+                  ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 10),
-                child: BrandButton(
-                  label: _page == _pages.length - 1 ? 'Get Started' : 'Next',
-                  onPressed: _next,
-                ),
-              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The green fade across the top of the intro pages.
+///
+/// Drawn under the content rather than behind a card, so the badge and the
+/// headline sit in the colour and it is gone by the time the illustration
+/// starts. Ignores pointers so the PageView still takes every swipe.
+class _TopWash extends StatelessWidget {
+  const _TopWash();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Brand.accent.withValues(alpha: 0.34),
+              Brand.accent.withValues(alpha: 0.16),
+              Brand.accent.withValues(alpha: 0),
             ],
+            stops: const [0, 0.14, 0.34],
           ),
         ),
       ),
