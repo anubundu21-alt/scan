@@ -148,6 +148,36 @@ void main() {
     expect(quota.state.canCreate, isFalse);
   });
 
+  test('the countdown names only the units that still matter', () {
+    expect(
+      ScanQuota.formatCountdown(
+        const Duration(days: 14, hours: 3, minutes: 25),
+      ),
+      '14 days · 3 hours · 25 minutes',
+    );
+    expect(ScanQuota.formatCountdown(const Duration(days: 1)), '1 day');
+    expect(
+      ScanQuota.formatCountdown(const Duration(hours: 1, minutes: 1)),
+      '1 hour · 1 minute',
+    );
+    expect(
+      ScanQuota.formatCountdown(const Duration(minutes: 30)),
+      '30 minutes',
+    );
+    expect(ScanQuota.formatCountdown(Duration.zero), 'any moment now');
+    expect(
+      ScanQuota.formatCountdown(const Duration(days: -2)),
+      'any moment now',
+    );
+  });
+
+  test('the reset date reads as a date', () {
+    expect(
+      ScanQuota.formatResetDate(DateTime(2026, 10, 20, 8, 28)),
+      'Oct 20, 2026',
+    );
+  });
+
   test('drawer label counts remaining starter scans', () async {
     final quota = ScanQuotaController(MemoryQuotaStore(used: 3));
     await quota.ensureLoaded();

@@ -892,8 +892,9 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
-    expect(find.text('See Scanella Pro'), findsOneWidget);
+    expect(find.textContaining('You’ve used all'), findsOneWidget);
+    expect(find.text('Unlock Scanella Pro'), findsOneWidget);
+    expect(find.text('Maybe Later'), findsOneWidget);
     expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
   });
 
@@ -1191,8 +1192,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.document_scanner_rounded));
     await tester.pumpAndSettle();
 
-    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
-    expect(find.text('See Scanella Pro'), findsOneWidget);
+    expect(find.textContaining('You’ve used all'), findsOneWidget);
+    expect(find.text('Unlock Scanella Pro'), findsOneWidget);
+    expect(find.text('Maybe Later'), findsOneWidget);
     expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
   });
 
@@ -1234,19 +1236,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('${ScanQuota.weeklyLimit} free scans used'), findsOneWidget);
+    expect(find.textContaining('You’ve used all'), findsOneWidget);
     expect(
-      find.textContaining('Your ${ScanQuota.weeklyLimit} free scans reset'),
+      find.textContaining('free scans every ${ScanQuota.resetDays} days'),
       findsOneWidget,
     );
     expect(find.text('Not now'), findsNothing);
 
-    await tester.tap(find.text('See Scanella Pro'));
-    await tester.pumpAndSettle();
+    // Never subscribed here, so the introductory month is still on offer.
+    expect(find.text('Unlock Scanella Pro'), findsOneWidget);
+    expect(find.text('Get 1 month FREE'), findsOneWidget);
 
-    expect(find.text('Go Pro'), findsOneWidget);
     expect(find.byTooltip('Close'), findsOneWidget);
-
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
   });

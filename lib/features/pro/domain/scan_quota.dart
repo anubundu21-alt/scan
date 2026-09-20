@@ -64,6 +64,27 @@ class ScanQuota {
     return DateFormat('d MMM y · h:mm a').format(at.toLocal());
   }
 
+  /// Just the day the allowance comes back: `Oct 20, 2026`.
+  static String formatResetDate(DateTime at) {
+    return DateFormat('MMM d, y').format(at.toLocal());
+  }
+
+  /// How long that is from now, in the units that still matter. Under a
+  /// minute reads as "any moment now" rather than a row of zeroes, and a
+  /// period that has already elapsed reads the same way.
+  static String formatCountdown(Duration left) {
+    if (left.inMinutes <= 0) return 'any moment now';
+    final days = left.inDays;
+    final hours = left.inHours % 24;
+    final minutes = left.inMinutes % 60;
+    final parts = <String>[
+      if (days > 0) '$days ${days == 1 ? 'day' : 'days'}',
+      if (hours > 0) '$hours ${hours == 1 ? 'hour' : 'hours'}',
+      if (minutes > 0) '$minutes ${minutes == 1 ? 'minute' : 'minutes'}',
+    ];
+    return parts.join(' · ');
+  }
+
   /// Dialog title when the current free allowance is gone.
   String get usedUpTitle {
     if (!starterDone || used >= starterLimit) {

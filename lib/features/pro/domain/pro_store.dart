@@ -18,6 +18,7 @@ class ProState {
     this.busy = false,
     this.error,
     this.storeProductsReady = false,
+    this.trialUsed = false,
   });
 
   final bool isPro;
@@ -26,6 +27,15 @@ class ProState {
   final String? error;
   final bool storeProductsReady;
 
+  /// Whether this device has already taken the introductory month.
+  ///
+  /// Apple decides eligibility, and StoreKit does not hand that back through
+  /// in_app_purchase, so this is our own record: it turns true the first time
+  /// a subscription goes through here, or whenever an entitlement is found.
+  /// It errs towards hiding the offer rather than promising a free month
+  /// Apple will not give.
+  final bool trialUsed;
+
   ProState copyWith({
     bool? isPro,
     LocalizedOffer? offer,
@@ -33,6 +43,7 @@ class ProState {
     String? error,
     bool clearError = false,
     bool? storeProductsReady,
+    bool? trialUsed,
   }) {
     return ProState(
       isPro: isPro ?? this.isPro,
@@ -40,6 +51,7 @@ class ProState {
       busy: busy ?? this.busy,
       error: clearError ? null : (error ?? this.error),
       storeProductsReady: storeProductsReady ?? this.storeProductsReady,
+      trialUsed: trialUsed ?? this.trialUsed,
     );
   }
 }
@@ -58,6 +70,7 @@ class ProController extends StateNotifier<ProState> {
   }
 
   static const _entitlementKey = 'scanella.pro.entitled';
+  static const _trialUsedKey = 'scanella.pro.trial_used';
 
   final ProPurchase _purchase;
   final LocalizedPricing _pricing;
@@ -68,6 +81,7 @@ class ProController extends StateNotifier<ProState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
+      var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
       try {
         if (await _purchase.hasActiveEntitlement()) {
           entitled = true;
@@ -93,12 +107,18 @@ class ProController extends StateNotifier<ProState> {
         store: store,
       );
 
+      if (entitled && !trialUsed) {
+        trialUsed = true;
+        await prefs.setBool(_trialUsedKey, true);
+      }
+
       state = state.copyWith(
         isPro: entitled,
         offer: offer,
         busy: false,
         storeProductsReady: storeReady,
         error: storeError,
+        trialUsed: trialUsed,
       );
     } catch (e) {
       state = state.copyWith(
@@ -115,7 +135,8 @@ class ProController extends StateNotifier<ProState> {
       if (ok) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
-        state = state.copyWith(isPro: true, busy: false);
+        await prefs.setBool(_trialUsedKey, true);
+        state = state.copyWith(isPro: true, busy: false, trialUsed: true);
         return true;
       }
       state = state.copyWith(
@@ -138,7 +159,8 @@ class ProController extends StateNotifier<ProState> {
       if (ok) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
-        state = state.copyWith(isPro: true, busy: false);
+        await prefs.setBool(_trialUsedKey, true);
+        state = state.copyWith(isPro: true, busy: false, trialUsed: true);
         return true;
       }
       state = state.copyWith(

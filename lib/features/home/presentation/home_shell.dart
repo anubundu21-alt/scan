@@ -10,6 +10,7 @@ import 'package:scan2/features/library/domain/smart_folder.dart';
 import 'package:scan2/features/library/presentation/documents_view.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/pro/domain/scan_quota.dart';
+import 'package:scan2/features/pro/presentation/free_scans_used_screen.dart';
 import 'package:scan2/features/pro/presentation/pro_gate.dart';
 import 'package:scan2/features/pro/presentation/pro_paywall.dart';
 import 'package:scan2/features/settings/presentation/app_lock.dart';
@@ -73,12 +74,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         await ref.read(scanQuotaProvider.notifier).ensureLoaded();
         if (!mounted) return;
         if (!ref.read(scanQuotaProvider).canCreate) {
-          final goPro = await showFreeScansUsedDialog(
-            context,
-            ref.read(scanQuotaProvider),
-          );
-          if (!goPro || !mounted) return;
-          await showProPaywall(context, requireChoice: true);
+          // Out of scans already: the used-up screen carries the offer, so
+          // showing the paywall on top of it would be the same ask twice.
+          await showFreeScansUsed(context, ref);
           return;
         }
       }
