@@ -31,6 +31,30 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// One notice at a time. The quota can change while one is open, and two
+  /// full-screen messages stacked on each other is how an app feels broken.
+  bool _noticeOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkQuotaNotices();
+  }
+
+  /// Home is where the user lands after every scan, so it is where the app
+  /// gets to say the allowance refilled or is running low.
+  void _checkQuotaNotices() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _noticeOpen) return;
+      _noticeOpen = true;
+      try {
+        await showQuotaNotices(context, ref);
+      } finally {
+        _noticeOpen = false;
+      }
+    });
+  }
+
   void _openMenu() => _scaffoldKey.currentState?.openDrawer();
 
   void _closeDrawer() => _scaffoldKey.currentState?.closeDrawer();
@@ -127,6 +151,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final scheme = theme.colorScheme;
     final isPro = ref.watch(proProvider).isPro;
     final quota = ref.watch(scanQuotaProvider);
+
+    ref.listen<ScanQuota>(scanQuotaProvider, (before, after) {
+      if (before?.used == after.used &&
+          before?.refreshedAt == after.refreshedAt) {
+        return;
+      }
+      _checkQuotaNotices();
+    });
 
     return Scaffold(
       key: _scaffoldKey,

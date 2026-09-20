@@ -22,6 +22,7 @@ class ScanQuota {
     this.ready = false,
     this.periodStartedAt,
     this.starterDone = false,
+    this.refreshedAt,
   });
 
   /// One-time scans for a new install.
@@ -37,6 +38,9 @@ class ScanQuota {
   /// Days in a free period, shown to the customer as "every 30 days".
   static const resetDays = 30;
 
+  /// How few scans may be left before the app says something about it.
+  static const lowWarningAt = 2;
+
   /// Scanning stops at the free-plan cap. Pro is unlimited.
   static const testingUnlockScans = false;
 
@@ -47,6 +51,9 @@ class ScanQuota {
   final DateTime? periodStartedAt;
   final bool starterDone;
 
+  /// When the allowance last went back to full, so the app can say so once.
+  final DateTime? refreshedAt;
+
   int get limit => starterDone ? monthlyLimit : starterLimit;
 
   bool get canCreate => used < limit;
@@ -55,6 +62,19 @@ class ScanQuota {
 
   DateTime? get resetsAt =>
       periodStartedAt == null ? null : periodStartedAt!.add(resetAfter);
+
+  /// Running low, but not out yet.
+  bool get nearlyOut => remaining > 0 && remaining <= lowWarningAt;
+
+  /// Names the batch of scans currently being used up.
+  ///
+  /// It changes when the allowance refills, which is how a message that
+  /// should appear once per batch knows it is looking at a new one.
+  String get allowanceKey {
+    if (!starterDone) return 'starter';
+    return 'period:${refreshedAt?.millisecondsSinceEpoch ?? 0}';
+  }
+
 
   static String formatResetAt(DateTime at) {
     return DateFormat("EEEE, d MMMM y 'at' h:mm a").format(at.toLocal());
@@ -137,6 +157,8 @@ abstract class QuotaStore {
   Future<void> writePeriodStartMs(int ms);
   Future<bool> readStarterDone();
   Future<void> writeStarterDone(bool done);
+  Future<int> readRefreshedAtMs();
+  Future<void> writeRefreshedAtMs(int ms);
 }
 
 /// In-memory store for tests.
@@ -145,13 +167,16 @@ class MemoryQuotaStore implements QuotaStore {
     int used = 0,
     int periodStartMs = 0,
     bool starterDone = false,
+    int refreshedAtMs = 0,
   }) : _used = used,
        _periodStartMs = periodStartMs,
-       _starterDone = starterDone;
+       _starterDone = starterDone,
+       _refreshedAtMs = refreshedAtMs;
 
   int _used;
   int _periodStartMs;
   bool _starterDone;
+  int _refreshedAtMs;
 
   @override
   Future<int> readUsed() async => _used;
@@ -170,6 +195,12 @@ class MemoryQuotaStore implements QuotaStore {
 
   @override
   Future<void> writeStarterDone(bool done) async => _starterDone = done;
+
+  @override
+  Future<int> readRefreshedAtMs() async => _refreshedAtMs;
+
+  @override
+  Future<void> writeRefreshedAtMs(int ms) async => _refreshedAtMs = ms;
 }
 
 /// SharedPreferences plus the native Keychain / Android marker for the
@@ -181,6 +212,7 @@ class DeviceQuotaStore implements QuotaStore {
   static const prefsKey = 'scanella.quota.used';
   static const periodKey = 'scanella.quota.period_start_ms';
   static const starterDoneKey = 'scanella.quota.starter_done';
+  static const refreshedAtKey = 'scanella.quota.refreshed_at_ms';
 
   final MethodChannel _channel;
 
@@ -246,6 +278,18 @@ class DeviceQuotaStore implements QuotaStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(starterDoneKey, done);
   }
+
+  @override
+  Future<int> readRefreshedAtMs() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(refreshedAtKey) ?? 0;
+  }
+
+  @override
+  Future<void> writeRefreshedAtMs(int ms) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(refreshedAtKey, ms);
+  }
 }
 
 class ScanQuotaController extends StateNotifier<ScanQuota> {
@@ -287,11 +331,15 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
       final started = startMs > 0
           ? DateTime.fromMillisecondsSinceEpoch(startMs)
           : null;
+      final refreshedMs = await _store.readRefreshedAtMs();
       state = ScanQuota(
         used: used,
         ready: true,
         periodStartedAt: started,
         starterDone: starterDone,
+        refreshedAt: refreshedMs > 0
+            ? DateTime.fromMillisecondsSinceEpoch(refreshedMs)
+            : null,
       );
       await _applyWindow();
     } catch (_) {
@@ -304,14 +352,19 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
     var used = state.used;
     var started = state.periodStartedAt;
     var starterDone = state.starterDone;
+    var refreshedAt = state.refreshedAt;
 
     if (starterDone &&
         started != null &&
         !now.isBefore(started.add(ScanQuota.resetAfter))) {
       used = 0;
       started = null;
+      // Stamped so the app can tell the customer their scans are back,
+      // once, rather than every time this runs.
+      refreshedAt = now;
       await _store.writeUsed(0);
       await _store.writePeriodStartMs(0);
+      await _store.writeRefreshedAtMs(now.millisecondsSinceEpoch);
     }
 
     if (starterDone && used >= ScanQuota.weeklyLimit && started == null) {
@@ -331,6 +384,7 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
       ready: true,
       periodStartedAt: started,
       starterDone: starterDone,
+      refreshedAt: refreshedAt,
     );
   }
 
@@ -353,6 +407,7 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
       ready: true,
       periodStartedAt: started,
       starterDone: starterDone,
+      refreshedAt: state.refreshedAt,
     );
     await _store.writeUsed(next);
     if (started != null) {

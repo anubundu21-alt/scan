@@ -19,7 +19,7 @@ void main() {
     await quota.ensureLoaded();
 
     expect(quota.state.limit, ScanQuota.starterLimit);
-    expect(quota.state.remaining, 50);
+    expect(quota.state.remaining, ScanQuota.starterLimit);
     expect(
       quota.state.freePlanLabel,
       '${ScanQuota.starterLimit} of ${ScanQuota.starterLimit} free scans left',
@@ -103,6 +103,53 @@ void main() {
     expect(quota.state.used, 0);
     expect(quota.state.canCreate, isTrue);
     expect(quota.state.limit, ScanQuota.monthlyLimit);
+  });
+
+  test('the refill is stamped so the app can announce it once', () async {
+    var now = DateTime(2026, 8, 30, 10, 15);
+    final quota = ScanQuotaController(MemoryQuotaStore(), clock: () => now);
+    await quota.ensureLoaded();
+
+    // Nothing has refilled yet, so there is nothing to announce.
+    expect(quota.state.refreshedAt, isNull);
+    expect(quota.state.allowanceKey, 'starter');
+
+    for (var i = 0; i < ScanQuota.starterLimit; i++) {
+      await quota.recordCreated();
+    }
+    final firstReset = quota.state.resetsAt!;
+    final starterBatch = quota.state.allowanceKey;
+
+    now = firstReset;
+    await quota.ensureLoaded();
+
+    expect(quota.state.used, 0);
+    expect(quota.state.refreshedAt, firstReset);
+    // A different batch of scans, so a message shown for the last one does
+    // not count as shown for this one.
+    expect(quota.state.allowanceKey, isNot(starterBatch));
+  });
+
+  test('running low is flagged before the allowance is gone', () async {
+    var now = DateTime(2026, 8, 30, 10, 15);
+    final quota = ScanQuotaController(MemoryQuotaStore(), clock: () => now);
+    await quota.ensureLoaded();
+
+    final upToWarning = ScanQuota.starterLimit - ScanQuota.lowWarningAt;
+    for (var i = 0; i < upToWarning; i++) {
+      expect(quota.state.nearlyOut, isFalse, reason: 'scan ${i + 1}');
+      await quota.recordCreated();
+    }
+
+    expect(quota.state.remaining, ScanQuota.lowWarningAt);
+    expect(quota.state.nearlyOut, isTrue);
+
+    // Out is not the same as nearly out: that screen is the used-up one.
+    for (var i = 0; i < ScanQuota.lowWarningAt; i++) {
+      await quota.recordCreated();
+    }
+    expect(quota.state.remaining, 0);
+    expect(quota.state.nearlyOut, isFalse);
   });
 
   test('a used-up count with no period start begins the period now', () async {
