@@ -67,27 +67,41 @@ void main() {
     expect(offer.yearly, 834.99);
   });
 
-  test('USD store prices yield to a non-US location', () {
+  test('the App Store price wins, whatever currency it reports', () {
     final store = LocalizedPricing.formatOffer(
-      currencyCode: 'USD',
-      countryCode: 'US',
-      countryName: 'United States',
+      currencyCode: 'PLN',
+      countryCode: 'PL',
+      countryName: 'Poland',
       usdToLocal: 1,
       source: 'store',
+      monthly: 14.99,
+      yearly: 39.99,
     );
     final located = LocalizedPricing.formatOffer(
-      currencyCode: 'INR',
-      countryCode: 'IN',
-      countryName: 'India',
-      usdToLocal: 83.5,
+      currencyCode: 'PLN',
+      countryCode: 'PL',
+      countryName: 'Poland',
+      usdToLocal: 3.85,
       source: 'internet',
     );
 
     final shown = LocalizedPricing.forDisplay(located: located, store: store);
-    expect(shown.currencyCode, 'INR');
+    expect(shown.source, 'store');
+    expect(shown.yearly, 39.99);
+  });
+
+  test('the estimate is used only until the store answers', () {
+    final located = LocalizedPricing.formatOffer(
+      currencyCode: 'PLN',
+      countryCode: 'PL',
+      countryName: 'Poland',
+      usdToLocal: 3.85,
+      source: 'internet',
+    );
+
+    final shown = LocalizedPricing.forDisplay(located: located, store: null);
     expect(shown.source, 'internet');
-    expect(shown.monthlyLabel, isNot(contains(r'$4.99')));
-    expect(shown.monthlyLabel, isNot(contains(r'$2.99')));
+    expect(identical(shown, located), isTrue);
   });
 
   test('store prices are kept when they already match the location', () {

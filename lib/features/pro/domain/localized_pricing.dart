@@ -106,19 +106,18 @@ class LocalizedPricing {
 
   /// Prices for Settings and the paywall.
   ///
-  /// StoreKit often reports the USD catalogue price while the purchase
-  /// sheet is already in the customer's currency. When that happens, show
-  /// the location price so Settings matches checkout.
+  /// Whatever the App Store reports is what the customer is actually
+  /// charged, in whatever currency their storefront uses, so it wins
+  /// wherever we have it. Apple sets each country's price from the tier the
+  /// product is on, and the app has no business second-guessing that.
+  ///
+  /// The converted estimate below is only a stand-in for the moment before
+  /// the product list arrives, or for when it never does.
   static LocalizedOffer forDisplay({
     required LocalizedOffer located,
     LocalizedOffer? store,
   }) {
-    if (store == null) return located;
-    final storeCode = store.currencyCode.toUpperCase();
-    final localCode = located.currencyCode.toUpperCase();
-    if (storeCode == localCode) return store;
-    if (storeCode == 'USD' && localCode != 'USD') return located;
-    return store;
+    return store ?? located;
   }
 
   static LocalizedOffer formatOffer({
