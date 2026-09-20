@@ -7,9 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Free-plan allowance on this device.
 ///
 /// A new install gets [starterLimit] scans. After those are used, the
-/// plan is [weeklyLimit] scans per week. The week starts when the last
-/// free slot is used. After [resetAfter], the weekly count returns to
-/// zero.
+/// plan is [monthlyLimit] scans per period. The period starts when the last
+/// free slot is used. After [resetAfter], the count returns to zero.
+/// Unused scans do not carry over.
 ///
 /// The count is the number of documents the user created (camera, photos,
 /// PDF upload, ID card, Sign PDF upload). Merge, split, add-page, and
@@ -25,25 +25,29 @@ class ScanQuota {
   });
 
   /// One-time scans for a new install.
-  static const starterLimit = 50;
+  static const starterLimit = 10;
 
-  /// Free scans each week after the starter pack is used.
-  static const weeklyLimit = 10;
+  /// Free scans each period after the starter pack is used.
+  static const monthlyLimit = 5;
 
-  /// Weekly cap; kept so older call sites still compile.
-  static const freeLimit = weeklyLimit;
+  /// Older names for the same cap, kept so existing call sites compile.
+  static const weeklyLimit = monthlyLimit;
+  static const freeLimit = monthlyLimit;
+
+  /// Days in a free period, shown to the customer as "every 30 days".
+  static const resetDays = 30;
 
   /// Scanning stops at the free-plan cap. Pro is unlimited.
   static const testingUnlockScans = false;
 
-  static const resetAfter = Duration(days: 7);
+  static const resetAfter = Duration(days: resetDays);
 
   final int used;
   final bool ready;
   final DateTime? periodStartedAt;
   final bool starterDone;
 
-  int get limit => starterDone ? weeklyLimit : starterLimit;
+  int get limit => starterDone ? monthlyLimit : starterLimit;
 
   bool get canCreate => used < limit;
 
@@ -65,24 +69,24 @@ class ScanQuota {
     if (!starterDone || used >= starterLimit) {
       return '$starterLimit free scans used';
     }
-    return '$weeklyLimit free scans used';
+    return '$monthlyLimit free scans used';
   }
 
   String get usedUpMessage {
     final when = resetsAt;
     if (!starterDone || used >= starterLimit) {
       if (when == null) {
-        return 'You get $weeklyLimit free scans each week after these '
-            '$starterLimit. Scanella Pro lets you keep scanning now.';
+        return 'You get $monthlyLimit free scans every $resetDays days after '
+            'these $starterLimit. Scanella Pro lets you keep scanning now.';
       }
-      return 'You get $weeklyLimit free scans on ${formatResetAt(when)}. '
+      return 'You get $monthlyLimit free scans on ${formatResetAt(when)}. '
           'Scanella Pro lets you keep scanning now.';
     }
     if (when == null) {
-      return 'Your $weeklyLimit free scans reset next week. '
+      return 'Your $monthlyLimit free scans reset in $resetDays days. '
           'Scanella Pro lets you keep scanning now.';
     }
-    return 'Your $weeklyLimit free scans reset on ${formatResetAt(when)}. '
+    return 'Your $monthlyLimit free scans reset on ${formatResetAt(when)}. '
         'Scanella Pro lets you keep scanning now.';
   }
 

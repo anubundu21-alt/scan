@@ -52,11 +52,11 @@ void main() {
     expect(find.text('Pro plan'), findsOneWidget);
     expect(find.text('Get started for free'), findsOneWidget);
     expect(find.text('Unlock the full power'), findsOneWidget);
-    expect(find.text('50 free scans for new users'), findsOneWidget);
-    expect(find.text('Then 10 free scans every week'), findsOneWidget);
+    expect(find.text('10 free scans for new users'), findsOneWidget);
+    expect(find.text('Then 5 free scans every 30 days'), findsOneWidget);
     expect(find.text('Free limitations'), findsOneWidget);
-    expect(find.text('Limited to 50 scans at start'), findsOneWidget);
-    expect(find.text('After that, 10 scans weekly'), findsOneWidget);
+    expect(find.text('Limited to 10 scans at start'), findsOneWidget);
+    expect(find.text('After that, 5 scans every 30 days'), findsOneWidget);
     expect(find.text('All PDF tools'), findsNWidgets(2));
     expect(find.text('Unlimited scans'), findsOneWidget);
     expect(find.text('Advanced OCR'), findsOneWidget);

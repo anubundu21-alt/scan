@@ -26,8 +26,17 @@ import 'package:scan2/features/onboarding/presentation/welcome_screen.dart';
 import 'package:scan2/features/pro/presentation/coming_soon_tool_screen.dart';
 import 'package:scan2/features/pro/presentation/complete_features_screen.dart';
 import 'package:scan2/features/settings/presentation/settings_screen.dart';
+import 'package:scan2/features/onboarding/presentation/free_access_screen.dart';
+import 'package:scan2/features/onboarding/presentation/pro_intro_screen.dart';
+import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/shared/providers/onboarding_provider.dart';
 import 'package:scan2/features/signatures/presentation/place_signature_screen.dart';
+
+/// Close the first run and drop the customer into the library.
+void _leaveIntro(BuildContext context, Ref ref) {
+  ref.read(onboardingCompletedProvider.notifier).complete();
+  context.go('/library');
+}
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -38,7 +47,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final seenIntro = ref.read(onboardingCompletedProvider);
       final location = state.matchedLocation;
 
-      const intro = {'/welcome', '/onboarding'};
+      const intro = {
+        '/welcome',
+        '/onboarding',
+        '/free-access',
+        '/pro-intro',
+      };
       const legal = {'/legal/terms', '/legal/privacy'};
 
       // First run: welcome, then the intro pages. Terms and Privacy are
@@ -59,6 +73,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/free-access',
+        builder: (context, state) => FreeAccessScreen(
+          // Someone who already has Pro has no free allowance to explain and
+          // no offer to see, so both screens are skipped for them.
+          onContinue: () => ref.read(proProvider).isPro
+              ? _leaveIntro(context, ref)
+              : context.go('/pro-intro'),
+        ),
+      ),
+      GoRoute(
+        path: '/pro-intro',
+        builder: (context, state) =>
+            ProIntroScreen(onDone: () => _leaveIntro(context, ref)),
       ),
       GoRoute(
         path: '/legal/terms',

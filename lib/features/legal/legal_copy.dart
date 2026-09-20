@@ -54,9 +54,9 @@ class LegalCopy {
     LegalSection(
       heading: 'Free scans',
       body:
-          'The first time you install Scanella, the free plan includes 50 '
-          'scans on this device. After those are used, you get 10 free scans '
-          'each week. The weekly allowance resets every week. A scan is a new '
+          'The first time you install Scanella, the free plan includes 10 '
+          'scans on this device. After those are used, you get 5 free scans '
+          'every 30 days, and unused scans do not carry over. A scan is a new '
           'document you capture or import. Merging, splitting, or editing an '
           'existing document does not use another free scan. The count stays '
           'with the device: deleting the app and installing it again does not '
@@ -118,8 +118,8 @@ class LegalCopy {
           'on App lock, and preferences such as theme and default filter '
           'are stored in app storage on this device. A password for a PDF '
           'you export is written into that PDF on the device; it is not '
-          'sent to us. A weekly free-scan count is stored on this device '
-          'so the allowance can reset after seven days. That value is a '
+          'sent to us. A free-scan count is stored on this device '
+          'so the allowance can reset after thirty days. That value is a '
           'number, not your pages.',
     ),
     LegalSection(

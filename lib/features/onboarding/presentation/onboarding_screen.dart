@@ -5,6 +5,7 @@ import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/core/widgets/illustrations.dart';
 import 'package:scan2/features/home/presentation/tool_art.dart';
+import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/shared/providers/onboarding_provider.dart';
 
 /// Screens 2–3 — the three-page introduction.
@@ -26,11 +27,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _finish() {
-    ref.read(onboardingCompletedProvider.notifier).complete();
-    // Straight into the library. An account buys nothing here — there is no
-    // server behind it — and a wall in front of an offline scanner is the
-    // most expensive screen the app could show.
-    context.go('/library');
+    // On to the free-plan explainer, then the Pro offer. Someone who already
+    // has Pro has neither a free allowance to explain nor an offer to see,
+    // so they go straight in. There is still no account and no login: the
+    // only wall in front of this scanner is one you can close.
+    if (ref.read(proProvider).isPro) {
+      ref.read(onboardingCompletedProvider.notifier).complete();
+      context.go('/library');
+      return;
+    }
+    context.go('/free-access');
   }
 
   void _next() {

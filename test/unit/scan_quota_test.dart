@@ -13,14 +13,17 @@ void main() {
         .setMockMethodCallHandler(const MethodChannel('scanella/quota'), null);
   });
 
-  test('a new install gets 50 starter scans before the weekly 10', () async {
+  test('a new install gets the starter pack before the period cap', () async {
     var now = DateTime(2026, 8, 30, 10, 15);
     final quota = ScanQuotaController(MemoryQuotaStore(), clock: () => now);
     await quota.ensureLoaded();
 
     expect(quota.state.limit, ScanQuota.starterLimit);
     expect(quota.state.remaining, 50);
-    expect(quota.state.freePlanLabel, '50 of 50 free scans left');
+    expect(
+      quota.state.freePlanLabel,
+      '${ScanQuota.starterLimit} of ${ScanQuota.starterLimit} free scans left',
+    );
 
     for (var i = 0; i < ScanQuota.starterLimit; i++) {
       expect(quota.state.canCreate, isTrue, reason: 'starter ${i + 1}');
@@ -31,23 +34,27 @@ void main() {
     expect(quota.state.starterDone, isTrue);
     expect(quota.state.canCreate, isFalse);
     expect(quota.state.remaining, 0);
-    expect(quota.state.resetsAt, DateTime(2026, 9, 6, 10, 15));
-    expect(quota.state.usedUpTitle, '50 free scans used');
+    final reset = DateTime(2026, 8, 30, 10, 15).add(ScanQuota.resetAfter);
+    expect(quota.state.resetsAt, reset);
+    expect(
+      quota.state.usedUpTitle,
+      '${ScanQuota.starterLimit} free scans used',
+    );
     expect(
       quota.state.usedUpMessage,
-      contains('You get ${ScanQuota.weeklyLimit} free scans on'),
+      contains('You get ${ScanQuota.monthlyLimit} free scans on'),
     );
     expect(quota.state.usedUpMessage, isNot(contains('reinstall')));
     expect(
       quota.state.freePlanLabel,
-      'Resets ${ScanQuota.formatResetShort(DateTime(2026, 9, 6, 10, 15))}',
+      'Resets ${ScanQuota.formatResetShort(reset)}',
     );
 
     await quota.recordCreated();
     expect(quota.state.used, ScanQuota.starterLimit);
   });
 
-  test('after the starter pack, 10 free scans reset each week', () async {
+  test('after the starter pack, the period cap resets each period', () async {
     var now = DateTime(2026, 8, 30, 10, 15);
     final store = MemoryQuotaStore();
     final quota = ScanQuotaController(store, clock: () => now);
@@ -57,40 +64,48 @@ void main() {
     }
     expect(quota.state.canCreate, isFalse);
 
-    now = DateTime(2026, 9, 6, 10, 14);
+    final firstReset = DateTime(2026, 8, 30, 10, 15).add(ScanQuota.resetAfter);
+    now = firstReset.subtract(const Duration(minutes: 1));
     await quota.ensureLoaded();
     expect(quota.state.canCreate, isFalse);
     expect(quota.state.used, ScanQuota.starterLimit);
 
-    now = DateTime(2026, 9, 6, 10, 15);
+    now = firstReset;
     await quota.ensureLoaded();
     expect(quota.state.used, 0);
     expect(quota.state.starterDone, isTrue);
-    expect(quota.state.limit, ScanQuota.weeklyLimit);
+    expect(quota.state.limit, ScanQuota.monthlyLimit);
     expect(quota.state.canCreate, isTrue);
     expect(quota.state.periodStartedAt, isNull);
-    expect(quota.state.freePlanLabel, '10 of 10 free scans left');
+    expect(
+      quota.state.freePlanLabel,
+      '${ScanQuota.monthlyLimit} of ${ScanQuota.monthlyLimit} free scans left',
+    );
 
-    for (var i = 0; i < ScanQuota.weeklyLimit; i++) {
-      expect(quota.state.canCreate, isTrue, reason: 'weekly ${i + 1}');
+    for (var i = 0; i < ScanQuota.monthlyLimit; i++) {
+      expect(quota.state.canCreate, isTrue, reason: 'period ${i + 1}');
       await quota.recordCreated();
     }
     expect(quota.state.canCreate, isFalse);
-    expect(quota.state.usedUpTitle, '10 free scans used');
+    expect(
+      quota.state.usedUpTitle,
+      '${ScanQuota.monthlyLimit} free scans used',
+    );
     expect(
       quota.state.usedUpMessage,
-      contains('Your ${ScanQuota.weeklyLimit} free scans reset on'),
+      contains('Your ${ScanQuota.monthlyLimit} free scans reset on'),
     );
-    expect(quota.state.resetsAt, DateTime(2026, 9, 13, 10, 15));
+    final secondReset = firstReset.add(ScanQuota.resetAfter);
+    expect(quota.state.resetsAt, secondReset);
 
-    now = DateTime(2026, 9, 13, 10, 15);
+    now = secondReset;
     await quota.ensureLoaded();
     expect(quota.state.used, 0);
     expect(quota.state.canCreate, isTrue);
-    expect(quota.state.limit, ScanQuota.weeklyLimit);
+    expect(quota.state.limit, ScanQuota.monthlyLimit);
   });
 
-  test('a used-up weekly count without a week start begins the week now', () async {
+  test('a used-up count with no period start begins the period now', () async {
     var now = DateTime(2026, 8, 30, 18, 40);
     final quota = ScanQuotaController(
       MemoryQuotaStore(used: ScanQuota.weeklyLimit, starterDone: true),
@@ -99,14 +114,21 @@ void main() {
     await quota.ensureLoaded();
     expect(quota.state.canCreate, isFalse);
     expect(quota.state.periodStartedAt, now);
-    expect(quota.state.usedUpTitle, '10 free scans used');
+    expect(
+      quota.state.usedUpTitle,
+      '${ScanQuota.monthlyLimit} free scans used',
+    );
     expect(
       quota.state.usedUpMessage,
-      contains(ScanQuota.formatResetAt(DateTime(2026, 9, 6, 18, 40))),
+      contains(
+        ScanQuota.formatResetAt(
+          DateTime(2026, 8, 30, 18, 40).add(ScanQuota.resetAfter),
+        ),
+      ),
     );
   });
 
-  test('native marker above the starter pack is treated as weekly used-up', () async {
+  test('native marker above the starter pack is treated as used-up', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(const MethodChannel('scanella/quota'), (
           call,
@@ -129,12 +151,16 @@ void main() {
   test('drawer label counts remaining starter scans', () async {
     final quota = ScanQuotaController(MemoryQuotaStore(used: 3));
     await quota.ensureLoaded();
-    expect(quota.state.remaining, 47);
+    expect(quota.state.remaining, ScanQuota.starterLimit - 3);
     expect(quota.state.limit, ScanQuota.starterLimit);
-    expect(quota.state.freePlanLabel, '47 of 50 free scans left');
+    expect(
+      quota.state.freePlanLabel,
+      '${ScanQuota.starterLimit - 3} of ${ScanQuota.starterLimit} '
+      'free scans left',
+    );
   });
 
-  test('existing installs skip the 50-scan starter pack', () async {
+  test('existing installs skip the starter pack', () async {
     SharedPreferences.setMockInitialValues({
       DeviceQuotaStore.prefsKey: 2,
     });
@@ -144,8 +170,12 @@ void main() {
     final quota = ScanQuotaController(store);
     await quota.ensureLoaded();
     expect(quota.state.starterDone, isTrue);
-    expect(quota.state.limit, ScanQuota.weeklyLimit);
-    expect(quota.state.remaining, 8);
-    expect(quota.state.freePlanLabel, '8 of 10 free scans left');
+    expect(quota.state.limit, ScanQuota.monthlyLimit);
+    expect(quota.state.remaining, ScanQuota.monthlyLimit - 2);
+    expect(
+      quota.state.freePlanLabel,
+      '${ScanQuota.monthlyLimit - 2} of ${ScanQuota.monthlyLimit} '
+      'free scans left',
+    );
   });
 }

@@ -27,10 +27,10 @@ class PlanPerk {
 
 const freeFeatureLines = [
   ProFeatureLine(
-    '50 free scans for new users, then 10 every week',
-    'The first time you install Scanella, you get 50 scans. After those are '
-        'used, you get 10 free scans each week. The weekly allowance resets '
-        'the following week.',
+    '10 free scans for new users, then 5 every 30 days',
+    'The first time you install Scanella, you get 10 scans. After those are '
+        'used, you get 5 free scans every 30 days. Unused scans do not carry '
+        'over.',
   ),
   ProFeatureLine(
     'All PDF tools',
@@ -58,8 +58,8 @@ const freePlanPerks = [
     icon: Icons.crop_free_rounded,
     color: Color(0xFF1F9A6B),
     wash: Color(0xFFE4F3ED),
-    title: '50 free scans for new users',
-    detail: 'Then 10 free scans every week',
+    title: '10 free scans for new users',
+    detail: 'Then 5 free scans every 30 days',
   ),
   PlanPerk(
     icon: Icons.picture_as_pdf_outlined,
@@ -92,8 +92,8 @@ const freePlanPerks = [
 ];
 
 const freePlanLimits = [
-  'Limited to 50 scans at start',
-  'After that, 10 scans weekly',
+  'Limited to 10 scans at start',
+  'After that, 5 scans every 30 days',
 ];
 
 const proPlanPerks = [
