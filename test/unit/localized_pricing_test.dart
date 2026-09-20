@@ -19,6 +19,22 @@ void main() {
     expect(offer.yearlySavingsPercent, greaterThan(40));
   });
 
+  test('big converted prices land on x9.99, small ones are left alone', () {
+    // Poland: the yearly converts to about 38.5 zloty, which used to show
+    // as 38.99. A shop would price that 39.99.
+    expect(LocalizedPricing.charmPrice(38.46, 'PLN'), 39.99);
+    expect(LocalizedPricing.charmPrice(39.10, 'PLN'), 39.99);
+
+    // Only when the next one is close, so a real 24.99 is not pushed up.
+    expect(LocalizedPricing.charmPrice(24.00, 'PLN'), 24.99);
+    expect(LocalizedPricing.charmPrice(45.50, 'PLN'), 45.99);
+
+    // Small prices keep their own ending.
+    expect(LocalizedPricing.charmPrice(9.99, 'USD'), 9.99);
+    expect(LocalizedPricing.charmPrice(7.39, 'GBP'), 7.99);
+    expect(LocalizedPricing.charmPrice(2.50, 'USD'), 2.99);
+  });
+
   test('UK converts to pounds from the connection', () async {
     final offer = await LocalizedPricing(
       locate: () async => const GeoCurrency(

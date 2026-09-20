@@ -271,6 +271,13 @@ class LocalizedPricing {
     final whole = value.floor();
     var charm = whole + 0.99;
     if (value > charm + 1e-9) charm = whole + 1.99;
+    // Past a couple of tens, shops step in x9.99: 39.99 reads like a price,
+    // 38.99 reads like a conversion. Only snap when the next one is close,
+    // so a genuine 24.99 is not pushed to 29.99.
+    if (charm >= 20) {
+      final nextNine = ((charm / 10).ceil() * 10) - 0.01;
+      if (nextNine - charm <= 2) charm = nextNine;
+    }
     return (charm * 100).round() / 100;
   }
 
