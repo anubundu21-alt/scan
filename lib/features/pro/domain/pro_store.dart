@@ -83,9 +83,14 @@ class ProController extends StateNotifier<ProState> {
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
       try {
-        if (await _purchase.hasActiveEntitlement()) {
-          entitled = true;
-          await prefs.setBool(_entitlementKey, true);
+        // Null means the store could not be reached, and the saved answer
+        // has to stand — revoking Pro over a dropped connection would lock
+        // out someone who is paying. A definite answer wins either way, so
+        // a cancelled or refunded subscription does switch Pro off.
+        final live = await _purchase.hasActiveEntitlement();
+        if (live != null && live != entitled) {
+          entitled = live;
+          await prefs.setBool(_entitlementKey, live);
         }
       } catch (_) {}
 

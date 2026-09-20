@@ -1,6 +1,7 @@
 import Flutter
 import PDFKit
 import Security
+import StoreKit
 import UIKit
 import Vision
 
@@ -21,6 +22,105 @@ import Vision
     ScanellaQuotaPlugin.register(with: quotaRegistrar)
     let pdfRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "ScanellaPdf")!
     ScanellaPdfPlugin.register(with: pdfRegistrar)
+    let proRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "ScanellaPro")!
+    ScanellaProPlugin.register(with: proRegistrar)
+  }
+}
+
+/// Whether this Apple ID is subscribed, and a copy that outlives an uninstall.
+///
+/// `currentEntitlement` asks StoreKit 2, which answers from the device without
+/// a password prompt and reports a lapsed or refunded subscription as gone. It
+/// needs iOS 15; below that it returns nil, meaning "unknown", and Dart falls
+/// back to the cached answer plus the Restore button. The deployment target
+/// stays where it is either way.
+///
+/// `readPro` / `writePro` keep that cached answer in the Keychain, which an
+/// uninstall does not clear, so a subscriber who reinstalls is not shown a
+/// paywall while the store is being asked.
+private enum ScanellaProPlugin {
+  static let service = "com.scanella.mobile.pro"
+  static let account = "entitled_v1"
+
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let channel = FlutterMethodChannel(
+      name: "scanella/pro",
+      binaryMessenger: registrar.messenger()
+    )
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "currentEntitlement":
+        if #available(iOS 15.0, *) {
+          Task {
+            let entitled = await hasCurrentEntitlement()
+            DispatchQueue.main.async { result(entitled) }
+          }
+        } else {
+          result(nil)
+        }
+      case "readPro":
+        result(readPro())
+      case "writePro":
+        guard let entitled = call.arguments as? Bool else {
+          result(
+            FlutterError(
+              code: "bad_args",
+              message: "entitled is required",
+              details: nil
+            )
+          )
+          return
+        }
+        writePro(entitled)
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  @available(iOS 15.0, *)
+  static func hasCurrentEntitlement() async -> Bool {
+    for await entry in Transaction.currentEntitlements {
+      guard case .verified(let transaction) = entry else { continue }
+      if transaction.revocationDate != nil { continue }
+      if let expiry = transaction.expirationDate, expiry <= Date() { continue }
+      return true
+    }
+    return false
+  }
+
+  static func readPro() -> Bool {
+    let query: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: account,
+      kSecReturnData as String: true,
+      kSecMatchLimit as String: kSecMatchLimitOne,
+    ]
+    var item: CFTypeRef?
+    let status = SecItemCopyMatching(query as CFDictionary, &item)
+    guard status == errSecSuccess,
+          let data = item as? Data,
+          let text = String(data: data, encoding: .utf8)
+    else {
+      return false
+    }
+    return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
+  }
+
+  static func writePro(_ entitled: Bool) {
+    let data = (entitled ? "1" : "0").data(using: .utf8)!
+    let query: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: account,
+    ]
+    SecItemDelete(query as CFDictionary)
+    var add = query
+    add[kSecValueData as String] = data
+    add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    SecItemAdd(add as CFDictionary, nil)
   }
 }
 

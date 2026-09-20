@@ -11,7 +11,11 @@ class ProProducts {
 
 /// Buys and restores Scanella Pro.
 abstract class ProPurchase {
-  Future<bool> hasActiveEntitlement();
+  /// True subscribed, false not, null when the store could not be reached.
+  ///
+  /// The difference matters: a null must leave the saved answer alone, or a
+  /// dropped connection would take Pro away from someone who is paying.
+  Future<bool?> hasActiveEntitlement();
   Future<bool> buy(ProPlan plan);
   Future<bool> restore();
   Future<LocalizedOffer?> storeOffer();
@@ -25,7 +29,7 @@ class FakeProPurchase implements ProPurchase {
   final LocalizedOffer? offer;
 
   @override
-  Future<bool> hasActiveEntitlement() async => entitled;
+  Future<bool?> hasActiveEntitlement() async => entitled;
 
   @override
   Future<bool> buy(ProPlan plan) async {

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:scan2/features/pro/data/iap_gateway.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
 import 'package:scan2/features/pro/domain/pro_purchase.dart';
@@ -10,10 +12,14 @@ import 'package:scan2/features/pro/domain/pro_purchase.dart';
 /// for digital features inside the iOS app. Payment methods (card, Apple Pay,
 /// carrier) are whatever is on the customer's Apple ID.
 class StoreKitPurchase implements ProPurchase {
-  StoreKitPurchase({IapGateway? gateway})
-    : _gateway = gateway ?? PluginIapGateway.shared();
+  StoreKitPurchase({IapGateway? gateway, MethodChannel? channel})
+    : _gateway = gateway ?? PluginIapGateway.shared(),
+      _channel = channel ?? const MethodChannel('scanella/pro');
 
   final IapGateway _gateway;
+
+  /// Native side of the entitlement check and its Keychain copy.
+  final MethodChannel _channel;
 
   /// Shown when StoreKit returns no products. Reinstalling TestFlight does
   /// not help — Apple is not listing the subscriptions for this app yet.
@@ -35,12 +41,54 @@ class StoreKitPurchase implements ProPurchase {
   static const _storeUnavailable =
       'The App Store is not available on this device.';
 
+  /// Whether this Apple ID or Google account is subscribed right now.
+  ///
+  /// Silent on both platforms — nothing here shows a password prompt, so it
+  /// is safe to call on launch. StoreKit 2 answers on iOS 15 and above and
+  /// reports a cancelled or refunded subscription as gone; Play Billing's
+  /// query does the same on Android. Older iOS has no silent API, so it
+  /// falls back to the Keychain copy, which survives an uninstall but cannot
+  /// know about a cancellation — there the Restore button is still the way
+  /// to correct it.
   @override
-  Future<bool> hasActiveEntitlement() async {
-    // Do not call restore() here — that can ask for the Apple ID every
-    // time the paywall opens. The Restore button is the path after a
-    // reinstall.
-    return false;
+  Future<bool?> hasActiveEntitlement() async {
+    if (Platform.isAndroid) {
+      // queryPurchases on Android does not prompt, unlike iOS restore.
+      try {
+        final live = await restore();
+        await cacheEntitlement(entitled: live);
+        return live;
+      } catch (_) {
+        return null;
+      }
+    }
+    try {
+      final live = await _channel.invokeMethod<bool>('currentEntitlement');
+      if (live != null) {
+        await cacheEntitlement(entitled: live);
+        return live;
+      }
+    } catch (_) {}
+    // Older iOS has no silent API. The Keychain copy outlives an uninstall,
+    // so a subscriber who reinstalls keeps Pro. It cannot see a
+    // cancellation; Restore is the way to correct that.
+    return _cachedEntitlement();
+  }
+
+  /// Keeps the Keychain copy in step, so the next launch paints the right
+  /// thing before the store has answered.
+  Future<void> cacheEntitlement({required bool entitled}) async {
+    try {
+      await _channel.invokeMethod<void>('writePro', entitled);
+    } catch (_) {}
+  }
+
+  Future<bool> _cachedEntitlement() async {
+    try {
+      return await _channel.invokeMethod<bool>('readPro') ?? false;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -61,7 +109,9 @@ class StoreKitPurchase implements ProPurchase {
         await _submitBuy(product);
       },
     );
-    return result == true;
+    final bought = result == true;
+    if (bought) await cacheEntitlement(entitled: true);
+    return bought;
   }
 
   Future<void> _submitBuy(StoreProduct product) async {
@@ -87,7 +137,12 @@ class StoreKitPurchase implements ProPurchase {
       timeout: const Duration(seconds: 12),
       treatEmptyAsFalse: true,
     );
-    return found == true;
+    final restored = found == true;
+    // Only ever write a yes here. A restore that finds nothing may simply
+    // have been signed into the wrong Apple ID, and that must not wipe a
+    // subscription this device already knows about.
+    if (restored) await cacheEntitlement(entitled: true);
+    return restored;
   }
 
   @override
