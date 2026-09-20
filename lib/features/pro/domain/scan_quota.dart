@@ -29,7 +29,7 @@ class ScanQuota {
   static const starterLimit = 10;
 
   /// Free scans each period after the starter pack is used.
-  static const monthlyLimit = 5;
+  static const monthlyLimit = 10;
 
   /// Older names for the same cap, kept so existing call sites compile.
   static const weeklyLimit = monthlyLimit;

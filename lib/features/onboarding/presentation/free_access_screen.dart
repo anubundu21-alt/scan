@@ -63,9 +63,8 @@ class FreeAccessScreen extends StatelessWidget {
                       wash: const Color(0xFFEAF2FD),
                       tint: const Color(0xFF2F6FED),
                       title:
-                          'After ${ScanQuota.starterLimit} scans, get '
-                          '${ScanQuota.monthlyLimit} free scans every '
-                          '${ScanQuota.resetDays} days',
+                          'Then ${ScanQuota.monthlyLimit} more free scans '
+                          'every ${ScanQuota.resetDays} days',
                       detail: 'Unused scans don’t carry over',
                     ),
                     const _AccessCard(

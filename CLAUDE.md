@@ -28,7 +28,7 @@ bundle id `com.scanella.mobile`. The marketing and legal site lives in
 | Thing | Value | Where it is set |
 | --- | --- | --- |
 | Starter scans, one time | 10 | `ScanQuota.starterLimit` |
-| Scans per period after that | 5 | `ScanQuota.monthlyLimit` |
+| Scans per period after that | 10 | `ScanQuota.monthlyLimit` |
 | Period length | 30 days | `ScanQuota.resetDays` |
 | PDF tools | always free, no limit | not quota-gated |
 | Yearly | $9.99 | `LocalizedPricing.yearlyUsd` |

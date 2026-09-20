@@ -20,7 +20,7 @@ Never type a price, a scan count or a reset period into a widget.
 | Value | Constant |
 | --- | --- |
 | 10 starter scans | `ScanQuota.starterLimit` |
-| 5 scans per period | `ScanQuota.monthlyLimit` |
+| 10 scans per period | `ScanQuota.monthlyLimit` |
 | 30 day period | `ScanQuota.resetDays` |
 | $9.99 yearly | `LocalizedPricing.yearlyUsd` |
 | $2.99 monthly | `LocalizedPricing.monthlyUsd` |
