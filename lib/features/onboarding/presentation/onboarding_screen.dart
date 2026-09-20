@@ -72,7 +72,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: const Text(
                           'Skip',
                           style: TextStyle(
-                            color: Brand.accent,
+                            color: Brand.ink,
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
                           ),
@@ -141,11 +141,15 @@ class _TopWash extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Brand.accent.withValues(alpha: 0.34),
-              Brand.accent.withValues(alpha: 0.16),
+              Brand.accent.withValues(alpha: 0.95),
+              Brand.accent.withValues(alpha: 0.87),
+              Brand.accent.withValues(alpha: 0.71),
+              Brand.accent.withValues(alpha: 0.45),
+              Brand.accent.withValues(alpha: 0.21),
+              Brand.accent.withValues(alpha: 0.03),
               Brand.accent.withValues(alpha: 0),
             ],
-            stops: const [0, 0.14, 0.34],
+            stops: const [0, 0.05, 0.09, 0.13, 0.18, 0.22, 0.26],
           ),
         ),
       ),
