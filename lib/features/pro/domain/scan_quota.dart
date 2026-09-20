@@ -388,6 +388,26 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
     );
   }
 
+  /// Forces the used count, for the testing tools only.
+  ///
+  /// Nothing in the app calls this: it exists so a tester can reach the
+  /// paywall or the running-low screen without making ten documents by
+  /// hand. It goes through the same store as a real scan, so the Keychain
+  /// copy moves with it and a reinstall behaves as it would for a customer.
+  Future<void> setUsedForTesting(int used) async {
+    await ensureLoaded();
+    final capped = used.clamp(0, ScanQuota.starterLimit);
+    await _store.writeUsed(capped);
+    await _store.writePeriodStartMs(0);
+    state = ScanQuota(
+      used: capped,
+      ready: true,
+      starterDone: state.starterDone,
+      refreshedAt: state.refreshedAt,
+    );
+    await _applyWindow();
+  }
+
   /// Call after a new library document is actually created.
   Future<void> recordCreated() async {
     await ensureLoaded();

@@ -91,6 +91,11 @@ private enum ScanellaProPlugin {
       case "markTrialUsed":
         writeFlag(true, account: trialAccount)
         result(nil)
+      case "clearTrialUsed":
+        // Testing tools only. Apple still decides who is owed the
+        // introductory month; this only clears what the app remembers.
+        writeFlag(false, account: trialAccount)
+        result(nil)
       case "readPro":
         result(readPro())
       case "readProStamp":

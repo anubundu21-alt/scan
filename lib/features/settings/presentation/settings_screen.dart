@@ -8,6 +8,7 @@ import 'package:scan2/core/haptics/app_haptics.dart';
 import 'package:scan2/core/theme/tactile.dart';
 import 'package:scan2/core/widgets/pressable_scale.dart';
 import 'package:scan2/core/theme/brand.dart';
+import 'package:scan2/features/settings/presentation/testing_tools_screen.dart';
 import 'package:scan2/features/crop/domain/image_processor.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/pro/presentation/pro_paywall.dart';
@@ -278,6 +279,27 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ],
             ),
+
+            // Only in a build made for testing. An App Store build is
+            // compiled without SCANELLA_TESTING, so this is not there at all.
+            if (TestingTools.enabled) ...[
+              const _SectionLabel('Testing'),
+              _Group(
+                children: [
+                  _InfoRow(
+                    icon: Icons.science_rounded,
+                    tint: Brand.docBlue,
+                    title: 'Testing tools',
+                    subtitle: 'Skip the waiting while trying the paid flow',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const TestingToolsScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
 
             const SizedBox(height: 28),
             Center(
