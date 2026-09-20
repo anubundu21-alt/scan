@@ -85,7 +85,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                   children: [
                     Row(
                       children: [
-                        const ProMark(size: 30),
+                        const ProMark(size: 28),
                         const SizedBox(width: 10),
                         const _ProWordmark(),
                       ],
@@ -95,12 +95,12 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                       'More than a scanner.\n'
                       'Your complete document solution.',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         height: 1.35,
                         color: Brand.grey,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     const _Tick('Unlimited scans'),
                     const _Tick('OCR – extract text'),
                     const _Tick('Advanced PDF tools'),
@@ -141,7 +141,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                           ),
                           disabledForegroundColor: Colors.white,
                           textStyle: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
                           shape: RoundedRectangleBorder(
@@ -162,7 +162,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                           'Maybe Later',
                           style: TextStyle(
                             color: Brand.accent,
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -201,7 +201,7 @@ class _ProWordmark extends StatelessWidget {
       TextSpan(
         style: TextStyle(
           fontFamily: Brand.font,
-          fontSize: 30,
+          fontSize: 27,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.6,
           color: Brand.ink,
@@ -223,19 +223,19 @@ class _Tick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
-            width: 26,
-            height: 26,
+            width: 24,
+            height: 24,
             decoration: const BoxDecoration(
               color: Brand.accent,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.check_rounded,
-              size: 17,
+              size: 15,
               color: Colors.white,
             ),
           ),
@@ -243,7 +243,7 @@ class _Tick extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
               color: Brand.ink,
             ),
@@ -302,7 +302,7 @@ class _PlanCard extends StatelessWidget {
                   const Text(
                     '1 month FREE',
                     style: TextStyle(
-                      fontSize: 19,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: Brand.ink,
                     ),
@@ -311,7 +311,7 @@ class _PlanCard extends StatelessWidget {
                   Text(
                     price,
                     style: const TextStyle(
-                      fontSize: 17,
+                      fontSize: 15,
                       color: Brand.grey,
                     ),
                   ),
