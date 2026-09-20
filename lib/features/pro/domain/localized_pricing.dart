@@ -23,7 +23,7 @@ class LocalizedOffer {
   });
 
   static const monthlyUsd = 2.99;
-  static const yearlyUsd = 19.99;
+  static const yearlyUsd = 9.99;
 
   final String currencyCode;
   final String countryCode;

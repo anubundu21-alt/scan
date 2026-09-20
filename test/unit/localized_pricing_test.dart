@@ -12,9 +12,9 @@ void main() {
 
     expect(offer.currencyCode, 'USD');
     expect(offer.monthly, 2.99);
-    expect(offer.yearly, 19.99);
+    expect(offer.yearly, 9.99);
     expect(offer.monthlyLabel, contains('2.99'));
-    expect(offer.yearlyLabel, contains('19.99'));
+    expect(offer.yearlyLabel, contains('9.99'));
     expect(offer.source, 'internet');
     expect(offer.yearlySavingsPercent, greaterThan(40));
   });
@@ -32,7 +32,7 @@ void main() {
     expect(offer.currencyCode, 'GBP');
     expect(offer.countryName, 'United Kingdom');
     expect(offer.monthly, 2.99);
-    expect(offer.yearly, 14.99);
+    expect(offer.yearly, 7.99);
     expect(offer.monthlyLabel, contains('£'));
   });
 
@@ -48,7 +48,7 @@ void main() {
 
     expect(offer.currencyCode, 'INR');
     expect(offer.monthly, 299);
-    expect(offer.yearly, 1669.99);
+    expect(offer.yearly, 834.99);
   });
 
   test('USD store prices yield to a non-US location', () {
