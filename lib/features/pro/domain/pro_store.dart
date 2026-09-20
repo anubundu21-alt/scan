@@ -94,6 +94,16 @@ class ProController extends StateNotifier<ProState> {
         }
       } catch (_) {}
 
+      // SharedPreferences is wiped by an uninstall, so a lapsed subscriber
+      // who reinstalls would otherwise be offered the introductory month a
+      // second time and be charged straight away. Ask the store, which
+      // remembers the trial even after it was cancelled.
+      if (!trialUsed) {
+        try {
+          if (await _purchase.trialConsumed()) trialUsed = true;
+        } catch (_) {}
+      }
+
       LocalizedOffer? store;
       var storeReady = false;
       String? storeError;
@@ -112,9 +122,10 @@ class ProController extends StateNotifier<ProState> {
         store: store,
       );
 
-      if (entitled && !trialUsed) {
-        trialUsed = true;
+      if (entitled && !trialUsed) trialUsed = true;
+      if (trialUsed && !(prefs.getBool(_trialUsedKey) ?? false)) {
         await prefs.setBool(_trialUsedKey, true);
+        await _purchase.markTrialConsumed();
       }
 
       state = state.copyWith(
@@ -141,6 +152,7 @@ class ProController extends StateNotifier<ProState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
+        await _purchase.markTrialConsumed();
         state = state.copyWith(isPro: true, busy: false, trialUsed: true);
         return true;
       }
@@ -165,6 +177,7 @@ class ProController extends StateNotifier<ProState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
+        await _purchase.markTrialConsumed();
         state = state.copyWith(isPro: true, busy: false, trialUsed: true);
         return true;
       }

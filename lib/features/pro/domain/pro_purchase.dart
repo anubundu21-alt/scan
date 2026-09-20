@@ -16,6 +16,19 @@ abstract class ProPurchase {
   /// The difference matters: a null must leave the saved answer alone, or a
   /// dropped connection would take Pro away from someone who is paying.
   Future<bool?> hasActiveEntitlement();
+
+  /// Whether the introductory month has already been taken on this device.
+  ///
+  /// Apple grants it once per subscription group and will not say so through
+  /// in_app_purchase, so this reads the store's own purchase history where it
+  /// can and a device record where it cannot. False only ever means "no sign
+  /// of one", so it errs towards offering the month rather than hiding it.
+  Future<bool> trialConsumed();
+
+  /// Records that the month has been taken, somewhere an uninstall cannot
+  /// reach.
+  Future<void> markTrialConsumed();
+
   Future<bool> buy(ProPlan plan);
   Future<bool> restore();
   Future<LocalizedOffer?> storeOffer();
@@ -23,17 +36,29 @@ abstract class ProPurchase {
 
 /// In-memory purchase used by widget tests.
 class FakeProPurchase implements ProPurchase {
-  FakeProPurchase({this.entitled = false, this.offer});
+  FakeProPurchase({
+    this.entitled = false,
+    this.offer,
+    this.trialUsed = false,
+  });
 
   bool entitled;
+  bool trialUsed;
   final LocalizedOffer? offer;
 
   @override
   Future<bool?> hasActiveEntitlement() async => entitled;
 
   @override
+  Future<bool> trialConsumed() async => trialUsed;
+
+  @override
+  Future<void> markTrialConsumed() async => trialUsed = true;
+
+  @override
   Future<bool> buy(ProPlan plan) async {
     entitled = true;
+    trialUsed = true;
     return true;
   }
 

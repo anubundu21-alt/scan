@@ -38,9 +38,20 @@ import Vision
 /// `readPro` / `writePro` keep that cached answer in the Keychain, which an
 /// uninstall does not clear, so a subscriber who reinstalls is not shown a
 /// paywall while the store is being asked.
+///
+/// `trialConsumed` answers the separate question of whether this Apple ID has
+/// already had the introductory month. On iOS 15 it reads StoreKit's own
+/// purchase history, which is authoritative and survives an uninstall; below
+/// that it falls back to the Keychain flag `markTrialUsed` writes. Getting
+/// this wrong offers a free month Apple will refuse to grant, so both sources
+/// are ORed and neither can clear the other.
 private enum ScanellaProPlugin {
   static let service = "com.scanella.mobile.pro"
   static let account = "entitled_v1"
+  static let trialAccount = "trial_used_v1"
+  static let productIds: Set<String> = [
+    "scanella_pro_monthly", "scanella_pro_yearly",
+  ]
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
@@ -58,6 +69,19 @@ private enum ScanellaProPlugin {
         } else {
           result(nil)
         }
+      case "trialConsumed":
+        if #available(iOS 15.0, *) {
+          Task {
+            let fromStore = await hasPastPurchase()
+            let used = fromStore || readFlag(trialAccount)
+            DispatchQueue.main.async { result(used) }
+          }
+        } else {
+          result(readFlag(trialAccount))
+        }
+      case "markTrialUsed":
+        writeFlag(true, account: trialAccount)
+        result(nil)
       case "readPro":
         result(readPro())
       case "writePro":
@@ -90,7 +114,29 @@ private enum ScanellaProPlugin {
     return false
   }
 
+  /// Any transaction at all on a Scanella Pro product, current or lapsed.
+  ///
+  /// Apple grants the introductory month once per subscription group, so a
+  /// single past transaction — even a trial that was cancelled and has since
+  /// expired — means there is no free month left to offer.
+  @available(iOS 15.0, *)
+  static func hasPastPurchase() async -> Bool {
+    for await entry in Transaction.all {
+      guard case .verified(let transaction) = entry else { continue }
+      if productIds.contains(transaction.productID) { return true }
+    }
+    return false
+  }
+
   static func readPro() -> Bool {
+    return readFlag(account)
+  }
+
+  static func writePro(_ entitled: Bool) {
+    writeFlag(entitled, account: account)
+  }
+
+  static func readFlag(_ account: String) -> Bool {
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
@@ -109,8 +155,8 @@ private enum ScanellaProPlugin {
     return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
   }
 
-  static func writePro(_ entitled: Bool) {
-    let data = (entitled ? "1" : "0").data(using: .utf8)!
+  static func writeFlag(_ on: Bool, account: String) {
+    let data = (on ? "1" : "0").data(using: .utf8)!
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,

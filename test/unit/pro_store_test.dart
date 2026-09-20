@@ -35,6 +35,68 @@ void main() {
     expect(controller.state.error, contains(ProProducts.monthly));
   });
 
+  test('a reinstall after a cancelled trial does not re-offer the month', () async {
+    // SharedPreferences is empty, as it is after an uninstall. The store
+    // still remembers the trial, so the offer must stay hidden.
+    final purchase = FakeProPurchase(entitled: false, trialUsed: true);
+    final controller = ProController(
+      purchase: purchase,
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.isPro, isFalse);
+    expect(controller.state.trialUsed, isTrue);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('scanella.pro.trial_used'), isTrue);
+  });
+
+  test('a first install with no purchase history is still offered the month', () async {
+    final controller = ProController(
+      purchase: FakeProPurchase(entitled: false, trialUsed: false),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.trialUsed, isFalse);
+  });
+
+  test('subscribing records the trial where an uninstall cannot reach it', () async {
+    final purchase = FakeProPurchase();
+    final controller = ProController(
+      purchase: purchase,
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+    expect(await controller.subscribe(ProPlan.yearly), isTrue);
+
+    expect(controller.state.isPro, isTrue);
+    expect(controller.state.trialUsed, isTrue);
+    expect(purchase.trialUsed, isTrue);
+  });
+
   test('Settings-style display drops USD store prices for a local country', () async {
     final controller = ProController(
       purchase: FakeProPurchase(

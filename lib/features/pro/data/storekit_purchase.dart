@@ -66,6 +66,7 @@ class StoreKitPurchase implements ProPurchase {
       final live = await _channel.invokeMethod<bool>('currentEntitlement');
       if (live != null) {
         await cacheEntitlement(entitled: live);
+        if (live) await markTrialConsumed();
         return live;
       }
     } catch (_) {}
@@ -73,6 +74,35 @@ class StoreKitPurchase implements ProPurchase {
     // so a subscriber who reinstalls keeps Pro. It cannot see a
     // cancellation; Restore is the way to correct that.
     return _cachedEntitlement();
+  }
+
+  /// Whether the introductory month has already been taken.
+  ///
+  /// On iOS the native side reads StoreKit's purchase history, which knows
+  /// about a trial that was started and then cancelled, and survives an
+  /// uninstall. Android has no equivalent silent history here, so it falls
+  /// back to whether the account is subscribed now.
+  @override
+  Future<bool> trialConsumed() async {
+    if (Platform.isAndroid) {
+      try {
+        return await restore();
+      } catch (_) {
+        return false;
+      }
+    }
+    try {
+      return await _channel.invokeMethod<bool>('trialConsumed') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> markTrialConsumed() async {
+    try {
+      await _channel.invokeMethod<void>('markTrialUsed');
+    } catch (_) {}
   }
 
   /// Keeps the Keychain copy in step, so the next launch paints the right
@@ -110,7 +140,10 @@ class StoreKitPurchase implements ProPurchase {
       },
     );
     final bought = result == true;
-    if (bought) await cacheEntitlement(entitled: true);
+    if (bought) {
+      await cacheEntitlement(entitled: true);
+      await markTrialConsumed();
+    }
     return bought;
   }
 
@@ -141,7 +174,10 @@ class StoreKitPurchase implements ProPurchase {
     // Only ever write a yes here. A restore that finds nothing may simply
     // have been signed into the wrong Apple ID, and that must not wipe a
     // subscription this device already knows about.
-    if (restored) await cacheEntitlement(entitled: true);
+    if (restored) {
+      await cacheEntitlement(entitled: true);
+      await markTrialConsumed();
+    }
     return restored;
   }
 

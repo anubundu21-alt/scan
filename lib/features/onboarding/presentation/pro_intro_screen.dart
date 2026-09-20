@@ -14,6 +14,11 @@ import 'package:scan2/features/pro/presentation/pro_paywall.dart' show ProMark;
 /// the rest of the app, so the Apple sheet is the real one. The free month is
 /// an introductory offer configured in App Store Connect: StoreKit applies it
 /// and bills the plan afterwards. Nothing here grants it.
+///
+/// Apple gives that month once per subscription group. Someone who has taken
+/// it already — including a reinstall after a cancelled trial — is shown the
+/// plan price instead, because a "1 month FREE" button would charge them on
+/// the spot. [ProState.trialUsed] decides.
 class ProIntroScreen extends ConsumerStatefulWidget {
   const ProIntroScreen({super.key, required this.onDone});
 
@@ -50,6 +55,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
           usdToLocal: 1,
           source: 'device',
         );
+    final firstTime = !pro.trialUsed;
 
     return Theme(
       data: AppTheme.light,
@@ -108,6 +114,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     const SizedBox(height: 22),
                     _PlanCard(
                       selected: _plan == ProPlan.yearly,
+                      title: firstTime ? '1 month FREE' : 'Yearly',
                       price: '${offer.yearlyLabel} per year',
                       badge: 'Best Value',
                       onTap: () => setState(() => _plan = ProPlan.yearly),
@@ -115,6 +122,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     const SizedBox(height: 12),
                     _PlanCard(
                       selected: _plan == ProPlan.monthly,
+                      title: firstTime ? '1 month FREE' : 'Monthly',
                       price: '${offer.monthlyLabel} per month',
                       onTap: () => setState(() => _plan = ProPlan.monthly),
                     ),
@@ -151,7 +159,11 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                           ),
                         ),
                         onPressed: pro.busy ? null : _subscribe,
-                        child: const Text('Start 1 Month Free Trial'),
+                        child: Text(
+                          firstTime
+                              ? 'Start 1 Month Free Trial'
+                              : 'Continue',
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -169,9 +181,12 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Cancel anytime. Your subscription will automatically '
-                      'renew at the end of the trial.',
+                    Text(
+                      firstTime
+                          ? 'Cancel anytime. Your subscription will '
+                                'automatically renew at the end of the trial.'
+                          : 'Cancel anytime. Your subscription renews '
+                                'automatically until you cancel.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -254,17 +269,20 @@ class _Tick extends StatelessWidget {
   }
 }
 
-/// One plan. The free month is the store's introductory offer, so the label
-/// reads the same on both cards and the price underneath is what follows it.
+/// One plan. The heading is the introductory month where Apple still owes
+/// one, and the plain plan name where it does not; the price underneath is
+/// what gets billed either way.
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.selected,
+    required this.title,
     required this.price,
     required this.onTap,
     this.badge,
   });
 
   final bool selected;
+  final String title;
   final String price;
   final String? badge;
   final VoidCallback onTap;
@@ -299,9 +317,9 @@ class _PlanCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '1 month FREE',
-                    style: TextStyle(
+                  Text(
+                    title,
+                    style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: Brand.ink,

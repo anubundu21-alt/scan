@@ -85,13 +85,19 @@ class ScanQuota {
     return parts.join(' · ');
   }
 
-  /// Dialog title when the current free allowance is gone.
-  String get usedUpTitle {
-    if (!starterDone || used >= starterLimit) {
-      return '$starterLimit free scans used';
-    }
-    return '$monthlyLimit free scans used';
+  /// How many scans the allowance that just ran out actually held.
+  ///
+  /// [limit] is forward-looking: the moment the tenth starter scan lands,
+  /// [starterDone] flips and it drops to [monthlyLimit]. Telling someone who
+  /// has just used ten scans that they used five reads like a bug, so the
+  /// screens that report a spent allowance use this instead.
+  int get usedUpLimit {
+    if (!starterDone || used >= starterLimit) return starterLimit;
+    return monthlyLimit;
   }
+
+  /// Dialog title when the current free allowance is gone.
+  String get usedUpTitle => '$usedUpLimit free scans used';
 
   String get usedUpMessage {
     final when = resetsAt;

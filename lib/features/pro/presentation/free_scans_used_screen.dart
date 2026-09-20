@@ -89,7 +89,7 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
                       const _EmptyMailMark(),
                       const SizedBox(height: 18),
                       Text(
-                        'You’ve used all\n${quota.limit} free scans!',
+                        'You’ve used all\n${quota.usedUpLimit} free scans!',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontFamily: Brand.font,
