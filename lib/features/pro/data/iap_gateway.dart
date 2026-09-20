@@ -26,12 +26,20 @@ class IapEvent {
     required this.status,
     this.error,
     this.complete,
+    this.transactionDate,
   });
 
   final String productId;
   final IapStatus status;
   final String? error;
   final Future<void> Function()? complete;
+
+  /// When the store billed this transaction, where it says.
+  ///
+  /// A restore hands back the whole history of a subscription, so the newest
+  /// date across the batch is the last time it renewed. That is the only
+  /// clue StoreKit 1 gives about whether a subscription is still live.
+  final DateTime? transactionDate;
 }
 
 /// Talks to the App Store / Play Billing. Stripe card forms are not used:
@@ -162,8 +170,16 @@ class PluginIapGateway implements IapGateway {
           complete: item.pendingCompletePurchase
               ? () => _plugin.completePurchase(item)
               : null,
+          transactionDate: _date(item.transactionDate),
         ),
     ];
+  }
+
+  static DateTime? _date(String? raw) {
+    if (raw == null) return null;
+    final ms = int.tryParse(raw.trim());
+    if (ms == null || ms <= 0) return null;
+    return DateTime.fromMillisecondsSinceEpoch(ms);
   }
 
   static IapStatus _status(PurchaseStatus status) {
@@ -192,7 +208,11 @@ class MemoryIapGateway implements IapGateway {
     this.queryError,
     this.firstBuyError,
     this.buyError,
+    this.transactionDate,
   }) : products = products ?? const [];
+
+  /// Date stamped on the events this gateway emits, as StoreKit would.
+  DateTime? transactionDate;
 
   bool available;
   List<StoreProduct> products;
@@ -231,7 +251,13 @@ class MemoryIapGateway implements IapGateway {
     final always = buyError;
     if (always != null) throw always;
     if (!buySucceeds) return false;
-    _out.add([IapEvent(productId: product.id, status: emitOnBuy)]);
+    _out.add([
+      IapEvent(
+        productId: product.id,
+        status: emitOnBuy,
+        transactionDate: transactionDate,
+      ),
+    ]);
     return true;
   }
 
@@ -240,7 +266,11 @@ class MemoryIapGateway implements IapGateway {
     if (emitOnBuy == IapStatus.purchased || emitOnBuy == IapStatus.restored) {
       _out.add([
         for (final product in products)
-          IapEvent(productId: product.id, status: IapStatus.restored),
+          IapEvent(
+            productId: product.id,
+            status: IapStatus.restored,
+            transactionDate: transactionDate,
+          ),
       ]);
     }
   }

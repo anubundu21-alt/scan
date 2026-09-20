@@ -48,10 +48,15 @@ import Vision
 private enum ScanellaProPlugin {
   static let service = "com.scanella.mobile.pro"
   static let account = "entitled_v1"
+  static let untilAccount = "entitled_until_v1"
+  static let basisAccount = "entitled_basis_v1"
   static let trialAccount = "trial_used_v1"
   static let productIds: Set<String> = [
     "scanella_pro_monthly", "scanella_pro_yearly",
   ]
+
+  /// Three days, matching the slack the Dart side uses.
+  static let graceSeconds: TimeInterval = 3 * 24 * 60 * 60
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
@@ -63,8 +68,12 @@ private enum ScanellaProPlugin {
       case "currentEntitlement":
         if #available(iOS 15.0, *) {
           Task {
-            let entitled = await hasCurrentEntitlement()
-            DispatchQueue.main.async { result(entitled) }
+            let live = await currentEntitlement()
+            // StoreKit 2 knows exactly when this period runs out. Writing
+            // that down keeps the cached answer honest for the one launch
+            // where the store cannot be reached at all.
+            writePro(live.entitled, untilMs: live.untilMs, basisMs: nil)
+            DispatchQueue.main.async { result(live.entitled) }
           }
         } else {
           result(nil)
@@ -84,8 +93,22 @@ private enum ScanellaProPlugin {
         result(nil)
       case "readPro":
         result(readPro())
+      case "readProStamp":
+        result([
+          "untilMs": readUntil().map { $0.timeIntervalSince1970 * 1000 },
+          "basisMs": readMillis(basisAccount),
+        ] as [String: Any?])
       case "writePro":
-        guard let entitled = call.arguments as? Bool else {
+        // Either a bare Bool, or a map carrying the date the cached yes
+        // stops being worth trusting.
+        if let entitled = call.arguments as? Bool {
+          writePro(entitled, untilMs: nil, basisMs: nil)
+          result(nil)
+          return
+        }
+        guard let args = call.arguments as? [String: Any],
+              let entitled = args["entitled"] as? Bool
+        else {
           result(
             FlutterError(
               code: "bad_args",
@@ -95,7 +118,11 @@ private enum ScanellaProPlugin {
           )
           return
         }
-        writePro(entitled)
+        writePro(
+          entitled,
+          untilMs: (args["untilMs"] as? NSNumber)?.doubleValue,
+          basisMs: (args["basisMs"] as? NSNumber)?.doubleValue
+        )
         result(nil)
       default:
         result(FlutterMethodNotImplemented)
@@ -103,15 +130,28 @@ private enum ScanellaProPlugin {
     }
   }
 
+  /// A live subscription, and when its current period ends.
+  ///
+  /// Apple keeps serving while it retries a failed payment, so the date
+  /// carries a few days' slack: noticing a lapse late is cheaper than
+  /// locking out someone who is paying.
   @available(iOS 15.0, *)
-  static func hasCurrentEntitlement() async -> Bool {
+  static func currentEntitlement() async -> (entitled: Bool, untilMs: Double?) {
+    var latest: Date?
+    var found = false
     for await entry in Transaction.currentEntitlements {
       guard case .verified(let transaction) = entry else { continue }
+      guard productIds.contains(transaction.productID) else { continue }
       if transaction.revocationDate != nil { continue }
       if let expiry = transaction.expirationDate, expiry <= Date() { continue }
-      return true
+      found = true
+      guard let expiry = transaction.expirationDate else { continue }
+      if latest == nil || expiry > latest! { latest = expiry }
     }
-    return false
+    guard found else { return (false, nil) }
+    guard let latest = latest else { return (true, nil) }
+    let withGrace = latest.addingTimeInterval(graceSeconds)
+    return (true, withGrace.timeIntervalSince1970 * 1000)
   }
 
   /// Any transaction at all on a Scanella Pro product, current or lapsed.
@@ -128,15 +168,61 @@ private enum ScanellaProPlugin {
     return false
   }
 
+  /// The cached yes, but only while it is still plausible.
+  ///
+  /// Below iOS 15 there is no silent way to notice that a subscription
+  /// lapsed, and the Keychain outlives an uninstall, so an unqualified yes
+  /// would keep a cancelled trial on Pro forever. A purchase made in this
+  /// app stamps the date its period runs out; once that passes, the cached
+  /// answer is thrown away and the customer is a free user again with the
+  /// Restore button there to correct us.
   static func readPro() -> Bool {
-    return readFlag(account)
+    guard readFlag(account) else { return false }
+    guard let until = readUntil() else { return true }
+    if until > Date() { return true }
+    writePro(false, untilMs: nil, basisMs: nil)
+    return false
   }
 
-  static func writePro(_ entitled: Bool) {
+  static func writePro(_ entitled: Bool, untilMs: Double?, basisMs: Double?) {
     writeFlag(entitled, account: account)
+    if !entitled {
+      clear(account: untilAccount)
+      clear(account: basisAccount)
+      return
+    }
+    // A yes with no date attached leaves any date already stored alone:
+    // StoreKit 2 refreshes the flag on every launch and knows nothing about
+    // our stamp, and it must not quietly turn the stamp off.
+    guard let untilMs = untilMs else { return }
+    writeText(String(untilMs), account: untilAccount)
+    if let basisMs = basisMs {
+      writeText(String(basisMs), account: basisAccount)
+    } else {
+      clear(account: basisAccount)
+    }
+  }
+
+  static func readUntil() -> Date? {
+    guard let ms = readMillis(untilAccount) else { return nil }
+    return Date(timeIntervalSince1970: ms / 1000)
+  }
+
+  static func readMillis(_ account: String) -> Double? {
+    guard let text = readText(account) else { return nil }
+    return Double(text.trimmingCharacters(in: .whitespacesAndNewlines))
   }
 
   static func readFlag(_ account: String) -> Bool {
+    guard let text = readText(account) else { return false }
+    return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
+  }
+
+  static func writeFlag(_ on: Bool, account: String) {
+    writeText(on ? "1" : "0", account: account)
+  }
+
+  static func readText(_ account: String) -> String? {
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
@@ -147,26 +233,32 @@ private enum ScanellaProPlugin {
     var item: CFTypeRef?
     let status = SecItemCopyMatching(query as CFDictionary, &item)
     guard status == errSecSuccess,
-          let data = item as? Data,
-          let text = String(data: data, encoding: .utf8)
+          let data = item as? Data
     else {
-      return false
+      return nil
     }
-    return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
+    return String(data: data, encoding: .utf8)
   }
 
-  static func writeFlag(_ on: Bool, account: String) {
-    let data = (on ? "1" : "0").data(using: .utf8)!
-    let query: [String: Any] = [
+  static func writeText(_ text: String, account: String) {
+    let data = text.data(using: .utf8)!
+    var add = baseQuery(account)
+    SecItemDelete(baseQuery(account) as CFDictionary)
+    add[kSecValueData as String] = data
+    add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    SecItemAdd(add as CFDictionary, nil)
+  }
+
+  static func clear(account: String) {
+    SecItemDelete(baseQuery(account) as CFDictionary)
+  }
+
+  static func baseQuery(_ account: String) -> [String: Any] {
+    return [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
       kSecAttrAccount as String: account,
     ]
-    SecItemDelete(query as CFDictionary)
-    var add = query
-    add[kSecValueData as String] = data
-    add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    SecItemAdd(add as CFDictionary, nil)
   }
 }
 

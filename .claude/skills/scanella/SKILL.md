@@ -45,6 +45,8 @@ stored natively.
 | Scans used | Keychain `used_v1`, Android Downloads marker | yes |
 | Subscribed now | StoreKit 2 `currentEntitlements`, Keychain `entitled_v1` | yes |
 | Free month taken | StoreKit `Transaction.all`, Keychain `trial_used_v1` | yes |
+| When Pro runs out | Keychain `entitled_until_v1` | yes |
+| Which transaction that came from | Keychain `entitled_basis_v1` | yes |
 | Period start date | SharedPreferences | no |
 
 Adding a new "has the user already..." flag means adding it to
@@ -61,6 +63,11 @@ Adding a new "has the user already..." flag means adding it to
   signed into the wrong Apple ID.
 - Minimum iOS is 13.0. StoreKit 2 calls need `@available(iOS 15.0, *)` and
   a fallback below that. Do not raise the deployment target.
+- Below iOS 15 nothing can silently see a cancellation, so a cached yes
+  must always carry an end date. Never write an entitlement to the Keychain
+  without one, and never trust a restored transaction that is not newer
+  than `entitled_basis_v1` — a restore replays old history as if it were
+  fresh.
 
 ## Always re-check these four journeys
 

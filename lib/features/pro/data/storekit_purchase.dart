@@ -14,9 +14,54 @@ import 'package:scan2/features/pro/domain/pro_purchase.dart';
 class StoreKitPurchase implements ProPurchase {
   StoreKitPurchase({IapGateway? gateway, MethodChannel? channel})
     : _gateway = gateway ?? PluginIapGateway.shared(),
-      _channel = channel ?? const MethodChannel('scanella/pro');
+      _channel = channel ?? const MethodChannel('scanella/pro') {
+    _watchRenewals();
+  }
 
   final IapGateway _gateway;
+
+  StreamSubscription<List<IapEvent>>? _renewals;
+
+  /// True while [buy] or [restore] is waiting on the store. Those two stamp
+  /// their own end date — [buy] is the only place that knows the purchase is
+  /// an introductory month rather than a full period — so the passive
+  /// watcher must keep its hands off until they are done.
+  bool _inFlight = false;
+
+  /// Renewals arrive on the payment queue on their own, without anyone
+  /// asking. Below iOS 15 that is the only notice a subscription is still
+  /// running, so each one pushes the cached end date forward and a paying
+  /// customer is never dropped to the free plan mid-subscription.
+  void _watchRenewals() {
+    try {
+      _renewals = _gateway.purchases.listen((events) async {
+        if (_inFlight) return;
+        for (final event in events) {
+          if (!ProProducts.all.contains(event.productId)) continue;
+          if (event.status != IapStatus.purchased &&
+              event.status != IapStatus.restored) {
+            continue;
+          }
+          // No date means no stamp, and an unstamped yes is the very thing
+          // that kept cancelled trials on Pro for good. Leave it alone.
+          final until = _expiryFrom(event);
+          if (until == null || until.isBefore(DateTime.now())) continue;
+          final at = event.transactionDate;
+          final basis = await _cachedBasis();
+          // Only a transaction newer than the one already stamped is a
+          // renewal; anything else is the queue replaying old history.
+          if (at != null && basis != null && !at.isAfter(basis)) continue;
+          await cacheEntitlement(entitled: true, until: until, basis: at);
+        }
+      }, onError: (Object _) {});
+    } catch (_) {}
+  }
+
+  /// Only tests take this apart; the app keeps one for its whole life.
+  Future<void> dispose() async {
+    await _renewals?.cancel();
+    _renewals = null;
+  }
 
   /// Native side of the entitlement check and its Keychain copy.
   final MethodChannel _channel;
@@ -46,10 +91,14 @@ class StoreKitPurchase implements ProPurchase {
   /// Silent on both platforms — nothing here shows a password prompt, so it
   /// is safe to call on launch. StoreKit 2 answers on iOS 15 and above and
   /// reports a cancelled or refunded subscription as gone; Play Billing's
-  /// query does the same on Android. Older iOS has no silent API, so it
-  /// falls back to the Keychain copy, which survives an uninstall but cannot
-  /// know about a cancellation — there the Restore button is still the way
-  /// to correct it.
+  /// query does the same on Android.
+  ///
+  /// Older iOS has no silent API, so it falls back to the Keychain copy,
+  /// which survives an uninstall. That copy carries the date the paid-up
+  /// period ends, written when the purchase was made and pushed forward by
+  /// every renewal the store delivers, so a cancelled subscription lapses on
+  /// its own rather than granting Pro for good. Restore still corrects us
+  /// if we drop someone too early.
   @override
   Future<bool?> hasActiveEntitlement() async {
     if (Platform.isAndroid) {
@@ -71,8 +120,9 @@ class StoreKitPurchase implements ProPurchase {
       }
     } catch (_) {}
     // Older iOS has no silent API. The Keychain copy outlives an uninstall,
-    // so a subscriber who reinstalls keeps Pro. It cannot see a
-    // cancellation; Restore is the way to correct that.
+    // so a subscriber who reinstalls keeps Pro, and the end date stamped
+    // alongside it means a cancelled subscription stops counting once its
+    // paid-up period runs out instead of lasting forever.
     return _cachedEntitlement();
   }
 
@@ -80,17 +130,14 @@ class StoreKitPurchase implements ProPurchase {
   ///
   /// On iOS the native side reads StoreKit's purchase history, which knows
   /// about a trial that was started and then cancelled, and survives an
-  /// uninstall. Android has no equivalent silent history here, so it falls
-  /// back to whether the account is subscribed now.
+  /// uninstall.
+  ///
+  /// Android has no equivalent here, and Play decides intro-offer
+  /// eligibility itself when it shows the sheet, so this answers no and
+  /// leaves [ProController] to fall back on its own saved record.
   @override
   Future<bool> trialConsumed() async {
-    if (Platform.isAndroid) {
-      try {
-        return await restore();
-      } catch (_) {
-        return false;
-      }
-    }
+    if (Platform.isAndroid) return false;
     try {
       return await _channel.invokeMethod<bool>('trialConsumed') ?? false;
     } catch (_) {
@@ -105,12 +152,63 @@ class StoreKitPurchase implements ProPurchase {
     } catch (_) {}
   }
 
+  /// How long one paid period runs, with a day's slack for a late renewal.
+  static Duration periodFor(ProPlan plan) {
+    return plan == ProPlan.monthly
+        ? const Duration(days: 31)
+        : const Duration(days: 366);
+  }
+
+  /// The introductory offer configured in App Store Connect: one month,
+  /// whichever plan carries it.
+  static const introPeriod = Duration(days: 31);
+
+  /// Apple keeps serving a subscription while it retries a failed payment,
+  /// so the stamp is deliberately generous. Being a few days late to notice
+  /// a lapse is cheaper than locking out someone who is paying.
+  static const gracePeriod = Duration(days: 3);
+
+  static ProPlan planOf(String productId) {
+    return productId == ProProducts.monthly ? ProPlan.monthly : ProPlan.yearly;
+  }
+
   /// Keeps the Keychain copy in step, so the next launch paints the right
   /// thing before the store has answered.
-  Future<void> cacheEntitlement({required bool entitled}) async {
+  ///
+  /// [until] is when this answer stops being worth trusting. Below iOS 15
+  /// nothing can silently notice a cancellation, and the Keychain outlives
+  /// an uninstall, so a yes with no end date would keep a lapsed trial on
+  /// Pro for good. Passing null leaves any date already stored alone.
+  Future<void> cacheEntitlement({
+    required bool entitled,
+    DateTime? until,
+    DateTime? basis,
+  }) async {
     try {
-      await _channel.invokeMethod<void>('writePro', entitled);
+      await _channel.invokeMethod<void>('writePro', <String, Object?>{
+        'entitled': entitled,
+        'untilMs': until?.millisecondsSinceEpoch,
+        'basisMs': basis?.millisecondsSinceEpoch,
+      });
     } catch (_) {}
+  }
+
+  /// The transaction the stored end date was worked out from.
+  ///
+  /// A restore replays the whole history, so without this there is no way to
+  /// tell a genuine renewal from the same old transaction coming round
+  /// again — and mistaking one for the other is what would hand a cancelled
+  /// yearly trial another year of Pro.
+  Future<DateTime?> _cachedBasis() async {
+    try {
+      final stamp = await _channel.invokeMapMethod<String, Object?>(
+        'readProStamp',
+      );
+      final ms = (stamp?['basisMs'] as num?)?.toInt();
+      return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<bool> _cachedEntitlement() async {
@@ -134,14 +232,32 @@ class StoreKitPurchase implements ProPurchase {
       throw StateError(missingProductsMessage);
     }
     final product = products.first;
-    final result = await _waitForResult(
-      start: () async {
-        await _submitBuy(product);
-      },
-    );
-    final bought = result == true;
+    // Asked before the sheet opens: if Apple still owes the introductory
+    // month, this purchase buys one month, not a whole plan period.
+    final hadTrialAlready = await trialConsumed();
+    IapEvent? event;
+    _inFlight = true;
+    try {
+      event = await _waitForEvent(
+        start: () async {
+          await _submitBuy(product);
+        },
+      );
+    } finally {
+      _inFlight = false;
+    }
+    final bought =
+        event != null &&
+        (event.status == IapStatus.purchased ||
+            event.status == IapStatus.restored);
     if (bought) {
-      await cacheEntitlement(entitled: true);
+      final period = hadTrialAlready ? periodFor(plan) : introPeriod;
+      final now = DateTime.now();
+      await cacheEntitlement(
+        entitled: true,
+        until: now.add(period + gracePeriod),
+        basis: event.transactionDate ?? now,
+      );
       await markTrialConsumed();
     }
     return bought;
@@ -165,20 +281,55 @@ class StoreKitPurchase implements ProPurchase {
   @override
   Future<bool> restore() async {
     if (!await _gateway.isAvailable()) return false;
-    final found = await _waitForResult(
-      start: _gateway.restore,
-      timeout: const Duration(seconds: 12),
-      treatEmptyAsFalse: true,
-    );
-    final restored = found == true;
+    IapEvent? event;
+    _inFlight = true;
+    try {
+      event = await _waitForEvent(
+        start: _gateway.restore,
+        timeout: const Duration(seconds: 12),
+      );
+    } finally {
+      _inFlight = false;
+    }
+    if (event == null) return false;
+    if (event.status != IapStatus.purchased &&
+        event.status != IapStatus.restored) {
+      return false;
+    }
+    // A restore hands back lapsed subscriptions too, so finding a
+    // transaction is not the same as being subscribed.
+    final at = event.transactionDate;
+    final basis = await _cachedBasis();
+    if (at != null && basis != null && !at.isAfter(basis)) {
+      // Nothing new: this is the transaction the stored end date already
+      // came from. A purchase knows whether it bought an introductory month
+      // or a full period and a replay does not, so the stored date stands.
+      await markTrialConsumed();
+      return _cachedEntitlement();
+    }
+    // When the store says when it last billed, a date older than a whole
+    // period means this is the wreckage of a cancelled plan, not a live one.
+    final until = _expiryFrom(event);
+    if (until != null && until.isBefore(DateTime.now())) {
+      await markTrialConsumed();
+      return false;
+    }
     // Only ever write a yes here. A restore that finds nothing may simply
     // have been signed into the wrong Apple ID, and that must not wipe a
     // subscription this device already knows about.
-    if (restored) {
-      await cacheEntitlement(entitled: true);
-      await markTrialConsumed();
-    }
-    return restored;
+    await cacheEntitlement(entitled: true, until: until, basis: at);
+    await markTrialConsumed();
+    return true;
+  }
+
+  /// When a restored transaction's period runs out, as far as we can tell.
+  ///
+  /// Null when the store gave no date; there the old behaviour stands and
+  /// the yes carries no end date.
+  static DateTime? _expiryFrom(IapEvent event) {
+    final at = event.transactionDate;
+    if (at == null) return null;
+    return at.add(periodFor(planOf(event.productId)) + gracePeriod);
   }
 
   @override
@@ -209,31 +360,38 @@ class StoreKitPurchase implements ProPurchase {
     );
   }
 
-  Future<bool?> _waitForResult({
+  /// Waits for the store to settle and hands back the event that decided it.
+  ///
+  /// A restore arrives as a batch covering the whole history of the
+  /// subscription, so the newest transaction in it wins: that is the last
+  /// time the store billed. Null means nothing arrived before the timeout.
+  Future<IapEvent?> _waitForEvent({
     required Future<void> Function() start,
     Duration timeout = const Duration(minutes: 2),
-    bool treatEmptyAsFalse = false,
   }) async {
-    final done = Completer<bool?>();
+    final done = Completer<IapEvent?>();
     final sub = _gateway.purchases.listen(
       (events) async {
+        IapEvent? best;
         for (final event in events) {
           if (event.status == IapStatus.pending) continue;
           try {
             await event.complete?.call();
           } catch (_) {}
           if (done.isCompleted) continue;
-          if (event.status == IapStatus.purchased ||
-              event.status == IapStatus.restored) {
-            done.complete(true);
-          } else if (event.status == IapStatus.canceled) {
-            done.complete(false);
-          } else if (event.status == IapStatus.error) {
+          if (event.status == IapStatus.error) {
             done.completeError(
               StateError(event.error ?? 'The App Store could not finish.'),
             );
+            return;
           }
+          if (event.status == IapStatus.canceled) {
+            best ??= event;
+            continue;
+          }
+          if (best == null || _isNewer(event, best)) best = event;
         }
+        if (best != null && !done.isCompleted) done.complete(best);
       },
       onError: (Object error) {
         if (!done.isCompleted) done.completeError(error);
@@ -241,13 +399,21 @@ class StoreKitPurchase implements ProPurchase {
     );
     try {
       await start();
-      return await done.future.timeout(
-        timeout,
-        onTimeout: () => treatEmptyAsFalse ? false : null,
-      );
+      return await done.future.timeout(timeout, onTimeout: () => null);
     } finally {
       await sub.cancel();
     }
+  }
+
+  /// A real purchase beats a cancellation, and the later date beats the
+  /// earlier one.
+  static bool _isNewer(IapEvent event, IapEvent best) {
+    if (best.status == IapStatus.canceled) return true;
+    final at = event.transactionDate;
+    final other = best.transactionDate;
+    if (at == null) return false;
+    if (other == null) return true;
+    return at.isAfter(other);
   }
 
   static bool _isDuplicateProduct(Object error) {

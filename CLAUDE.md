@@ -48,6 +48,8 @@ what a returning user is allowed to do must live somewhere else.
 | Scans used | Keychain `used_v1` / Android Downloads marker | yes |
 | Subscribed right now | StoreKit 2, Keychain `entitled_v1` | yes |
 | Free month already taken | StoreKit history, Keychain `trial_used_v1` | yes |
+| When Pro runs out | Keychain `entitled_until_v1` | yes |
+| Which transaction that came from | Keychain `entitled_basis_v1` | yes |
 | Period start date | SharedPreferences | no |
 
 Before adding any new "has the user already…" flag, put it in the Keychain
