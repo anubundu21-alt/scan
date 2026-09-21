@@ -255,4 +255,33 @@ void main() {
       'free scans left',
     );
   });
+
+  test('setUsedForTesting jumps to a spent starter pack', () async {
+    final quota = ScanQuotaController(MemoryQuotaStore());
+    await quota.ensureLoaded();
+    await quota.setUsedForTesting(ScanQuota.starterLimit);
+    expect(quota.state.used, ScanQuota.starterLimit);
+    expect(quota.state.starterDone, isTrue);
+    expect(quota.state.canCreate, isFalse);
+    expect(quota.state.remaining, 0);
+  });
+
+  test('setUsedForTesting can leave two scans', () async {
+    final quota = ScanQuotaController(MemoryQuotaStore());
+    await quota.ensureLoaded();
+    await quota.setUsedForTesting(ScanQuota.starterLimit - 2);
+    expect(quota.state.used, ScanQuota.starterLimit - 2);
+    expect(quota.state.remaining, 2);
+    expect(quota.state.nearlyOut, isTrue);
+    expect(quota.state.canCreate, isTrue);
+  });
+
+  test('setUsedForTesting can give the allowance back', () async {
+    final store = MemoryQuotaStore(used: ScanQuota.starterLimit, starterDone: true);
+    final quota = ScanQuotaController(store);
+    await quota.ensureLoaded();
+    await quota.setUsedForTesting(0);
+    expect(quota.state.used, 0);
+    expect(quota.state.canCreate, isTrue);
+  });
 }

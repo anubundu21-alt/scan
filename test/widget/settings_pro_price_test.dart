@@ -56,5 +56,6 @@ void main() {
     expect(find.textContaining(r'$4.99'), findsNothing);
     expect(find.textContaining('USD'), findsNothing);
     expect(find.textContaining(usd.monthlyLabel), findsNothing);
+    expect(find.text('Testing tools'), findsNothing);
   });
 }

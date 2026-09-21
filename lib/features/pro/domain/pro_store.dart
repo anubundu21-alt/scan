@@ -75,8 +75,10 @@ class ProController extends StateNotifier<ProState> {
     ProPurchase? purchase,
     LocalizedPricing pricing = const LocalizedPricing(),
     this.locale,
+    bool testingTools = const bool.fromEnvironment('SCANELLA_TESTING'),
   }) : _purchase = purchase ?? StoreKitPurchase(),
        _pricing = pricing,
+       _testingTools = testingTools,
        super(const ProState()) {
     restore();
   }
@@ -84,9 +86,13 @@ class ProController extends StateNotifier<ProState> {
   static const _entitlementKey = 'scanella.pro.entitled';
   static const _trialUsedKey = 'scanella.pro.trial_used';
 
+  /// Testing tools only. App Store builds never read this.
+  static const testingForceFreeKey = 'scanella.pro.testing_force_free';
+
   final ProPurchase _purchase;
   final LocalizedPricing _pricing;
   final Locale? locale;
+  final bool _testingTools;
 
   Future<void> restore() async {
     state = state.copyWith(busy: true, clearError: true);
@@ -94,17 +100,22 @@ class ProController extends StateNotifier<ProState> {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
+      final forceFree =
+          _testingTools && (prefs.getBool(testingForceFreeKey) ?? false);
       try {
         // Null means the store could not be reached, and the saved answer
         // has to stand — revoking Pro over a dropped connection would lock
         // out someone who is paying. A definite answer wins either way, so
         // a cancelled or refunded subscription does switch Pro off.
+        // A testing pin stays free even if the sandbox subscription is
+        // still live, so a TestFlight phone can walk the unpaid path.
         final live = await _purchase.hasActiveEntitlement();
-        if (live != null && live != entitled) {
+        if (!forceFree && live != null && live != entitled) {
           entitled = live;
           await prefs.setBool(_entitlementKey, live);
         }
       } catch (_) {}
+      if (forceFree) entitled = false;
 
       // SharedPreferences is wiped by an uninstall, so a lapsed subscriber
       // who reinstalls would otherwise be offered the introductory month a
@@ -179,6 +190,7 @@ class ProController extends StateNotifier<ProState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
+        await prefs.remove(testingForceFreeKey);
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,
@@ -209,6 +221,7 @@ class ProController extends StateNotifier<ProState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
+        await prefs.remove(testingForceFreeKey);
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,

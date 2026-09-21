@@ -261,6 +261,14 @@ platform :ios do
       dart_defines = "--dart-define=SCANELLA_CONVERT_API=#{Shellwords.escape(convert_api)} "
     end
 
+    # Compiles in the testing tools: shortcuts for walking the paid flow
+    # without waiting. Off unless asked for, so an App Store build never
+    # carries them.
+    if ENV["SCANELLA_TESTING"].to_s.strip == "true"
+      UI.important("Testing tools are ON in this build - do not ship it to the App Store")
+      dart_defines += "--dart-define=SCANELLA_TESTING=true "
+    end
+
     sh(
       "flutter build ipa --release " \
       "--build-number=#{build_number} --build-name=#{build_name} " \

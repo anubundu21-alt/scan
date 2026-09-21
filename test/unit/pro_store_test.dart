@@ -261,4 +261,69 @@ void main() {
     controller.clearError();
     expect(controller.state.error, isNull);
   });
+
+  LocalizedPricing _usPricing() {
+    return LocalizedPricing(
+      locate: () async => const GeoCurrency(
+        countryCode: 'US',
+        currencyCode: 'USD',
+        countryName: 'United States',
+      ),
+      ratesFor: (_) async => 1,
+    );
+  }
+
+  test('testing tools can pin a subscribed device as free', () async {
+    SharedPreferences.setMockInitialValues({
+      ProController.testingForceFreeKey: true,
+    });
+    final controller = ProController(
+      purchase: FakeProPurchase(entitled: true),
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isFalse);
+  });
+
+  test('without the testing pin, a live subscription stays Pro', () async {
+    final controller = ProController(
+      purchase: FakeProPurchase(entitled: true),
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isTrue);
+  });
+
+  test('an App Store build ignores the testing pin', () async {
+    SharedPreferences.setMockInitialValues({
+      ProController.testingForceFreeKey: true,
+    });
+    final controller = ProController(
+      purchase: FakeProPurchase(entitled: true),
+      pricing: _usPricing(),
+      testingTools: false,
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isTrue);
+  });
+
+  test('buying Pro drops the testing pin', () async {
+    SharedPreferences.setMockInitialValues({
+      ProController.testingForceFreeKey: true,
+    });
+    final controller = ProController(
+      purchase: FakeProPurchase(entitled: false),
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isFalse);
+
+    expect(await controller.subscribe(ProPlan.yearly), isTrue);
+    expect(controller.state.isPro, isTrue);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(ProController.testingForceFreeKey), isNot(isTrue));
+  });
 }
