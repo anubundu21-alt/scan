@@ -326,4 +326,47 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool(ProController.testingForceFreeKey), isNot(isTrue));
   });
+
+  test('a reinstall with testing pins stays free and shows the month', () async {
+    // Prefs are empty, as after an uninstall. The store still says this
+    // Apple ID is subscribed and has used the trial. The Keychain pins
+    // are what must keep the unpaid first-run screens on offer.
+    final purchase = FakeProPurchase(
+      entitled: true,
+      trialUsed: true,
+      introOffer: false,
+      testingForceFree: true,
+      testingOfferTrial: true,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+
+    expect(controller.state.isPro, isFalse);
+    expect(controller.state.trialUsed, isFalse);
+    expect(controller.state.canStartTrial, isTrue);
+    expect(purchase.entitlementChecks, 0);
+  });
+
+  test('without testing tools, Keychain pins do not hide a subscription', () async {
+    final purchase = FakeProPurchase(
+      entitled: true,
+      trialUsed: true,
+      introOffer: false,
+      testingForceFree: true,
+      testingOfferTrial: true,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+    );
+    await controller.restore();
+
+    expect(controller.state.isPro, isTrue);
+    expect(controller.state.canStartTrial, isFalse);
+    expect(purchase.entitlementChecks, greaterThan(0));
+  });
 }

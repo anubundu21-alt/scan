@@ -86,8 +86,9 @@ class ProController extends StateNotifier<ProState> {
   static const _entitlementKey = 'scanella.pro.entitled';
   static const _trialUsedKey = 'scanella.pro.trial_used';
 
-  /// Testing tools only. App Store builds never read this.
+  /// Testing tools only. App Store builds never read these.
   static const testingForceFreeKey = 'scanella.pro.testing_force_free';
+  static const testingOfferTrialKey = 'scanella.pro.testing_offer_trial';
 
   final ProPurchase _purchase;
   final LocalizedPricing _pricing;
@@ -100,19 +101,27 @@ class ProController extends StateNotifier<ProState> {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
-      final forceFree =
+      var forceFree =
           _testingTools && (prefs.getBool(testingForceFreeKey) ?? false);
+      var offerTrial =
+          _testingTools && (prefs.getBool(testingOfferTrialKey) ?? false);
+      if (_testingTools) {
+        try {
+          final pins = await _purchase.readTestingPins();
+          if (pins.forceFree) forceFree = true;
+          if (pins.offerTrial) offerTrial = true;
+        } catch (_) {}
+      }
       try {
-        // Null means the store could not be reached, and the saved answer
-        // has to stand — revoking Pro over a dropped connection would lock
-        // out someone who is paying. A definite answer wins either way, so
-        // a cancelled or refunded subscription does switch Pro off.
-        // A testing pin stays free even if the sandbox subscription is
-        // still live, so a TestFlight phone can walk the unpaid path.
-        final live = await _purchase.hasActiveEntitlement();
-        if (!forceFree && live != null && live != entitled) {
-          entitled = live;
-          await prefs.setBool(_entitlementKey, live);
+        // Asking the store also writes the Keychain copy. While a testing
+        // pin is on, skip that: it would stamp Pro back on, and a reinstall
+        // would look subscribed again.
+        if (!forceFree) {
+          final live = await _purchase.hasActiveEntitlement();
+          if (live != null && live != entitled) {
+            entitled = live;
+            await prefs.setBool(_entitlementKey, live);
+          }
         }
       } catch (_) {}
       if (forceFree) entitled = false;
@@ -121,11 +130,12 @@ class ProController extends StateNotifier<ProState> {
       // who reinstalls would otherwise be offered the introductory month a
       // second time and be charged straight away. Ask the store, which
       // remembers the trial even after it was cancelled.
-      if (!trialUsed) {
+      if (!offerTrial && !trialUsed) {
         try {
           if (await _purchase.trialConsumed()) trialUsed = true;
         } catch (_) {}
       }
+      if (offerTrial) trialUsed = false;
 
       LocalizedOffer? store;
       var storeReady = false;
@@ -146,7 +156,9 @@ class ProController extends StateNotifier<ProState> {
       );
 
       if (entitled && !trialUsed) trialUsed = true;
-      if (trialUsed && !(prefs.getBool(_trialUsedKey) ?? false)) {
+      if (!offerTrial &&
+          trialUsed &&
+          !(prefs.getBool(_trialUsedKey) ?? false)) {
         await prefs.setBool(_trialUsedKey, true);
         await _purchase.markTrialConsumed();
       }
@@ -155,14 +167,19 @@ class ProController extends StateNotifier<ProState> {
       // halves of it — is an offer configured, and is this account still
       // owed one — so a build with no offer set up in App Store Connect
       // quietly shows the plain price instead of promising a month that
-      // would bill straight away.
+      // would bill straight away. The testing pin is the exception: it
+      // only paints the first-time UI so a tester can walk the screens.
       var canStartTrial = false;
       if (!entitled) {
-        bool? eligible;
-        try {
-          eligible = await _purchase.introOfferAvailable();
-        } catch (_) {}
-        canStartTrial = eligible ?? !trialUsed;
+        if (offerTrial) {
+          canStartTrial = true;
+        } else {
+          bool? eligible;
+          try {
+            eligible = await _purchase.introOfferAvailable();
+          } catch (_) {}
+          canStartTrial = eligible ?? !trialUsed;
+        }
       }
 
       state = state.copyWith(
@@ -191,6 +208,8 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
         await prefs.remove(testingForceFreeKey);
+        await prefs.remove(testingOfferTrialKey);
+        await _purchase.writeTestingPins();
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,
@@ -222,6 +241,8 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
         await prefs.remove(testingForceFreeKey);
+        await prefs.remove(testingOfferTrialKey);
+        await _purchase.writeTestingPins();
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,

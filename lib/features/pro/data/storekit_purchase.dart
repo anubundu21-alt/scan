@@ -168,6 +168,34 @@ class StoreKitPurchase implements ProPurchase {
     }
   }
 
+  @override
+  Future<({bool forceFree, bool offerTrial})> readTestingPins() async {
+    try {
+      final pins = await _channel.invokeMapMethod<String, Object?>(
+        'readTestingPins',
+      );
+      return (
+        forceFree: pins?['forceFree'] == true,
+        offerTrial: pins?['offerTrial'] == true,
+      );
+    } catch (_) {
+      return (forceFree: false, offerTrial: false);
+    }
+  }
+
+  @override
+  Future<void> writeTestingPins({
+    bool forceFree = false,
+    bool offerTrial = false,
+  }) async {
+    try {
+      await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
+        'forceFree': forceFree,
+        'offerTrial': offerTrial,
+      });
+    } catch (_) {}
+  }
+
   /// How long one paid period runs, with a day's slack for a late renewal.
   static Duration periodFor(ProPlan plan) {
     return plan == ProPlan.monthly

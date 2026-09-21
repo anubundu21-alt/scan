@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
 import 'package:scan2/features/pro/domain/scan_quota.dart';
+import 'package:scan2/features/shared/providers/onboarding_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Shortcuts for walking the paid flow end to end without waiting.
 ///
 /// Compiled in only when the build was made with
 /// `--dart-define=SCANELLA_TESTING=true`, so an App Store build has no way
-/// to reach any of this. Nothing here grants Pro: the store decides that,
-/// and a tester still pays through the real Apple sheet. What it does is
-/// skip the waiting — burning an allowance instead of making ten documents,
-/// and forgetting what the device remembers so a reinstall can be tried
-/// without actually deleting the app.
+/// to reach any of this. Nothing here grants Pro: buying still goes through
+/// the real Apple sheet. What it does is skip the waiting, and pin this
+/// iPhone as a new free user somewhere an uninstall cannot wipe.
 class TestingTools {
   const TestingTools._();
 
@@ -28,15 +28,19 @@ class TestingTools {
   static const refreshSeenKey = 'scanella.quota.refresh_seen_ms';
   static const lowSeenKey = 'scanella.quota.low_seen_batch';
 
-  /// Wipes everything an uninstall would wipe, and the Keychain copies it
-  /// would not. Also pins this device as free until [listenToStoreAgain],
-  /// so a still-live sandbox subscription does not immediately put Pro
-  /// back on.
+  /// Pins this iPhone as a new free user until [listenToStoreAgain].
+  ///
+  /// The pins live in the Keychain so a delete-and-reinstall still looks
+  /// like a first install: Pro off, upgrade screen on, 1 month free shown.
+  /// Asking the store is skipped while they are on, because that write
+  /// would stamp Pro back and a reinstall would skip those screens again.
   static Future<void> forgetPro() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(entitlementKey);
     await prefs.remove(trialUsedKey);
     await prefs.setBool(ProController.testingForceFreeKey, true);
+    await prefs.setBool(ProController.testingOfferTrialKey, true);
+    await prefs.setBool(OnboardingNotifier.prefsKey, false);
     try {
       await _channel.invokeMethod<void>('writePro', <String, Object?>{
         'entitled': false,
@@ -44,13 +48,24 @@ class TestingTools {
         'basisMs': null,
       });
       await _channel.invokeMethod<void>('clearTrialUsed');
+      await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
+        'forceFree': true,
+        'offerTrial': true,
+      });
     } catch (_) {}
   }
 
-  /// Drops the testing pin so the next restore uses the store's answer.
+  /// Drops the testing pins so the next restore uses the store's answer.
   static Future<void> listenToStoreAgain() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(ProController.testingForceFreeKey);
+    await prefs.remove(ProController.testingOfferTrialKey);
+    try {
+      await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
+        'forceFree': false,
+        'offerTrial': false,
+      });
+    } catch (_) {}
   }
 
   /// Lets the one-off quota messages appear again.
@@ -87,6 +102,21 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
     );
   }
 
+  Future<void> _actAsNewFreeUser() {
+    return _run(
+      'This iPhone is a new free user. The upgrade screen is next.',
+      () async {
+        await TestingTools.forgetPro();
+        await TestingTools.forgetNotices();
+        await ref.read(scanQuotaProvider.notifier).resetForNewInstall();
+        await ref.read(proProvider.notifier).restore();
+        ref.read(onboardingCompletedProvider.notifier).reset();
+        if (!mounted) return;
+        context.go('/welcome');
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final quota = ref.watch(scanQuotaProvider);
@@ -110,6 +140,7 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
                   _Fact('Starter pack done', '${quota.starterDone}'),
                   _Fact('Pro', pro.isPro ? 'on' : 'off'),
                   _Fact('Free month taken', '${pro.trialUsed}'),
+                  _Fact('Show 1 month free', '${pro.canStartTrial}'),
                   _Fact(
                     'Resets',
                     quota.resetsAt == null
@@ -142,23 +173,18 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
           Text('Pro', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           _Action(
-            label: 'Forget Pro on this device',
+            label: 'Act as a new free user',
             detail:
-                'Turns Pro off here so you can try the free plan. A still-'
-                'live sandbox subscription will not put it back until you '
-                'tap Ask the store again, or buy.',
-            onTap: () => _run(
-              'Pro is off on this iPhone.',
-              () async {
-                await TestingTools.forgetPro();
-                await ref.read(proProvider.notifier).restore();
-              },
-            ),
+                'Turns Pro off, shows the 1 month free buttons, and opens '
+                'the first-run screens. Survives delete and reinstall. '
+                'Menu → Scanella Pro will say how many free scans are left, '
+                'not that Pro is on.',
+            onTap: _actAsNewFreeUser,
           ),
           _Action(
             label: 'Ask the store again',
             detail: 'Uses Apple’s answer. Pro comes back if the sandbox '
-                'subscription is still running.',
+                'subscription is still running, and the free month hides.',
             onTap: () => _run(
               'Asked.',
               () async {
@@ -187,10 +213,10 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
           ],
           const SizedBox(height: 24),
           Text(
-            'Nothing here grants Pro. Buying still goes through Apple, and '
-            'Apple still decides who is owed a free month. In TestFlight the '
-            'purchase is a sandbox one: no real money changes hands, and a '
-            'one-month plan runs out in about five minutes.',
+            'The 1 month free buttons are the first-time layout only. This '
+            'Apple ID already used the trial, so a real purchase still bills '
+            'the plan. Use a new sandbox Apple ID if you need Apple to grant '
+            'the month for real.',
             style: theme.textTheme.bodySmall,
           ),
         ],

@@ -11,7 +11,7 @@ class OnboardingNotifier extends StateNotifier<bool> {
     _restore();
   }
 
-  static const _key = 'onboarding.completed';
+  static const prefsKey = 'onboarding.completed';
   SharedPreferences? _prefs;
 
   /// Starts true so the first frame does not flash the welcome screen at
@@ -20,7 +20,7 @@ class OnboardingNotifier extends StateNotifier<bool> {
     try {
       final prefs = await SharedPreferences.getInstance();
       _prefs = prefs;
-      state = prefs.getBool(_key) ?? false;
+      state = prefs.getBool(prefsKey) ?? false;
     } catch (e) {
       debugPrint('Onboarding state unavailable: $e');
       state = true;
@@ -29,12 +29,12 @@ class OnboardingNotifier extends StateNotifier<bool> {
 
   void complete() {
     state = true;
-    _prefs?.setBool(_key, true);
+    _prefs?.setBool(prefsKey, true);
   }
 
   void reset() {
     state = false;
-    _prefs?.setBool(_key, false);
+    _prefs?.setBool(prefsKey, false);
   }
 }
 

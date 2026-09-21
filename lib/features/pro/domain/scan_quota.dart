@@ -408,6 +408,15 @@ class ScanQuotaController extends StateNotifier<ScanQuota> {
     await _applyWindow();
   }
 
+  /// Back to a brand-new install's allowance, for the testing tools only.
+  Future<void> resetForNewInstall() async {
+    await _store.writeUsed(0);
+    await _store.writePeriodStartMs(0);
+    await _store.writeStarterDone(false);
+    await _store.writeRefreshedAtMs(0);
+    state = const ScanQuota(used: 0, ready: true);
+  }
+
   /// Call after a new library document is actually created.
   Future<void> recordCreated() async {
     await ensureLoaded();

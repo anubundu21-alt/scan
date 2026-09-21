@@ -284,4 +284,20 @@ void main() {
     expect(quota.state.used, 0);
     expect(quota.state.canCreate, isTrue);
   });
+
+  test('resetForNewInstall restores the starter pack', () async {
+    final store = MemoryQuotaStore(
+      used: ScanQuota.starterLimit,
+      starterDone: true,
+      periodStartMs: DateTime(2026, 9, 1).millisecondsSinceEpoch,
+    );
+    final quota = ScanQuotaController(store);
+    await quota.ensureLoaded();
+    await quota.resetForNewInstall();
+    expect(quota.state.used, 0);
+    expect(quota.state.starterDone, isFalse);
+    expect(quota.state.limit, ScanQuota.starterLimit);
+    expect(quota.state.canCreate, isTrue);
+    expect(quota.state.periodStartedAt, isNull);
+  });
 }

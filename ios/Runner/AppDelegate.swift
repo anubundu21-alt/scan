@@ -51,6 +51,8 @@ private enum ScanellaProPlugin {
   static let untilAccount = "entitled_until_v1"
   static let basisAccount = "entitled_basis_v1"
   static let trialAccount = "trial_used_v1"
+  static let testingFreeAccount = "testing_force_free_v1"
+  static let testingTrialAccount = "testing_offer_trial_v1"
   static let productIds: Set<String> = [
     "scanella_pro_monthly", "scanella_pro_yearly",
   ]
@@ -104,6 +106,25 @@ private enum ScanellaProPlugin {
         // Testing tools only. Apple still decides who is owed the
         // introductory month; this only clears what the app remembers.
         writeFlag(false, account: trialAccount)
+        result(nil)
+      case "readTestingPins":
+        result([
+          "forceFree": readFlag(testingFreeAccount),
+          "offerTrial": readFlag(testingTrialAccount),
+        ] as [String: Bool])
+      case "writeTestingPins":
+        guard let args = call.arguments as? [String: Any] else {
+          result(
+            FlutterError(
+              code: "bad_args",
+              message: "forceFree and offerTrial are required",
+              details: nil
+            )
+          )
+          return
+        }
+        writeFlag(boolValue(args["forceFree"]), account: testingFreeAccount)
+        writeFlag(boolValue(args["offerTrial"]), account: testingTrialAccount)
         result(nil)
       case "readPro":
         result(readPro())
@@ -254,6 +275,12 @@ private enum ScanellaProPlugin {
   static func readFlag(_ account: String) -> Bool {
     guard let text = readText(account) else { return false }
     return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
+  }
+
+  static func boolValue(_ value: Any?) -> Bool {
+    if let flag = value as? Bool { return flag }
+    if let number = value as? NSNumber { return number.boolValue }
+    return false
   }
 
   static func writeFlag(_ on: Bool, account: String) {
