@@ -18,7 +18,8 @@ import 'package:scan2/features/pro/presentation/pro_paywall.dart' show ProMark;
 /// Apple gives that month once per subscription group. Someone who has taken
 /// it already — including a reinstall after a cancelled trial — is shown the
 /// plan price instead, because a "1 month FREE" button would charge them on
-/// the spot. [ProState.trialUsed] decides.
+/// the spot. [ProState.canStartTrial] decides, and it is the store's own
+/// answer wherever the store will give one.
 class ProIntroScreen extends ConsumerStatefulWidget {
   const ProIntroScreen({super.key, required this.onDone});
 
@@ -55,7 +56,9 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
           usdToLocal: 1,
           source: 'device',
         );
-    final firstTime = !pro.trialUsed;
+    // The store's answer, not a guess: an introductory offer has to exist
+    // and this Apple ID has to still be owed one.
+    final firstTime = pro.canStartTrial;
 
     return Theme(
       data: AppTheme.light,

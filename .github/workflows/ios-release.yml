@@ -20,10 +20,6 @@ on:
         description: 'Also upload to TestFlight'
         type: boolean
         default: true
-      testing_tools:
-        description: 'Include the in-app testing tools (never for an App Store build)'
-        type: boolean
-        default: false
 
 jobs:
   release:
@@ -110,7 +106,6 @@ jobs:
           BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
           BUILD_NAME: ${{ steps.version.outputs.build_name }}
           CONVERT_API_BASE_URL: ${{ vars.CONVERT_API_BASE_URL }}
-          SCANELLA_TESTING: ${{ github.event_name == 'workflow_dispatch' && inputs.testing_tools || false }}
           FASTLANE_SKIP_UPDATE_CHECK: '1'
           FASTLANE_DISABLE_COLORS: '1'
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}

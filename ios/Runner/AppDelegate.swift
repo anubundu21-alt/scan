@@ -78,6 +78,15 @@ private enum ScanellaProPlugin {
         } else {
           result(nil)
         }
+      case "introEligible":
+        if #available(iOS 15.0, *) {
+          Task {
+            let ok = await introOfferAvailable()
+            DispatchQueue.main.async { result(ok) }
+          }
+        } else {
+          result(nil)
+        }
       case "trialConsumed":
         if #available(iOS 15.0, *) {
           Task {
@@ -90,11 +99,6 @@ private enum ScanellaProPlugin {
         }
       case "markTrialUsed":
         writeFlag(true, account: trialAccount)
-        result(nil)
-      case "clearTrialUsed":
-        // Testing tools only. Apple still decides who is owed the
-        // introductory month; this only clears what the app remembers.
-        writeFlag(false, account: trialAccount)
         result(nil)
       case "readPro":
         result(readPro())
@@ -157,6 +161,30 @@ private enum ScanellaProPlugin {
     guard let latest = latest else { return (true, nil) }
     let withGrace = latest.addingTimeInterval(graceSeconds)
     return (true, withGrace.timeIntervalSince1970 * 1000)
+  }
+
+  /// Whether Apple would actually grant the introductory month right now.
+  ///
+  /// Two things have to be true and only the store knows either: an
+  /// introductory offer has to be configured in App Store Connect, and this
+  /// Apple ID has to still be owed one. Someone who started the month and
+  /// cancelled has already had it, so Apple says no and the app must not
+  /// promise it. If no offer is configured at all, this is false and the
+  /// app offers the plain plan instead of advertising a month that would
+  /// bill immediately.
+  @available(iOS 15.0, *)
+  static func introOfferAvailable() async -> Bool {
+    do {
+      let products = try await Product.products(for: Array(productIds))
+      for product in products {
+        guard let subscription = product.subscription else { continue }
+        guard subscription.introductoryOffer != nil else { continue }
+        if await subscription.isEligibleForIntroOffer { return true }
+      }
+    } catch {
+      return false
+    }
+    return false
   }
 
   /// Any transaction at all on a Scanella Pro product, current or lapsed.

@@ -19,6 +19,7 @@ class ProState {
     this.error,
     this.storeProductsReady = false,
     this.trialUsed = false,
+    this.canStartTrial = false,
   });
 
   final bool isPro;
@@ -36,6 +37,15 @@ class ProState {
   /// Apple will not give.
   final bool trialUsed;
 
+  /// Whether to offer the introductory month.
+  ///
+  /// The store's answer where there is one, because only it knows both
+  /// whether an offer is configured and whether this account is still owed
+  /// it. [trialUsed] is the fallback. False means the plain plan price is
+  /// what gets shown — never a free month the customer would be billed for
+  /// on the spot.
+  final bool canStartTrial;
+
   ProState copyWith({
     bool? isPro,
     LocalizedOffer? offer,
@@ -44,6 +54,7 @@ class ProState {
     bool clearError = false,
     bool? storeProductsReady,
     bool? trialUsed,
+    bool? canStartTrial,
   }) {
     return ProState(
       isPro: isPro ?? this.isPro,
@@ -52,6 +63,7 @@ class ProState {
       error: clearError ? null : (error ?? this.error),
       storeProductsReady: storeProductsReady ?? this.storeProductsReady,
       trialUsed: trialUsed ?? this.trialUsed,
+      canStartTrial: canStartTrial ?? this.canStartTrial,
     );
   }
 }
@@ -128,6 +140,20 @@ class ProController extends StateNotifier<ProState> {
         await _purchase.markTrialConsumed();
       }
 
+      // Whether to say "1 month free" anywhere. The store answers both
+      // halves of it — is an offer configured, and is this account still
+      // owed one — so a build with no offer set up in App Store Connect
+      // quietly shows the plain price instead of promising a month that
+      // would bill straight away.
+      var canStartTrial = false;
+      if (!entitled) {
+        bool? eligible;
+        try {
+          eligible = await _purchase.introOfferAvailable();
+        } catch (_) {}
+        canStartTrial = eligible ?? !trialUsed;
+      }
+
       state = state.copyWith(
         isPro: entitled,
         offer: offer,
@@ -135,6 +161,7 @@ class ProController extends StateNotifier<ProState> {
         storeProductsReady: storeReady,
         error: storeError,
         trialUsed: trialUsed,
+        canStartTrial: canStartTrial,
       );
     } catch (e) {
       state = state.copyWith(
@@ -153,7 +180,12 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
         await _purchase.markTrialConsumed();
-        state = state.copyWith(isPro: true, busy: false, trialUsed: true);
+        state = state.copyWith(
+          isPro: true,
+          busy: false,
+          trialUsed: true,
+          canStartTrial: false,
+        );
         return true;
       }
       state = state.copyWith(
@@ -178,7 +210,12 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_entitlementKey, true);
         await prefs.setBool(_trialUsedKey, true);
         await _purchase.markTrialConsumed();
-        state = state.copyWith(isPro: true, busy: false, trialUsed: true);
+        state = state.copyWith(
+          isPro: true,
+          busy: false,
+          trialUsed: true,
+          canStartTrial: false,
+        );
         return true;
       }
       state = state.copyWith(

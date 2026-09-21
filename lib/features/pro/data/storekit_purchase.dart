@@ -152,6 +152,22 @@ class StoreKitPurchase implements ProPurchase {
     } catch (_) {}
   }
 
+  /// Whether Apple would grant the introductory month right now.
+  ///
+  /// The store is the only thing that knows, and it answers for both halves
+  /// of the question: whether an offer is configured at all, and whether
+  /// this Apple ID has already had one. Null on older iOS and on Android,
+  /// where the app falls back to its own record.
+  @override
+  Future<bool?> introOfferAvailable() async {
+    if (Platform.isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<bool>('introEligible');
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// How long one paid period runs, with a day's slack for a late renewal.
   static Duration periodFor(ProPlan plan) {
     return plan == ProPlan.monthly

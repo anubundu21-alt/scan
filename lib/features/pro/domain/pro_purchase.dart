@@ -29,6 +29,14 @@ abstract class ProPurchase {
   /// reach.
   Future<void> markTrialConsumed();
 
+  /// Whether the store would actually grant the introductory month now.
+  ///
+  /// True only when an introductory offer exists AND this account is still
+  /// owed one, so it is false both for someone who has already taken the
+  /// month and when no offer is configured at all. Null when the store
+  /// could not answer, and the app falls back to its own record.
+  Future<bool?> introOfferAvailable();
+
   Future<bool> buy(ProPlan plan);
   Future<bool> restore();
   Future<LocalizedOffer?> storeOffer();
@@ -40,10 +48,14 @@ class FakeProPurchase implements ProPurchase {
     this.entitled = false,
     this.offer,
     this.trialUsed = false,
+    this.introOffer,
   });
 
   bool entitled;
   bool trialUsed;
+
+  /// What the store says about the introductory month; null for "no answer".
+  bool? introOffer;
   final LocalizedOffer? offer;
 
   @override
@@ -54,6 +66,9 @@ class FakeProPurchase implements ProPurchase {
 
   @override
   Future<void> markTrialConsumed() async => trialUsed = true;
+
+  @override
+  Future<bool?> introOfferAvailable() async => introOffer;
 
   @override
   Future<bool> buy(ProPlan plan) async {

@@ -97,6 +97,77 @@ void main() {
     expect(purchase.trialUsed, isTrue);
   });
 
+  test('no introductory offer configured means no free month is promised', () async {
+    // A brand new install, but App Store Connect has no offer set up.
+    final controller = ProController(
+      purchase: FakeProPurchase(trialUsed: false, introOffer: false),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.trialUsed, isFalse);
+    expect(controller.state.canStartTrial, isFalse);
+  });
+
+  test('the store can offer the month even when nothing is saved', () async {
+    final controller = ProController(
+      purchase: FakeProPurchase(trialUsed: false, introOffer: true),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.canStartTrial, isTrue);
+  });
+
+  test('a cancelled trial is not offered the month again', () async {
+    // Apple remembers, so it says no even though prefs are empty.
+    final controller = ProController(
+      purchase: FakeProPurchase(trialUsed: true, introOffer: false),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.canStartTrial, isFalse);
+  });
+
+  test('with no answer from the store, the saved record decides', () async {
+    final controller = ProController(
+      purchase: FakeProPurchase(trialUsed: false),
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+
+    expect(controller.state.canStartTrial, isTrue);
+  });
+
   test('Settings-style display drops USD store prices for a local country', () async {
     final controller = ProController(
       purchase: FakeProPurchase(

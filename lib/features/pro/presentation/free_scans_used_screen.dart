@@ -9,10 +9,11 @@ import 'package:scan2/features/pro/domain/scan_quota.dart';
 
 /// Shown when the free allowance runs out.
 ///
-/// Two versions of one screen. Someone who has never taken the introductory
-/// month is offered it; someone who has is offered the yearly plan instead,
-/// because Apple will not grant the month twice and a button promising one
-/// would be a lie. [ProState.trialUsed] decides which.
+/// Two versions of one screen. Someone Apple would still grant the
+/// introductory month is offered it; everyone else is offered the yearly
+/// plan instead, because a button promising a free month that bills on the
+/// spot is a lie. [ProState.canStartTrial] decides which, and it is the
+/// store's own answer wherever the store will give one.
 Future<bool> showFreeScansUsed(BuildContext context, WidgetRef ref) async {
   await ref.read(scanQuotaProvider.notifier).ensureLoaded();
   if (!context.mounted) return false;
@@ -56,7 +57,7 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
           usdToLocal: 1,
           source: 'device',
         );
-    final firstTime = !pro.trialUsed;
+    final firstTime = pro.canStartTrial;
 
     return Theme(
       data: AppTheme.light,

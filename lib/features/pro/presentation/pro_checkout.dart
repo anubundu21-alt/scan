@@ -40,24 +40,33 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           source: 'device',
         );
 
+    // Only when the store says Apple would really grant it. With no
+    // introductory offer configured, or for someone who has already had
+    // one, this is false and the plain plan price is what gets shown.
+    final freeMonth = pro.canStartTrial;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProPlanCard(
           selected: _plan == ProPlan.yearly,
-          title: 'Yearly',
+          title: freeMonth ? '1 month free' : 'Yearly',
           price: offer.yearlyLabel,
-          detail: '${offer.yearlyPerMonthLabel} / month · save '
-              '${offer.yearlySavingsPercent}%',
+          detail: freeMonth
+              ? 'then ${offer.yearlyLabel} / year · cancel any time'
+              : '${offer.yearlyPerMonthLabel} / month · save '
+                    '${offer.yearlySavingsPercent}%',
           badge: 'Best value',
           onTap: () => _select(ProPlan.yearly),
         ),
         const SizedBox(height: 10),
         ProPlanCard(
           selected: _plan == ProPlan.monthly,
-          title: 'Monthly',
+          title: freeMonth ? '1 month free' : 'Monthly',
           price: offer.monthlyLabel,
-          detail: 'Cancel any time',
+          detail: freeMonth
+              ? 'then ${offer.monthlyLabel} / month'
+              : 'Cancel any time',
           onTap: () => _select(ProPlan.monthly),
         ),
         if (pro.error != null) ...[
@@ -96,7 +105,11 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
                     if (ok && context.mounted) widget.onSubscribed?.call();
                   },
             child: Text(
-              pro.isPro ? 'You have Scanella Pro' : 'Upgrade Now',
+              pro.isPro
+                  ? 'You have Scanella Pro'
+                  : freeMonth
+                  ? 'Start 1 Month Free Trial'
+                  : 'Upgrade Now',
             ),
           ),
         ),
@@ -114,7 +127,11 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           ),
         ),
         Text(
-          'Payment uses your Apple ID. Scanella never sees your card.',
+          freeMonth
+              ? 'Free for one month, then it renews automatically until you '
+                    'cancel. Payment uses your Apple ID. Scanella never sees '
+                    'your card.'
+              : 'Payment uses your Apple ID. Scanella never sees your card.',
           textAlign: TextAlign.center,
           style: theme.textTheme.labelSmall,
         ),
