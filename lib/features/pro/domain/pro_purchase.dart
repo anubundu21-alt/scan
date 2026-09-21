@@ -71,7 +71,7 @@ abstract class ProPurchase {
 }
 
 /// In-memory purchase used by widget tests.
-class FakeProPurchase implements ProPurchase {
+class FakeProPurchase extends ProPurchase {
   FakeProPurchase({
     this.entitled = false,
     this.offer,
@@ -108,6 +108,10 @@ class FakeProPurchase implements ProPurchase {
 
   @override
   Future<bool?> introOfferAvailable() async => introOffer;
+
+  @override
+  Future<IntroEligibility> introEligibility() async =>
+      IntroEligibility(monthly: introOffer, yearly: introOffer);
 
   @override
   Future<bool> buy(ProPlan plan) async {
