@@ -218,6 +218,28 @@ class ProController extends StateNotifier<ProState> {
         );
         return true;
       }
+      // A restore that finds nothing is also the customer asking why the
+      // app thinks they are subscribed. Where the store gives a definite
+      // no — StoreKit 2 does — the saved yes is simply wrong and Pro goes
+      // off. An unsure answer comes back null and changes nothing, so a
+      // dropped connection cannot take Pro away from someone paying.
+      bool? live;
+      try {
+        live = await _purchase.hasActiveEntitlement();
+      } catch (_) {}
+      if (live == false) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_entitlementKey, false);
+        state = state.copyWith(
+          isPro: false,
+          busy: false,
+          error: state.isPro
+              ? 'This Apple ID has no Scanella Pro subscription, so Pro has '
+                    'been switched off on this iPhone.'
+              : 'No Pro purchase found for this Apple ID.',
+        );
+        return false;
+      }
       state = state.copyWith(
         busy: false,
         error: 'No Pro purchase found for this Apple ID.',

@@ -168,6 +168,32 @@ void main() {
     expect(controller.state.canStartTrial, isTrue);
   });
 
+  test('Restore switches Pro off when the store says there is none', () async {
+    SharedPreferences.setMockInitialValues({'scanella.pro.entitled': true});
+    final purchase = FakeProPurchase(entitled: false);
+    final controller = ProController(
+      purchase: purchase,
+      pricing: LocalizedPricing(
+        locate: () async => const GeoCurrency(
+          countryCode: 'US',
+          currencyCode: 'USD',
+          countryName: 'United States',
+        ),
+        ratesFor: (_) async => 1,
+      ),
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isFalse);
+
+    // Pretend the saved answer is stale and the store is reachable.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('scanella.pro.entitled', true);
+    expect(await controller.restorePurchases(), isFalse);
+
+    expect(controller.state.isPro, isFalse);
+    expect(prefs.getBool('scanella.pro.entitled'), isFalse);
+  });
+
   test('Settings-style display drops USD store prices for a local country', () async {
     final controller = ProController(
       purchase: FakeProPurchase(
