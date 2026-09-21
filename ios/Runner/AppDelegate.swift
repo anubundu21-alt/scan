@@ -53,6 +53,7 @@ private enum ScanellaProPlugin {
   static let trialAccount = "trial_used_v1"
   static let testingFreeAccount = "testing_force_free_v1"
   static let testingTrialAccount = "testing_offer_trial_v1"
+  static let testingUseStoreAccount = "testing_use_store_v1"
   static let productIds: Set<String> = [
     "scanella_pro_monthly", "scanella_pro_yearly",
   ]
@@ -111,13 +112,14 @@ private enum ScanellaProPlugin {
         result([
           "forceFree": readFlag(testingFreeAccount),
           "offerTrial": readFlag(testingTrialAccount),
+          "useStore": readFlag(testingUseStoreAccount),
         ] as [String: Bool])
       case "writeTestingPins":
         guard let args = call.arguments as? [String: Any] else {
           result(
             FlutterError(
               code: "bad_args",
-              message: "forceFree and offerTrial are required",
+              message: "forceFree, offerTrial and useStore are required",
               details: nil
             )
           )
@@ -125,6 +127,7 @@ private enum ScanellaProPlugin {
         }
         writeFlag(boolValue(args["forceFree"]), account: testingFreeAccount)
         writeFlag(boolValue(args["offerTrial"]), account: testingTrialAccount)
+        writeFlag(boolValue(args["useStore"]), account: testingUseStoreAccount)
         result(nil)
       case "readPro":
         result(readPro())

@@ -79,7 +79,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => FreeAccessScreen(
           // Someone who already has Pro has no free allowance to explain and
           // no offer to see, so both screens are skipped for them.
-          onContinue: () => ref.read(proProvider).isPro
+          onContinue: () =>
+              ref.read(proProvider).isPro && !ref.read(proProvider).testingBuild
               ? _leaveIntro(context, ref)
               : context.go('/pro-intro'),
         ),

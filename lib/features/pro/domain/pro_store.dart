@@ -20,6 +20,7 @@ class ProState {
     this.storeProductsReady = false,
     this.trialUsed = false,
     this.canStartTrial = false,
+    this.testingBuild = false,
   });
 
   final bool isPro;
@@ -43,8 +44,14 @@ class ProState {
   /// whether an offer is configured and whether this account is still owed
   /// it. [trialUsed] is the fallback. False means the plain plan price is
   /// what gets shown — never a free month the customer would be billed for
-  /// on the spot.
+  /// on the spot. A TestFlight testing build paints the first-time layout
+  /// anyway, so the screens can be walked on an Apple ID that already used
+  /// the real month.
   final bool canStartTrial;
+
+  /// Compiled in only for TestFlight testing tools. Lets onboarding still
+  /// show the upgrade screen so a tester can see it.
+  final bool testingBuild;
 
   ProState copyWith({
     bool? isPro,
@@ -55,6 +62,7 @@ class ProState {
     bool? storeProductsReady,
     bool? trialUsed,
     bool? canStartTrial,
+    bool? testingBuild,
   }) {
     return ProState(
       isPro: isPro ?? this.isPro,
@@ -64,6 +72,7 @@ class ProState {
       storeProductsReady: storeProductsReady ?? this.storeProductsReady,
       trialUsed: trialUsed ?? this.trialUsed,
       canStartTrial: canStartTrial ?? this.canStartTrial,
+      testingBuild: testingBuild ?? this.testingBuild,
     );
   }
 }
@@ -89,6 +98,7 @@ class ProController extends StateNotifier<ProState> {
   /// Testing tools only. App Store builds never read these.
   static const testingForceFreeKey = 'scanella.pro.testing_force_free';
   static const testingOfferTrialKey = 'scanella.pro.testing_offer_trial';
+  static const testingUseStoreKey = 'scanella.pro.testing_use_store';
 
   final ProPurchase _purchase;
   final LocalizedPricing _pricing;
@@ -101,16 +111,24 @@ class ProController extends StateNotifier<ProState> {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
-      var forceFree =
-          _testingTools && (prefs.getBool(testingForceFreeKey) ?? false);
-      var offerTrial =
-          _testingTools && (prefs.getBool(testingOfferTrialKey) ?? false);
+      // A testing TestFlight walks the unpaid first-run by default, including
+      // the 1 month free layout. Apple will not grant that month again on
+      // this Apple ID; the buttons are how the screens are tested. "Ask the
+      // store again" turns [testingUseStoreKey] on and uses Apple for real.
+      var useStore =
+          _testingTools && (prefs.getBool(testingUseStoreKey) ?? false);
+      var forceFree = false;
+      var offerTrial = false;
       if (_testingTools) {
         try {
           final pins = await _purchase.readTestingPins();
-          if (pins.forceFree) forceFree = true;
-          if (pins.offerTrial) offerTrial = true;
+          if (pins.useStore) useStore = true;
+          if (pins.forceFree || pins.offerTrial) useStore = false;
         } catch (_) {}
+        if (!useStore) {
+          forceFree = true;
+          offerTrial = true;
+        }
       }
       try {
         // Asking the store also writes the Keychain copy. While a testing
@@ -190,6 +208,7 @@ class ProController extends StateNotifier<ProState> {
         error: storeError,
         trialUsed: trialUsed,
         canStartTrial: canStartTrial,
+        testingBuild: _testingTools,
       );
     } catch (e) {
       state = state.copyWith(
@@ -209,7 +228,8 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_trialUsedKey, true);
         await prefs.remove(testingForceFreeKey);
         await prefs.remove(testingOfferTrialKey);
-        await _purchase.writeTestingPins();
+        await prefs.setBool(testingUseStoreKey, true);
+        await _purchase.writeTestingPins(useStore: true);
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,
@@ -242,7 +262,8 @@ class ProController extends StateNotifier<ProState> {
         await prefs.setBool(_trialUsedKey, true);
         await prefs.remove(testingForceFreeKey);
         await prefs.remove(testingOfferTrialKey);
-        await _purchase.writeTestingPins();
+        await prefs.setBool(testingUseStoreKey, true);
+        await _purchase.writeTestingPins(useStore: true);
         await _purchase.markTrialConsumed();
         state = state.copyWith(
           isPro: true,

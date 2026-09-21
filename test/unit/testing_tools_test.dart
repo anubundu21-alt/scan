@@ -46,6 +46,7 @@ void main() {
     expect(pins.arguments, {
       'forceFree': true,
       'offerTrial': true,
+      'useStore': false,
     });
   });
 
@@ -55,10 +56,12 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.containsKey(ProController.testingForceFreeKey), isFalse);
     expect(prefs.containsKey(ProController.testingOfferTrialKey), isFalse);
+    expect(prefs.getBool(ProController.testingUseStoreKey), isTrue);
     final pins = calls.lastWhere((c) => c.method == 'writeTestingPins');
     expect(pins.arguments, {
       'forceFree': false,
       'offerTrial': false,
+      'useStore': true,
     });
   });
 

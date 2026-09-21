@@ -42,12 +42,14 @@ abstract class ProPurchase {
   Future<LocalizedOffer?> storeOffer();
 
   /// Testing tools only. Survives an uninstall because it lives in Keychain.
-  Future<({bool forceFree, bool offerTrial})> readTestingPins() async =>
-      (forceFree: false, offerTrial: false);
+  Future<({bool forceFree, bool offerTrial, bool useStore})>
+      readTestingPins() async =>
+          (forceFree: false, offerTrial: false, useStore: false);
 
   Future<void> writeTestingPins({
     bool forceFree = false,
     bool offerTrial = false,
+    bool useStore = false,
   }) async {}
 }
 
@@ -60,6 +62,7 @@ class FakeProPurchase implements ProPurchase {
     this.introOffer,
     this.testingForceFree = false,
     this.testingOfferTrial = false,
+    this.testingUseStore = false,
   });
 
   bool entitled;
@@ -70,6 +73,7 @@ class FakeProPurchase implements ProPurchase {
   bool? introOffer;
   bool testingForceFree;
   bool testingOfferTrial;
+  bool testingUseStore;
   final LocalizedOffer? offer;
 
   @override
@@ -93,6 +97,7 @@ class FakeProPurchase implements ProPurchase {
     trialUsed = true;
     testingForceFree = false;
     testingOfferTrial = false;
+    testingUseStore = true;
     return true;
   }
 
@@ -103,15 +108,21 @@ class FakeProPurchase implements ProPurchase {
   Future<LocalizedOffer?> storeOffer() async => offer;
 
   @override
-  Future<({bool forceFree, bool offerTrial})> readTestingPins() async =>
-      (forceFree: testingForceFree, offerTrial: testingOfferTrial);
+  Future<({bool forceFree, bool offerTrial, bool useStore})>
+      readTestingPins() async => (
+            forceFree: testingForceFree,
+            offerTrial: testingOfferTrial,
+            useStore: testingUseStore,
+          );
 
   @override
   Future<void> writeTestingPins({
     bool forceFree = false,
     bool offerTrial = false,
+    bool useStore = false,
   }) async {
     testingForceFree = forceFree;
     testingOfferTrial = offerTrial;
+    testingUseStore = useStore;
   }
 }

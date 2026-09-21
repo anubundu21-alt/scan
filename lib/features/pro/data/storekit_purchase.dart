@@ -169,7 +169,8 @@ class StoreKitPurchase implements ProPurchase {
   }
 
   @override
-  Future<({bool forceFree, bool offerTrial})> readTestingPins() async {
+  Future<({bool forceFree, bool offerTrial, bool useStore})>
+      readTestingPins() async {
     try {
       final pins = await _channel.invokeMapMethod<String, Object?>(
         'readTestingPins',
@@ -177,9 +178,10 @@ class StoreKitPurchase implements ProPurchase {
       return (
         forceFree: pins?['forceFree'] == true,
         offerTrial: pins?['offerTrial'] == true,
+        useStore: pins?['useStore'] == true,
       );
     } catch (_) {
-      return (forceFree: false, offerTrial: false);
+      return (forceFree: false, offerTrial: false, useStore: false);
     }
   }
 
@@ -187,11 +189,13 @@ class StoreKitPurchase implements ProPurchase {
   Future<void> writeTestingPins({
     bool forceFree = false,
     bool offerTrial = false,
+    bool useStore = false,
   }) async {
     try {
       await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
         'forceFree': forceFree,
         'offerTrial': offerTrial,
+        'useStore': useStore,
       });
     } catch (_) {}
   }

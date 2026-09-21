@@ -273,6 +273,25 @@ void main() {
     );
   }
 
+  test('a testing build shows the trial without tapping anything', () async {
+    final purchase = FakeProPurchase(
+      entitled: true,
+      trialUsed: true,
+      introOffer: false,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+
+    expect(controller.state.isPro, isFalse);
+    expect(controller.state.canStartTrial, isTrue);
+    expect(controller.state.testingBuild, isTrue);
+    expect(purchase.entitlementChecks, 0);
+  });
+
   test('testing tools can pin a subscribed device as free', () async {
     SharedPreferences.setMockInitialValues({
       ProController.testingForceFreeKey: true,
@@ -286,14 +305,15 @@ void main() {
     expect(controller.state.isPro, isFalse);
   });
 
-  test('without the testing pin, a live subscription stays Pro', () async {
+  test('Ask the store again uses a live subscription', () async {
     final controller = ProController(
-      purchase: FakeProPurchase(entitled: true),
+      purchase: FakeProPurchase(entitled: true, testingUseStore: true),
       pricing: _usPricing(),
       testingTools: true,
     );
     await controller.restore();
     expect(controller.state.isPro, isTrue);
+    expect(controller.state.canStartTrial, isFalse);
   });
 
   test('an App Store build ignores the testing pin', () async {

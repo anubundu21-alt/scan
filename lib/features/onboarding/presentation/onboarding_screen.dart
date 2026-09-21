@@ -31,7 +31,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // has Pro has neither a free allowance to explain nor an offer to see,
     // so they go straight in. There is still no account and no login: the
     // only wall in front of this scanner is one you can close.
-    if (ref.read(proProvider).isPro) {
+    if (ref.read(proProvider).isPro && !ref.read(proProvider).testingBuild) {
       ref.read(onboardingCompletedProvider.notifier).complete();
       context.go('/library');
       return;

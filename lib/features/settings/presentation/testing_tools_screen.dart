@@ -40,6 +40,7 @@ class TestingTools {
     await prefs.remove(trialUsedKey);
     await prefs.setBool(ProController.testingForceFreeKey, true);
     await prefs.setBool(ProController.testingOfferTrialKey, true);
+    await prefs.remove(ProController.testingUseStoreKey);
     await prefs.setBool(OnboardingNotifier.prefsKey, false);
     try {
       await _channel.invokeMethod<void>('writePro', <String, Object?>{
@@ -51,19 +52,22 @@ class TestingTools {
       await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
         'forceFree': true,
         'offerTrial': true,
+        'useStore': false,
       });
     } catch (_) {}
   }
 
-  /// Drops the testing pins so the next restore uses the store's answer.
+  /// Drops the testing walk so the next restore uses the store's answer.
   static Future<void> listenToStoreAgain() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(ProController.testingForceFreeKey);
     await prefs.remove(ProController.testingOfferTrialKey);
+    await prefs.setBool(ProController.testingUseStoreKey, true);
     try {
       await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
         'forceFree': false,
         'offerTrial': false,
+        'useStore': true,
       });
     } catch (_) {}
   }
@@ -175,10 +179,10 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
           _Action(
             label: 'Act as a new free user',
             detail:
-                'Turns Pro off, shows the 1 month free buttons, and opens '
-                'the first-run screens. Survives delete and reinstall. '
-                'Menu → Scanella Pro will say how many free scans are left, '
-                'not that Pro is on.',
+                'Replays welcome → free scans → the last upgrade screen '
+                'with 1 month free. This TestFlight already shows the trial '
+                'layout without this; use it when you want those screens '
+                'again.',
             onTap: _actAsNewFreeUser,
           ),
           _Action(
