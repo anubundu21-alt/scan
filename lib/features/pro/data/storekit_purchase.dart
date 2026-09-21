@@ -160,12 +160,37 @@ class StoreKitPurchase implements ProPurchase {
   /// where the app falls back to its own record.
   @override
   Future<bool?> introOfferAvailable() async {
-    if (Platform.isAndroid) return null;
-    try {
-      return await _channel.invokeMethod<bool>('introEligible');
-    } catch (_) {
-      return null;
+    final eligibility = await introEligibility();
+    if (eligibility.monthly == true || eligibility.yearly == true) {
+      return true;
     }
+    if (eligibility.monthly == false && eligibility.yearly == false) {
+      return false;
+    }
+    return null;
+  }
+
+  @override
+  Future<IntroEligibility> introEligibility() async {
+    if (Platform.isAndroid) return const IntroEligibility();
+    try {
+      final map = await _channel.invokeMapMethod<String, Object?>(
+        'introEligibility',
+      );
+      if (map == null) return const IntroEligibility();
+      return IntroEligibility(
+        monthly: _flag(map[ProProducts.monthly]),
+        yearly: _flag(map[ProProducts.yearly]),
+      );
+    } catch (_) {
+      return const IntroEligibility();
+    }
+  }
+
+  static bool? _flag(Object? value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    return null;
   }
 
   @override

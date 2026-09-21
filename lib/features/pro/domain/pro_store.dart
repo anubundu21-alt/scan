@@ -100,6 +100,14 @@ class ProController extends StateNotifier<ProState> {
   static const testingOfferTrialKey = 'scanella.pro.testing_offer_trial';
   static const testingUseStoreKey = 'scanella.pro.testing_use_store';
 
+  /// Shown instead of Apple’s sheet when the app painted a free month that
+  /// this Apple ID is not owed. The payment window is Apple’s: the date on
+  /// it cannot be changed from here.
+  static const trialWouldChargeTodayMessage =
+      'This Apple ID already used the 1 month free, so Apple would charge '
+      'today. To test a real trial, open iPhone Settings → App Store → '
+      'Sandbox Account and sign in with a new sandbox tester, then try again.';
+
   final ProPurchase _purchase;
   final LocalizedPricing _pricing;
   final Locale? locale;
@@ -221,6 +229,19 @@ class ProController extends StateNotifier<ProState> {
   Future<bool> subscribe(ProPlan plan) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
+      // The Apple sheet decides the billing date. If this account is not
+      // owed a free month, opening it after a "Start trial" button would
+      // charge today. Do not open it.
+      if (state.canStartTrial) {
+        final eligible = (await _purchase.introEligibility()).forPlan(plan);
+        if (eligible == false) {
+          state = state.copyWith(
+            busy: false,
+            error: trialWouldChargeTodayMessage,
+          );
+          return false;
+        }
+      }
       final ok = await _purchase.buy(plan);
       if (ok) {
         final prefs = await SharedPreferences.getInstance();

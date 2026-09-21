@@ -90,6 +90,15 @@ private enum ScanellaProPlugin {
         } else {
           result(nil)
         }
+      case "introEligibility":
+        if #available(iOS 15.0, *) {
+          Task {
+            let map = await introEligibility()
+            DispatchQueue.main.async { result(map) }
+          }
+        } else {
+          result(nil)
+        }
       case "trialConsumed":
         if #available(iOS 15.0, *) {
           Task {
@@ -202,18 +211,28 @@ private enum ScanellaProPlugin {
   /// app offers the plain plan instead of advertising a month that would
   /// bill immediately.
   @available(iOS 15.0, *)
-  static func introOfferAvailable() async -> Bool {
+  static func introEligibility() async -> [String: Bool] {
+    var out: [String: Bool] = [
+      "scanella_pro_monthly": false,
+      "scanella_pro_yearly": false,
+    ]
     do {
       let products = try await Product.products(for: Array(productIds))
       for product in products {
         guard let subscription = product.subscription else { continue }
         guard subscription.introductoryOffer != nil else { continue }
-        if await subscription.isEligibleForIntroOffer { return true }
+        out[product.id] = await subscription.isEligibleForIntroOffer
       }
     } catch {
-      return false
+      return out
     }
-    return false
+    return out
+  }
+
+  @available(iOS 15.0, *)
+  static func introOfferAvailable() async -> Bool {
+    let map = await introEligibility()
+    return map.values.contains(true)
   }
 
   /// Any transaction at all on a Scanella Pro product, current or lapsed.

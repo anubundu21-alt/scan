@@ -389,4 +389,40 @@ void main() {
     expect(controller.state.canStartTrial, isFalse);
     expect(purchase.entitlementChecks, greaterThan(0));
   });
+
+  test('Start trial does not open Apple when this Apple ID already used it', () async {
+    final purchase = FakeProPurchase(
+      entitled: false,
+      trialUsed: true,
+      introOffer: false,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+    expect(controller.state.canStartTrial, isTrue);
+
+    expect(await controller.subscribe(ProPlan.yearly), isFalse);
+    expect(purchase.buyCalls, 0);
+    expect(controller.state.error, ProController.trialWouldChargeTodayMessage);
+  });
+
+  test('Start trial still buys when Apple would grant the month', () async {
+    final purchase = FakeProPurchase(
+      entitled: false,
+      introOffer: true,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+
+    expect(await controller.subscribe(ProPlan.yearly), isTrue);
+    expect(purchase.buyCalls, 1);
+    expect(controller.state.isPro, isTrue);
+  });
 }

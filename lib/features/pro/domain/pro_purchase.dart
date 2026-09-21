@@ -2,6 +2,17 @@ import 'package:scan2/features/pro/domain/localized_pricing.dart';
 
 enum ProPlan { monthly, yearly }
 
+/// Whether Apple would grant the introductory month on each plan.
+class IntroEligibility {
+  const IntroEligibility({this.monthly, this.yearly});
+
+  final bool? monthly;
+  final bool? yearly;
+
+  bool? forPlan(ProPlan plan) =>
+      plan == ProPlan.monthly ? monthly : yearly;
+}
+
 /// Product identifiers to create in App Store Connect / Play Console.
 class ProProducts {
   static const monthly = 'scanella_pro_monthly';
@@ -37,6 +48,12 @@ abstract class ProPurchase {
   /// could not answer, and the app falls back to its own record.
   Future<bool?> introOfferAvailable();
 
+  /// Per-plan answer for [introOfferAvailable].
+  Future<IntroEligibility> introEligibility() async {
+    final any = await introOfferAvailable();
+    return IntroEligibility(monthly: any, yearly: any);
+  }
+
   Future<bool> buy(ProPlan plan);
   Future<bool> restore();
   Future<LocalizedOffer?> storeOffer();
@@ -68,6 +85,7 @@ class FakeProPurchase implements ProPurchase {
   bool entitled;
   bool trialUsed;
   int entitlementChecks = 0;
+  int buyCalls = 0;
 
   /// What the store says about the introductory month; null for "no answer".
   bool? introOffer;
@@ -93,6 +111,7 @@ class FakeProPurchase implements ProPurchase {
 
   @override
   Future<bool> buy(ProPlan plan) async {
+    buyCalls += 1;
     entitled = true;
     trialUsed = true;
     testingForceFree = false;
