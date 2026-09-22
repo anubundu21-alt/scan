@@ -312,13 +312,39 @@ void main() {
 
   test('Ask the store again uses a live subscription', () async {
     final controller = ProController(
-      purchase: FakeProPurchase(entitled: true, testingUseStore: true),
+      purchase: FakeProPurchase(
+        entitled: true,
+        testingUseStore: true,
+        courtesyUsed: true,
+      ),
       pricing: _usPricing(),
       testingTools: true,
     );
     await controller.restore();
     expect(controller.state.isPro, isTrue);
     expect(controller.state.canStartTrial, isFalse);
+  });
+
+  test('leftover store Pro does not skip the 7-day tap', () async {
+    final purchase = FakeProPurchase(
+      entitled: true,
+      trialUsed: true,
+      introOffer: false,
+      testingUseStore: true,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      testingTools: true,
+    );
+    await controller.restore();
+
+    expect(controller.state.isPro, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
+
+    expect(await controller.startOfferedTrialOrSubscribe(ProPlan.yearly), isTrue);
+    expect(purchase.buyCalls, 0);
+    expect(controller.state.isPro, isTrue);
   });
 
   test('an App Store build ignores the testing pin', () async {

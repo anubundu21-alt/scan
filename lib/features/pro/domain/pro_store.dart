@@ -141,6 +141,17 @@ class ProController extends StateNotifier<ProState> {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
+
+      var courtesyUsed = false;
+      DateTime? courtesyUntil;
+      try {
+        final courtesy = await _purchase.readCourtesyTrial();
+        courtesyUsed = courtesy.used;
+        courtesyUntil = courtesy.until;
+      } catch (_) {}
+      final courtesyActive = courtesyUntil != null &&
+          courtesyUntil.isAfter(_now());
+
       var useStore =
           _testingTools && (prefs.getBool(testingUseStoreKey) ?? false);
       var forceFree = false;
@@ -153,7 +164,11 @@ class ProController extends StateNotifier<ProState> {
           if (pins.forceFree) forceFree = true;
           if (pins.offerTrial) offerTrial = true;
         } catch (_) {}
-        if (!useStore) {
+        // Leftover Apple / Keychain Pro must not skip the 7-day tap.
+        if (!courtesyUsed) {
+          forceFree = true;
+          useStore = false;
+        } else if (!useStore) {
           forceFree = true;
         }
       }
@@ -227,15 +242,6 @@ class ProController extends StateNotifier<ProState> {
         }
       }
 
-      var courtesyUsed = false;
-      DateTime? courtesyUntil;
-      try {
-        final courtesy = await _purchase.readCourtesyTrial();
-        courtesyUsed = courtesy.used;
-        courtesyUntil = courtesy.until;
-      } catch (_) {}
-      final courtesyActive = courtesyUntil != null &&
-          courtesyUntil.isAfter(_now());
       if (courtesyActive) entitled = true;
       if (_testingTools && offerTrial && !courtesyUsed && !entitled) {
         canStartTrial = false;
