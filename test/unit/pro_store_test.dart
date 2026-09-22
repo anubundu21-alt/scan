@@ -114,6 +114,7 @@ void main() {
 
     expect(controller.state.trialUsed, isFalse);
     expect(controller.state.canStartTrial, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
   });
 
   test('the store can offer the month even when nothing is saved', () async {
@@ -131,6 +132,7 @@ void main() {
     await controller.restore();
 
     expect(controller.state.canStartTrial, isTrue);
+    expect(controller.state.canStartCourtesyTrial, isFalse);
   });
 
   test('a cancelled trial is not offered the month again', () async {
@@ -149,6 +151,7 @@ void main() {
     await controller.restore();
 
     expect(controller.state.canStartTrial, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
   });
 
   test('with no answer from the store, the saved record decides', () async {
@@ -166,6 +169,7 @@ void main() {
     await controller.restore();
 
     expect(controller.state.canStartTrial, isTrue);
+    expect(controller.state.canStartCourtesyTrial, isFalse);
   });
 
   test('Restore switches Pro off when the store says there is none', () async {
@@ -287,7 +291,8 @@ void main() {
     await controller.restore();
 
     expect(controller.state.isPro, isFalse);
-    expect(controller.state.canStartTrial, isTrue);
+    expect(controller.state.canStartTrial, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
     expect(controller.state.testingBuild, isTrue);
     expect(purchase.entitlementChecks, 0);
   });
@@ -367,7 +372,8 @@ void main() {
 
     expect(controller.state.isPro, isFalse);
     expect(controller.state.trialUsed, isFalse);
-    expect(controller.state.canStartTrial, isTrue);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
+    expect(controller.state.canStartTrial, isFalse);
     expect(purchase.entitlementChecks, 0);
   });
 
@@ -395,6 +401,8 @@ void main() {
       entitled: false,
       trialUsed: true,
       introOffer: false,
+      courtesyUsed: true,
+      testingOfferTrial: true,
     );
     final controller = ProController(
       purchase: purchase,
@@ -402,6 +410,7 @@ void main() {
       testingTools: true,
     );
     await controller.restore();
+    expect(controller.state.canStartCourtesyTrial, isFalse);
     expect(controller.state.canStartTrial, isTrue);
 
     expect(await controller.subscribe(ProPlan.yearly), isFalse);
@@ -413,16 +422,87 @@ void main() {
     final purchase = FakeProPurchase(
       entitled: false,
       introOffer: true,
+      courtesyUsed: true,
     );
     final controller = ProController(
       purchase: purchase,
       pricing: _usPricing(),
-      testingTools: true,
     );
     await controller.restore();
 
     expect(await controller.subscribe(ProPlan.yearly), isTrue);
     expect(purchase.buyCalls, 1);
+    expect(controller.state.isPro, isTrue);
+  });
+
+  test('a first install is offered the 7-day trial without Apple', () async {
+    final purchase = FakeProPurchase(introOffer: false);
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+    );
+    await controller.restore();
+    expect(controller.state.canStartCourtesyTrial, isTrue);
+
+    expect(await controller.startOfferedTrialOrSubscribe(ProPlan.yearly), isTrue);
+    expect(purchase.buyCalls, 0);
+    expect(purchase.courtesyStarts, 1);
+    expect(controller.state.isPro, isTrue);
+    expect(controller.state.canStartCourtesyTrial, isFalse);
+  });
+
+  test('the 7-day trial stays on after an uninstall while it is running', () async {
+    final until = DateTime(2026, 9, 29);
+    final purchase = FakeProPurchase(
+      entitled: false,
+      courtesyUsed: true,
+      courtesyUntil: until,
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      clock: () => DateTime(2026, 9, 24),
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isTrue);
+    expect(controller.state.canStartCourtesyTrial, isFalse);
+  });
+
+  test('the 7-day trial is not offered again after it ends', () async {
+    final purchase = FakeProPurchase(
+      entitled: false,
+      introOffer: false,
+      courtesyUsed: true,
+      courtesyUntil: DateTime(2026, 9, 20),
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      clock: () => DateTime(2026, 9, 24),
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isFalse);
+    expect(await controller.startCourtesyTrial(), isFalse);
+    expect(purchase.courtesyStarts, 0);
+  });
+
+  test('Restore keeps the 7-day trial on when Apple has no subscription', () async {
+    SharedPreferences.setMockInitialValues({'scanella.pro.entitled': true});
+    final purchase = FakeProPurchase(
+      entitled: false,
+      courtesyUsed: true,
+      courtesyUntil: DateTime(2026, 9, 29),
+    );
+    final controller = ProController(
+      purchase: purchase,
+      pricing: _usPricing(),
+      clock: () => DateTime(2026, 9, 24),
+    );
+    await controller.restore();
+    expect(controller.state.isPro, isTrue);
+
+    expect(await controller.restorePurchases(), isFalse);
     expect(controller.state.isPro, isTrue);
   });
 }

@@ -88,6 +88,10 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 ScanellaPdf.handle(this, call, result)
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "scanella/pro")
+            .setMethodCallHandler { call, result ->
+                ScanellaPro.handle(this, call, result)
+            }
     }
 
     private fun clientFor(language: String?) =
@@ -243,6 +247,162 @@ private object ScanellaQuota {
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             if (!dir.exists()) dir.mkdirs()
             File(dir, FILE_NAME).writeText("$used\n")
+        } catch (_: Exception) {
+        }
+    }
+}
+
+/// 7-day Pro trial that survives uninstall on this phone.
+private object ScanellaPro {
+    private const val PREFS = "scanella_pro"
+    private const val USED_KEY = "courtesy_used"
+    private const val UNTIL_KEY = "courtesy_until"
+    private const val FILE_NAME = "scanella_pro_courtesy_v1"
+
+    fun handle(context: Context, call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "readCourtesyTrial" -> result.success(readCourtesy(context))
+            "startCourtesyTrial" -> {
+                val untilMs = (call.arguments as? Map<*, *>)?.get("untilMs")
+                val until = when (untilMs) {
+                    is Number -> untilMs.toLong()
+                    else -> null
+                }
+                if (until == null) {
+                    result.error("bad_args", "untilMs is required", null)
+                    return
+                }
+                writeCourtesy(context, used = true, untilMs = until)
+                result.success(null)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun readCourtesy(context: Context): Map<String, Any?> {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var used = prefs.getBoolean(USED_KEY, false)
+        var until = if (prefs.contains(UNTIL_KEY)) prefs.getLong(UNTIL_KEY, 0) else null
+        val marker = readMarker(context)
+        if (marker != null) {
+            used = used || marker.first
+            if (marker.second != null) {
+                until = maxOf(until ?: 0L, marker.second!!)
+            }
+        }
+        if (used) {
+            prefs.edit().putBoolean(USED_KEY, true).apply()
+            if (until != null && until > 0) {
+                prefs.edit().putLong(UNTIL_KEY, until).apply()
+                writeMarker(context, true, until)
+            }
+        }
+        return mapOf(
+            "used" to used,
+            "untilMs" to until,
+        )
+    }
+
+    private fun writeCourtesy(context: Context, used: Boolean, untilMs: Long) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(USED_KEY, used)
+            .putLong(UNTIL_KEY, untilMs)
+            .apply()
+        writeMarker(context, used, untilMs)
+    }
+
+    private fun readMarker(context: Context): Pair<Boolean, Long?>? {
+        val text = readMediaStore(context) ?: readLegacyFile() ?: return null
+        val lines = text.trim().lines()
+        val used = lines.firstOrNull() == "1"
+        val until = lines.getOrNull(1)?.toLongOrNull()
+        return used to until
+    }
+
+    private fun writeMarker(context: Context, used: Boolean, untilMs: Long) {
+        val body = "${if (used) 1 else 0}\n$untilMs\n"
+        if (!writeMediaStore(context, body)) {
+            writeLegacyFile(body)
+        }
+    }
+
+    private fun readMediaStore(context: Context): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        return try {
+            val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL)
+            val projection = arrayOf(MediaStore.MediaColumns._ID)
+            val selection = "${MediaStore.MediaColumns.DISPLAY_NAME}=?"
+            val args = arrayOf(FILE_NAME)
+            context.contentResolver.query(collection, projection, selection, args, null)?.use { cursor ->
+                if (!cursor.moveToFirst()) return null
+                val uri = ContentUris.withAppendedId(collection, cursor.getLong(0))
+                context.contentResolver.openInputStream(uri)?.use {
+                    it.bufferedReader().readText()
+                }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun writeMediaStore(context: Context, body: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
+        return try {
+            val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL)
+            val projection = arrayOf(MediaStore.MediaColumns._ID)
+            val selection = "${MediaStore.MediaColumns.DISPLAY_NAME}=?"
+            val args = arrayOf(FILE_NAME)
+            val existing = context.contentResolver.query(
+                collection,
+                projection,
+                selection,
+                args,
+                null,
+            )?.use { cursor ->
+                if (!cursor.moveToFirst()) null
+                else ContentUris.withAppendedId(collection, cursor.getLong(0))
+            }
+            val bytes = body.toByteArray()
+            if (existing != null) {
+                context.contentResolver.openOutputStream(existing, "wt")?.use { it.write(bytes) }
+                return true
+            }
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, FILE_NAME)
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val uri = context.contentResolver.insert(collection, values) ?: return false
+            context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
+            values.clear()
+            values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+            context.contentResolver.update(uri, values, null, null)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun readLegacyFile(): String? {
+        return try {
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                FILE_NAME,
+            )
+            if (!file.exists()) return null
+            file.readText()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun writeLegacyFile(body: String) {
+        try {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (!dir.exists()) dir.mkdirs()
+            File(dir, FILE_NAME).writeText(body)
         } catch (_: Exception) {
         }
     }

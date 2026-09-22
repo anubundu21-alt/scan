@@ -10,6 +10,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:scan2/features/pro/domain/pro_purchase.dart';
 
+/// App-granted Pro, separate from Apple's introductory month.
+class ProTrial {
+  static const courtesyDays = 7;
+  static const courtesy = Duration(days: courtesyDays);
+
+  static String get freeTitle => '$courtesyDays days FREE';
+  static String get startButton => 'Start $courtesyDays-day free trial';
+}
+
 @immutable
 class ProState {
   const ProState({
@@ -20,6 +29,7 @@ class ProState {
     this.storeProductsReady = false,
     this.trialUsed = false,
     this.canStartTrial = false,
+    this.canStartCourtesyTrial = false,
     this.testingBuild = false,
   });
 
@@ -53,6 +63,12 @@ class ProState {
   /// show the upgrade screen so a tester can see it.
   final bool testingBuild;
 
+  /// Whether this device may still start the app-granted 7-day Pro window.
+  ///
+  /// This is the trial the app can start without Apple. It is offered when
+  /// this Apple ID is not owed the introductory month, and only once.
+  final bool canStartCourtesyTrial;
+
   ProState copyWith({
     bool? isPro,
     LocalizedOffer? offer,
@@ -62,6 +78,7 @@ class ProState {
     bool? storeProductsReady,
     bool? trialUsed,
     bool? canStartTrial,
+    bool? canStartCourtesyTrial,
     bool? testingBuild,
   }) {
     return ProState(
@@ -72,6 +89,8 @@ class ProState {
       storeProductsReady: storeProductsReady ?? this.storeProductsReady,
       trialUsed: trialUsed ?? this.trialUsed,
       canStartTrial: canStartTrial ?? this.canStartTrial,
+      canStartCourtesyTrial:
+          canStartCourtesyTrial ?? this.canStartCourtesyTrial,
       testingBuild: testingBuild ?? this.testingBuild,
     );
   }
@@ -85,9 +104,11 @@ class ProController extends StateNotifier<ProState> {
     LocalizedPricing pricing = const LocalizedPricing(),
     this.locale,
     bool testingTools = const bool.fromEnvironment('SCANELLA_TESTING'),
+    DateTime Function()? clock,
   }) : _purchase = purchase ?? StoreKitPurchase(),
        _pricing = pricing,
        _testingTools = testingTools,
+       _now = clock ?? DateTime.now,
        super(const ProState()) {
     restore();
   }
@@ -112,6 +133,7 @@ class ProController extends StateNotifier<ProState> {
   final LocalizedPricing _pricing;
   final Locale? locale;
   final bool _testingTools;
+  final DateTime Function() _now;
 
   Future<void> restore() async {
     state = state.copyWith(busy: true, clearError: true);
@@ -119,10 +141,6 @@ class ProController extends StateNotifier<ProState> {
       final prefs = await SharedPreferences.getInstance();
       var entitled = prefs.getBool(_entitlementKey) ?? false;
       var trialUsed = prefs.getBool(_trialUsedKey) ?? false;
-      // A testing TestFlight walks the unpaid first-run by default, including
-      // the 1 month free layout. Apple will not grant that month again on
-      // this Apple ID; the buttons are how the screens are tested. "Ask the
-      // store again" turns [testingUseStoreKey] on and uses Apple for real.
       var useStore =
           _testingTools && (prefs.getBool(testingUseStoreKey) ?? false);
       var forceFree = false;
@@ -132,10 +150,11 @@ class ProController extends StateNotifier<ProState> {
           final pins = await _purchase.readTestingPins();
           if (pins.useStore) useStore = true;
           if (pins.forceFree || pins.offerTrial) useStore = false;
+          if (pins.forceFree) forceFree = true;
+          if (pins.offerTrial) offerTrial = true;
         } catch (_) {}
         if (!useStore) {
           forceFree = true;
-          offerTrial = true;
         }
       }
       try {
@@ -208,6 +227,22 @@ class ProController extends StateNotifier<ProState> {
         }
       }
 
+      var courtesyUsed = false;
+      DateTime? courtesyUntil;
+      try {
+        final courtesy = await _purchase.readCourtesyTrial();
+        courtesyUsed = courtesy.used;
+        courtesyUntil = courtesy.until;
+      } catch (_) {}
+      final courtesyActive = courtesyUntil != null &&
+          courtesyUntil.isAfter(_now());
+      if (courtesyActive) entitled = true;
+      if (_testingTools && offerTrial && !courtesyUsed && !entitled) {
+        canStartTrial = false;
+      }
+      final canStartCourtesyTrial =
+          !entitled && !courtesyUsed && !canStartTrial;
+
       state = state.copyWith(
         isPro: entitled,
         offer: offer,
@@ -216,6 +251,7 @@ class ProController extends StateNotifier<ProState> {
         error: storeError,
         trialUsed: trialUsed,
         canStartTrial: canStartTrial,
+        canStartCourtesyTrial: canStartCourtesyTrial,
         testingBuild: _testingTools,
       );
     } catch (e) {
@@ -257,6 +293,7 @@ class ProController extends StateNotifier<ProState> {
           busy: false,
           trialUsed: true,
           canStartTrial: false,
+          canStartCourtesyTrial: false,
         );
         return true;
       }
@@ -291,6 +328,7 @@ class ProController extends StateNotifier<ProState> {
           busy: false,
           trialUsed: true,
           canStartTrial: false,
+          canStartCourtesyTrial: false,
         );
         return true;
       }
@@ -304,6 +342,13 @@ class ProController extends StateNotifier<ProState> {
         live = await _purchase.hasActiveEntitlement();
       } catch (_) {}
       if (live == false) {
+        final courtesy = await _purchase.readCourtesyTrial();
+        final courtesyActive = courtesy.until != null &&
+            courtesy.until!.isAfter(_now());
+        if (courtesyActive) {
+          state = state.copyWith(isPro: true, busy: false);
+          return false;
+        }
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, false);
         state = state.copyWith(
@@ -325,6 +370,40 @@ class ProController extends StateNotifier<ProState> {
       state = state.copyWith(busy: false, error: _readable(e));
       return false;
     }
+  }
+
+  /// Unlocks Pro for [ProTrial.courtesy] without Apple. Once per device.
+  Future<bool> startCourtesyTrial() async {
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      final existing = await _purchase.readCourtesyTrial();
+      if (existing.used) {
+        state = state.copyWith(
+          busy: false,
+          error: 'The ${ProTrial.courtesyDays}-day trial has already been used '
+              'on this iPhone.',
+        );
+        return false;
+      }
+      final until = _now().add(ProTrial.courtesy);
+      await _purchase.startCourtesyTrial(until: until);
+      state = state.copyWith(
+        isPro: true,
+        busy: false,
+        canStartCourtesyTrial: false,
+        canStartTrial: false,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(busy: false, error: _readable(e));
+      return false;
+    }
+  }
+
+  /// Starts the 7-day app trial when that is on offer, otherwise Apple.
+  Future<bool> startOfferedTrialOrSubscribe(ProPlan plan) {
+    if (state.canStartCourtesyTrial) return startCourtesyTrial();
+    return subscribe(plan);
   }
 
   /// Tests and the first store-less builds unlock from SharedPreferences.

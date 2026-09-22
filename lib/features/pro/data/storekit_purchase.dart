@@ -225,6 +225,32 @@ class StoreKitPurchase implements ProPurchase {
     } catch (_) {}
   }
 
+  @override
+  Future<({bool used, DateTime? until})> readCourtesyTrial() async {
+    try {
+      final map = await _channel.invokeMapMethod<String, Object?>(
+        'readCourtesyTrial',
+      );
+      if (map == null) return (used: false, until: null);
+      final ms = (map['untilMs'] as num?)?.toInt();
+      return (
+        used: map['used'] == true,
+        until: ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms),
+      );
+    } catch (_) {
+      return (used: false, until: null);
+    }
+  }
+
+  @override
+  Future<void> startCourtesyTrial({required DateTime until}) async {
+    try {
+      await _channel.invokeMethod<void>('startCourtesyTrial', <String, Object?>{
+        'untilMs': until.millisecondsSinceEpoch,
+      });
+    } catch (_) {}
+  }
+
   /// How long one paid period runs, with a day's slack for a late renewal.
   static Duration periodFor(ProPlan plan) {
     return plan == ProPlan.monthly

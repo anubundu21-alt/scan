@@ -40,19 +40,23 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           source: 'device',
         );
 
-    // Only when the store says Apple would really grant it. With no
-    // introductory offer configured, or for someone who has already had
-    // one, this is false and the plain plan price is what gets shown.
-    final freeMonth = pro.canStartTrial;
+    // App-granted 7 days first. Apple's month only after that window is used
+    // and this Apple ID is still owed one.
+    final courtesy = pro.canStartCourtesyTrial;
+    final freeMonth = !courtesy && pro.canStartTrial;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProPlanCard(
           selected: _plan == ProPlan.yearly,
-          title: freeMonth ? '1 month free' : 'Yearly',
+          title: courtesy
+              ? ProTrial.freeTitle
+              : (freeMonth ? '1 month free' : 'Yearly'),
           price: offer.yearlyLabel,
-          detail: freeMonth
+          detail: courtesy
+              ? 'then ${offer.yearlyLabel} / year · cancel any time'
+              : freeMonth
               ? 'then ${offer.yearlyLabel} / year · cancel any time'
               : '${offer.yearlyPerMonthLabel} / month · save '
                     '${offer.yearlySavingsPercent}%',
@@ -62,9 +66,13 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
         const SizedBox(height: 10),
         ProPlanCard(
           selected: _plan == ProPlan.monthly,
-          title: freeMonth ? '1 month free' : 'Monthly',
+          title: courtesy
+              ? ProTrial.freeTitle
+              : (freeMonth ? '1 month free' : 'Monthly'),
           price: offer.monthlyLabel,
-          detail: freeMonth
+          detail: courtesy
+              ? 'then ${offer.monthlyLabel} / month'
+              : freeMonth
               ? 'then ${offer.monthlyLabel} / month'
               : 'Cancel any time',
           onTap: () => _select(ProPlan.monthly),
@@ -101,12 +109,14 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
                     AppHaptics.selection();
                     final ok = await ref
                         .read(proProvider.notifier)
-                        .subscribe(_plan);
+                        .startOfferedTrialOrSubscribe(_plan);
                     if (ok && context.mounted) widget.onSubscribed?.call();
                   },
             child: Text(
               pro.isPro
                   ? 'You have Scanella Pro'
+                  : courtesy
+                  ? ProTrial.startButton
                   : freeMonth
                   ? 'Start 1 Month Free Trial'
                   : 'Upgrade Now',
@@ -127,7 +137,10 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           ),
         ),
         Text(
-          freeMonth
+          courtesy
+              ? 'No payment now. After ${ProTrial.courtesyDays} days you can '
+                    'subscribe. Scanella never sees your card.'
+              : freeMonth
               ? 'Free for one month, then it renews automatically until you '
                     'cancel. Payment uses your Apple ID. Scanella never sees '
                     'your card.'

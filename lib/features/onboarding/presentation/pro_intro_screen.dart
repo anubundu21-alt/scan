@@ -34,7 +34,9 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
 
   Future<void> _subscribe() async {
     AppHaptics.selection();
-    final ok = await ref.read(proProvider.notifier).subscribe(_plan);
+    final ok = await ref
+        .read(proProvider.notifier)
+        .startOfferedTrialOrSubscribe(_plan);
     if (ok && mounted) widget.onDone();
   }
 
@@ -56,9 +58,10 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
           usdToLocal: 1,
           source: 'device',
         );
-    // The store's answer, not a guess: an introductory offer has to exist
-    // and this Apple ID has to still be owed one.
-    final firstTime = pro.canStartTrial;
+    // App-granted 7 days when that is still available. Apple's month only
+    // when this Apple ID is still owed it and the 7 days have been used.
+    final courtesy = pro.canStartCourtesyTrial;
+    final firstTime = courtesy || pro.canStartTrial;
 
     return Theme(
       data: AppTheme.light,
@@ -117,7 +120,9 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     const SizedBox(height: 22),
                     _PlanCard(
                       selected: _plan == ProPlan.yearly,
-                      title: firstTime ? '1 month FREE' : 'Yearly',
+                      title: courtesy
+                          ? ProTrial.freeTitle
+                          : (firstTime ? '1 month FREE' : 'Yearly'),
                       price: '${offer.yearlyLabel} per year',
                       badge: 'Best Value',
                       onTap: () => setState(() => _plan = ProPlan.yearly),
@@ -125,7 +130,9 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     const SizedBox(height: 12),
                     _PlanCard(
                       selected: _plan == ProPlan.monthly,
-                      title: firstTime ? '1 month FREE' : 'Monthly',
+                      title: courtesy
+                          ? ProTrial.freeTitle
+                          : (firstTime ? '1 month FREE' : 'Monthly'),
                       price: '${offer.monthlyLabel} per month',
                       onTap: () => setState(() => _plan = ProPlan.monthly),
                     ),
@@ -163,7 +170,9 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                         ),
                         onPressed: pro.busy ? null : _subscribe,
                         child: Text(
-                          firstTime
+                          courtesy
+                              ? ProTrial.startButton
+                              : firstTime
                               ? 'Start 1 Month Free Trial'
                               : 'Continue',
                         ),
@@ -185,7 +194,10 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      firstTime
+                      courtesy
+                          ? 'No payment now. After ${ProTrial.courtesyDays} days, '
+                                'upgrade to keep unlimited scans.'
+                          : firstTime
                           ? 'Cancel anytime. Your subscription will '
                                 'automatically renew at the end of the trial.'
                           : 'Cancel anytime. Your subscription renews '

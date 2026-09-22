@@ -27,7 +27,12 @@ void main() {
         overrides: [
           proProvider.overrideWith(
             (ref) => ProController(
-              purchase: FakeProPurchase(offer: offer),
+              purchase: FakeProPurchase(
+                offer: offer,
+                trialUsed: true,
+                introOffer: false,
+                courtesyUsed: true,
+              ),
               pricing: LocalizedPricing(
                 locate: () async => const GeoCurrency(
                   countryCode: 'GB',
@@ -84,7 +89,12 @@ void main() {
         overrides: [
           proProvider.overrideWith(
             (ref) => ProController(
-              purchase: FakeProPurchase(offer: offer),
+              purchase: FakeProPurchase(
+                offer: offer,
+                trialUsed: true,
+                introOffer: false,
+                courtesyUsed: true,
+              ),
               pricing: LocalizedPricing(
                 locate: () async => const GeoCurrency(
                   countryCode: 'US',
@@ -178,7 +188,11 @@ void main() {
         overrides: [
           proProvider.overrideWith(
             (ref) => ProController(
-              purchase: FakeProPurchase(),
+              purchase: FakeProPurchase(
+                trialUsed: true,
+                introOffer: false,
+                courtesyUsed: true,
+              ),
               pricing: LocalizedPricing(
                 locate: () async => const GeoCurrency(
                   countryCode: 'PL',

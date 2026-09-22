@@ -51,6 +51,8 @@ private enum ScanellaProPlugin {
   static let untilAccount = "entitled_until_v1"
   static let basisAccount = "entitled_basis_v1"
   static let trialAccount = "trial_used_v1"
+  static let courtesyUsedAccount = "courtesy_used_v1"
+  static let courtesyUntilAccount = "courtesy_until_v1"
   static let testingFreeAccount = "testing_force_free_v1"
   static let testingTrialAccount = "testing_offer_trial_v1"
   static let testingUseStoreAccount = "testing_use_store_v1"
@@ -137,6 +139,29 @@ private enum ScanellaProPlugin {
         writeFlag(boolValue(args["forceFree"]), account: testingFreeAccount)
         writeFlag(boolValue(args["offerTrial"]), account: testingTrialAccount)
         writeFlag(boolValue(args["useStore"]), account: testingUseStoreAccount)
+        result(nil)
+      case "readCourtesyTrial":
+        result([
+          "used": readFlag(courtesyUsedAccount),
+          "untilMs": readMillis(courtesyUntilAccount),
+        ] as [String: Any?])
+      case "startCourtesyTrial":
+        // Once only. A second start after an uninstall would be another
+        // free week, so the used flag is never cleared from here.
+        guard let args = call.arguments as? [String: Any],
+              let untilMs = (args["untilMs"] as? NSNumber)?.doubleValue
+        else {
+          result(
+            FlutterError(
+              code: "bad_args",
+              message: "untilMs is required",
+              details: nil
+            )
+          )
+          return
+        }
+        writeFlag(true, account: courtesyUsedAccount)
+        writeText(String(untilMs), account: courtesyUntilAccount)
         result(nil)
       case "readPro":
         result(readPro())

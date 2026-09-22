@@ -68,6 +68,12 @@ abstract class ProPurchase {
     bool offerTrial = false,
     bool useStore = false,
   }) async {}
+
+  /// App-granted Pro window. Survives an uninstall because it lives natively.
+  Future<({bool used, DateTime? until})> readCourtesyTrial() async =>
+      (used: false, until: null);
+
+  Future<void> startCourtesyTrial({required DateTime until}) async {}
 }
 
 /// In-memory purchase used by widget tests.
@@ -80,12 +86,17 @@ class FakeProPurchase extends ProPurchase {
     this.testingForceFree = false,
     this.testingOfferTrial = false,
     this.testingUseStore = false,
+    this.courtesyUsed = false,
+    this.courtesyUntil,
   });
 
   bool entitled;
   bool trialUsed;
   int entitlementChecks = 0;
   int buyCalls = 0;
+  int courtesyStarts = 0;
+  bool courtesyUsed;
+  DateTime? courtesyUntil;
 
   /// What the store says about the introductory month; null for "no answer".
   bool? introOffer;
@@ -147,5 +158,16 @@ class FakeProPurchase extends ProPurchase {
     testingForceFree = forceFree;
     testingOfferTrial = offerTrial;
     testingUseStore = useStore;
+  }
+
+  @override
+  Future<({bool used, DateTime? until})> readCourtesyTrial() async =>
+      (used: courtesyUsed, until: courtesyUntil);
+
+  @override
+  Future<void> startCourtesyTrial({required DateTime until}) async {
+    courtesyStarts += 1;
+    courtesyUsed = true;
+    courtesyUntil = until;
   }
 }

@@ -40,7 +40,9 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
     // Yearly either way: it is the plan the button names, and the
     // introductory month rides on it when Apple says the customer is owed
     // one.
-    final ok = await ref.read(proProvider.notifier).subscribe(ProPlan.yearly);
+    final ok = await ref
+        .read(proProvider.notifier)
+        .startOfferedTrialOrSubscribe(ProPlan.yearly);
     if (ok && mounted) Navigator.of(context).pop();
   }
 
@@ -57,7 +59,8 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
           usdToLocal: 1,
           source: 'device',
         );
-    final firstTime = pro.canStartTrial;
+    final courtesy = pro.canStartCourtesyTrial;
+    final firstTime = courtesy || pro.canStartTrial;
 
     return Theme(
       data: AppTheme.light,
@@ -123,7 +126,9 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
                         title: firstTime
                             ? 'Unlock Scanella Pro'
                             : 'Upgrade to Scanella Pro',
-                        detail: firstTime
+                        detail: courtesy
+                            ? ProTrial.freeTitle
+                            : firstTime
                             ? 'Get 1 month FREE'
                             : 'Best Value · ${offer.yearlyLabel} per year',
                         onPressed: _unlock,
