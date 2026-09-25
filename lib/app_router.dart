@@ -47,12 +47,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final seenIntro = ref.read(onboardingCompletedProvider);
       final location = state.matchedLocation;
 
-      const intro = {
-        '/welcome',
-        '/onboarding',
-        '/free-access',
-        '/pro-intro',
-      };
+      const intro = {'/welcome', '/onboarding', '/free-access', '/pro-intro'};
       const legal = {'/legal/terms', '/legal/privacy'};
 
       // First run: welcome, then the intro pages. Terms and Privacy are

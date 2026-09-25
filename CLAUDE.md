@@ -30,14 +30,14 @@ bundle id `com.scanella.mobile`. The marketing and legal site lives in
 | Starter scans, one time | 10 | `ScanQuota.starterLimit` |
 | Scans per period after that | 10 | `ScanQuota.monthlyLimit` |
 | Period length | 30 days | `ScanQuota.resetDays` |
-| App-granted Pro trial | 7 days | `ProTrial.courtesyDays` |
+| App-granted Pro trial | 30 days (1 month) | `ProTrial.courtesyDays` |
 | PDF tools | always free, no limit | not quota-gated |
 | Yearly | $9.99 | `LocalizedPricing.yearlyUsd` |
 | Monthly | $2.99 | `LocalizedPricing.monthlyUsd` |
 
 - The introductory free month is an **Introductory Offer in App Store
   Connect**. No code grants it.
-- The app can also grant **7 days of Pro** once per device (`ProTrial`).
+- The app can also grant **1 month (30 days) of Pro** once per device (`ProTrial`).
   That is not Apple’s month. It lives in Keychain so an uninstall cannot
   reset it.
 - The App Store price always wins over the estimated local price.
@@ -52,7 +52,7 @@ what a returning user is allowed to do must live somewhere else.
 | Scans used | Keychain `used_v1` / Android Downloads marker | yes |
 | Subscribed right now | StoreKit 2, Keychain `entitled_v1` | yes |
 | Free month already taken | StoreKit history, Keychain `trial_used_v1` | yes |
-| App 7-day trial used / until | Keychain `courtesy_used_v1` / `courtesy_until_v1` | yes |
+| App 1-month trial used / until | Keychain `courtesy_used_v1` / `courtesy_until_v1` | yes |
 | When Pro runs out | Keychain `entitled_until_v1` | yes |
 | Which transaction that came from | Keychain `entitled_basis_v1` | yes |
 | Period start date | SharedPreferences | no |

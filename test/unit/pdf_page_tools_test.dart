@@ -125,36 +125,38 @@ void main() {
       expect(
         () => const PdfPageTools().unlock(pdf),
         throwsA(
-          isA<ConversionFailure>().having(
-            (e) => e.code,
-            'code',
-            'not-locked',
-          ),
+          isA<ConversionFailure>().having((e) => e.code, 'code', 'not-locked'),
         ),
       );
     });
 
-    test('unlock writes a PDF without Encrypt and keeps the page ink', () async {
-      final jpeg = solidJpeg(width: 80, height: 100);
-      final open = await const ImagePdfConvert().imagesToPdf([jpeg]);
-      final locked = Uint8List.fromList([
-        ...open,
-        ...utf8.encode('\n/Encrypt\n'),
-      ]);
-      expect(pdfLooksEncrypted(locked), isTrue);
+    test(
+      'unlock writes a PDF without Encrypt and keeps the page ink',
+      () async {
+        final jpeg = solidJpeg(width: 80, height: 100);
+        final open = await const ImagePdfConvert().imagesToPdf([jpeg]);
+        final locked = Uint8List.fromList([
+          ...open,
+          ...utf8.encode('\n/Encrypt\n'),
+        ]);
+        expect(pdfLooksEncrypted(locked), isTrue);
 
-      final tools = PdfPageTools(pagesFromPdf: (_) async => [jpeg]);
-      final unlocked = await tools.unlock(locked, password: 'secret');
-      expect(String.fromCharCodes(unlocked.take(5)), '%PDF-');
-      expect(pdfLooksEncrypted(unlocked), isFalse);
+        final tools = PdfPageTools(pagesFromPdf: (_) async => [jpeg]);
+        final unlocked = await tools.unlock(locked, password: 'secret');
+        expect(String.fromCharCodes(unlocked.take(5)), '%PDF-');
+        expect(pdfLooksEncrypted(unlocked), isFalse);
 
-      final embedded = firstJpegIn(unlocked);
-      expect(embedded, isNotNull);
-      final decoded = img.decodeImage(embedded!)!;
-      final sample = decoded.getPixel(decoded.width ~/ 2, decoded.height ~/ 2);
-      expect(sample.r.toInt(), greaterThan(150));
-      expect(sample.g.toInt(), lessThan(80));
-    });
+        final embedded = firstJpegIn(unlocked);
+        expect(embedded, isNotNull);
+        final decoded = img.decodeImage(embedded!)!;
+        final sample = decoded.getPixel(
+          decoded.width ~/ 2,
+          decoded.height ~/ 2,
+        );
+        expect(sample.r.toInt(), greaterThan(150));
+        expect(sample.g.toInt(), lessThan(80));
+      },
+    );
 
     test('unlock keeps a wrong-password error from native', () async {
       final jpeg = solidJpeg(width: 80, height: 100);

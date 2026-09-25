@@ -71,9 +71,7 @@ class _FreeScansUsedScreenState extends ConsumerState<FreeScansUsedScreen> {
             color: Brand.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
           ),
-          margin: EdgeInsets.only(
-            top: MediaQuery.paddingOf(context).top,
-          ),
+          margin: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
           child: SafeArea(
             top: false,
             child: Column(
@@ -189,11 +187,7 @@ class _EmptyMailMark extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(70)),
             ),
           ),
-          const Icon(
-            Icons.mail_rounded,
-            size: 76,
-            color: Color(0xFF2F6FED),
-          ),
+          const Icon(Icons.mail_rounded, size: 76, color: Color(0xFF2F6FED)),
           Positioned(
             right: 92,
             bottom: 22,
@@ -269,10 +263,7 @@ class _NextScansCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       ScanQuota.formatCountdown(at.difference(DateTime.now())),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Brand.grey,
-                      ),
+                      style: const TextStyle(fontSize: 13, color: Brand.grey),
                     ),
                   ],
                 ],

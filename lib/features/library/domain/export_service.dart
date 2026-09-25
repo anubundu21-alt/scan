@@ -68,9 +68,7 @@ class ExportService {
         password: options.password,
         searchable: options.searchable,
         ocrText: document.ocrText,
-        blocks: [
-          for (final block in document.ocrBlocks) block.toJson(),
-        ],
+        blocks: [for (final block in document.ocrBlocks) block.toJson()],
         pageIndexes: pageIndexes,
       ),
     );
@@ -134,10 +132,7 @@ class ExportService {
   ///
   /// Throws [GalException] when access is refused, which the caller surfaces —
   /// silently doing nothing is the worst possible outcome for a save action.
-  Future<int> saveToPhotos(
-    Document document, {
-    List<int>? pageIndexes,
-  }) async {
+  Future<int> saveToPhotos(Document document, {List<int>? pageIndexes}) async {
     var saved = 0;
     for (final entry in _pagesToExport(document, pageIndexes)) {
       final bytes = await _compositedPageBytes(entry.page);
@@ -461,7 +456,8 @@ List<pw.Widget> _searchableLayer(
     ];
   }
   final text = (args.ocrText ?? '').trim();
-  if (text.isEmpty || pageIndex != (args.pageIndexes.isEmpty ? 0 : args.pageIndexes.first)) {
+  if (text.isEmpty ||
+      pageIndex != (args.pageIndexes.isEmpty ? 0 : args.pageIndexes.first)) {
     return const [];
   }
   return [

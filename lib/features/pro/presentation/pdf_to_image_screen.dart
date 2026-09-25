@@ -42,33 +42,30 @@ class _PdfToImageScreenState extends State<PdfToImageScreen>
     final bytes = await File(path).readAsBytes();
     final stem = p.basenameWithoutExtension(path).trim();
     final png = _png;
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.starting,
-            message: 'Reading pages…',
-            fraction: 0.15,
-          ),
-        );
-        final pages = await _convert.pdfToImages(bytes, png: png);
-        onProgress(
-          ConversionStatus(
-            stage: ConversionStage.downloading,
-            message: pages.length == 1
-                ? 'Saving the image…'
-                : 'Packing ${pages.length} pages…',
-            fraction: 0.85,
-          ),
-        );
-        return _convert.packImages(
-          pages,
-          png: png,
-          stem: stem.isEmpty ? 'pages' : stem,
-        );
-      },
-      doneMessage: png ? 'PDF saved as PNG.' : 'PDF saved as JPG.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.starting,
+          message: 'Reading pages…',
+          fraction: 0.15,
+        ),
+      );
+      final pages = await _convert.pdfToImages(bytes, png: png);
+      onProgress(
+        ConversionStatus(
+          stage: ConversionStage.downloading,
+          message: pages.length == 1
+              ? 'Saving the image…'
+              : 'Packing ${pages.length} pages…',
+          fraction: 0.85,
+        ),
+      );
+      return _convert.packImages(
+        pages,
+        png: png,
+        stem: stem.isEmpty ? 'pages' : stem,
+      );
+    }, doneMessage: png ? 'PDF saved as PNG.' : 'PDF saved as JPG.');
   }
 
   @override
@@ -92,9 +89,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen>
               const SizedBox(height: 8),
               _FormatPicker(
                 png: _png,
-                onChanged: isBusy
-                    ? null
-                    : (png) => setState(() => _png = png),
+                onChanged: isBusy ? null : (png) => setState(() => _png = png),
               ),
               const SizedBox(height: 20),
               ConversionUploadTile(
@@ -155,11 +150,7 @@ class _FormatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressableChip(
-      selected: selected,
-      label: label,
-      onTap: onTap,
-    );
+    return PressableChip(selected: selected, label: label, onTap: onTap);
   }
 }
 

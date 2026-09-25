@@ -9,8 +9,7 @@ class IntroEligibility {
   final bool? monthly;
   final bool? yearly;
 
-  bool? forPlan(ProPlan plan) =>
-      plan == ProPlan.monthly ? monthly : yearly;
+  bool? forPlan(ProPlan plan) => plan == ProPlan.monthly ? monthly : yearly;
 }
 
 /// Product identifiers to create in App Store Connect / Play Console.
@@ -60,8 +59,8 @@ abstract class ProPurchase {
 
   /// Testing tools only. Survives an uninstall because it lives in Keychain.
   Future<({bool forceFree, bool offerTrial, bool useStore})>
-      readTestingPins() async =>
-          (forceFree: false, offerTrial: false, useStore: false);
+  readTestingPins() async =>
+      (forceFree: false, offerTrial: false, useStore: false);
 
   Future<void> writeTestingPins({
     bool forceFree = false,
@@ -143,11 +142,11 @@ class FakeProPurchase extends ProPurchase {
 
   @override
   Future<({bool forceFree, bool offerTrial, bool useStore})>
-      readTestingPins() async => (
-            forceFree: testingForceFree,
-            offerTrial: testingOfferTrial,
-            useStore: testingUseStore,
-          );
+  readTestingPins() async => (
+    forceFree: testingForceFree,
+    offerTrial: testingOfferTrial,
+    useStore: testingUseStore,
+  );
 
   @override
   Future<void> writeTestingPins({

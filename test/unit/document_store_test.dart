@@ -299,65 +299,78 @@ void main() {
     expect(merged.pages.first.stamps.first.caption, 'Alex · 28 Aug 2026');
   });
 
-  test('setPageStamps bakes ink into the page so a saved file shows it', () async {
-    final store = newStore();
-    final page = img.Image(width: 120, height: 160);
-    for (var y = 0; y < 160; y++) {
-      for (var x = 0; x < 120; x++) {
-        page.setPixelRgb(x, y, 40, 100, 200);
+  test(
+    'setPageStamps bakes ink into the page so a saved file shows it',
+    () async {
+      final store = newStore();
+      final page = img.Image(width: 120, height: 160);
+      for (var y = 0; y < 160; y++) {
+        for (var x = 0; x < 120; x++) {
+          page.setPixelRgb(x, y, 40, 100, 200);
+        }
       }
-    }
-    final source = File(p.join(tempRoot.path, 'page.jpg'));
-    source.writeAsBytesSync(img.encodeJpg(page, quality: 95));
-    final doc = await store.createDocumentFromScans([source.path]);
+      final source = File(p.join(tempRoot.path, 'page.jpg'));
+      source.writeAsBytesSync(img.encodeJpg(page, quality: 95));
+      final doc = await store.createDocumentFromScans([source.path]);
 
-    final sig = img.Image(width: 30, height: 16);
-    for (var y = 0; y < 16; y++) {
-      for (var x = 0; x < 30; x++) {
-        sig.setPixelRgb(x, y, 0, 0, 0);
+      final sig = img.Image(width: 30, height: 16);
+      for (var y = 0; y < 16; y++) {
+        for (var x = 0; x < 30; x++) {
+          sig.setPixelRgb(x, y, 0, 0, 0);
+        }
       }
-    }
-    final stampFile = File(p.join(tempRoot.path, 'real_sig.png'));
-    stampFile.writeAsBytesSync(img.encodePng(sig));
+      final stampFile = File(p.join(tempRoot.path, 'real_sig.png'));
+      stampFile.writeAsBytesSync(img.encodePng(sig));
 
-    await store.setPageStamps(
-      documentId: doc.id,
-      pagePath: doc.pagePaths.first,
-      stamps: [
-        PageStamp(
-          imagePath: stampFile.path,
-          nx: 0.55,
-          ny: 0.75,
-          nw: 0.3,
-          nh: 0.12,
-        ),
-      ],
-    );
+      await store.setPageStamps(
+        documentId: doc.id,
+        pagePath: doc.pagePaths.first,
+        stamps: [
+          PageStamp(
+            imagePath: stampFile.path,
+            nx: 0.55,
+            ny: 0.75,
+            nw: 0.3,
+            nh: 0.12,
+          ),
+        ],
+      );
 
-    final saved = (await store.getDocument(doc.id))!;
-    expect(saved.pages.first.stamps, isEmpty, reason: 'ink is in the JPEG');
-    final baked = img.decodeImage(File(saved.pages.first.path).readAsBytesSync())!;
-    final ink = baked.getPixel(80, 130);
-    expect(ink.r.toInt(), lessThan(60), reason: 'saved page must show the signature');
-    final paper = baked.getPixel(10, 10);
-    expect(paper.b.toInt(), greaterThan(140), reason: 'the page is not a white box');
+      final saved = (await store.getDocument(doc.id))!;
+      expect(saved.pages.first.stamps, isEmpty, reason: 'ink is in the JPEG');
+      final baked = img.decodeImage(
+        File(saved.pages.first.path).readAsBytesSync(),
+      )!;
+      final ink = baked.getPixel(80, 130);
+      expect(
+        ink.r.toInt(),
+        lessThan(60),
+        reason: 'saved page must show the signature',
+      );
+      final paper = baked.getPixel(10, 10);
+      expect(
+        paper.b.toInt(),
+        greaterThan(140),
+        reason: 'the page is not a white box',
+      );
 
-    await store.rotatePageClockwise(
-      documentId: doc.id,
-      pagePath: saved.pages.first.path,
-    );
-    final turned = img.decodeImage(
-      File(saved.pages.first.path).readAsBytesSync(),
-    )!;
-    // 90° clockwise: (x, y) → (height - 1 - y, x) → (29, 80).
-    final rotatedInk = turned.getPixel(29, 80);
-    expect(
-      rotatedInk.r.toInt(),
-      lessThan(60),
-      reason: 'rotating a signed page must keep the ink',
-    );
-    expect(turned.getPixel(149, 10).b.toInt(), greaterThan(140));
-  });
+      await store.rotatePageClockwise(
+        documentId: doc.id,
+        pagePath: saved.pages.first.path,
+      );
+      final turned = img.decodeImage(
+        File(saved.pages.first.path).readAsBytesSync(),
+      )!;
+      // 90° clockwise: (x, y) → (height - 1 - y, x) → (29, 80).
+      final rotatedInk = turned.getPixel(29, 80);
+      expect(
+        rotatedInk.r.toInt(),
+        lessThan(60),
+        reason: 'rotating a signed page must keep the ink',
+      );
+      expect(turned.getPixel(149, 10).b.toInt(), greaterThan(140));
+    },
+  );
 
   test('a page the compositor cannot read keeps stamps for export', () async {
     final store = newStore();
@@ -389,9 +402,7 @@ void main() {
 
   test('favorite, tags, private and hash persist', () async {
     final store = newStore();
-    final doc = await store.createDocumentFromScans([
-      makeSourceImage('a.jpg'),
-    ]);
+    final doc = await store.createDocumentFromScans([makeSourceImage('a.jpg')]);
     expect(doc.contentHash, isNotNull);
     await store.updateDocument(
       doc.id,

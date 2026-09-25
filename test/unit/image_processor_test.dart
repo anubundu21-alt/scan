@@ -123,7 +123,6 @@ void main() {
   });
 
   group('filter kernels', () {
-
     test('Auto leaves cream paper neutral rather than orange', () {
       final page = _creamPage();
       final before = _paperMeans(page);
@@ -140,7 +139,8 @@ void main() {
       expect(
         (after[0] - after[2]).abs(),
         lessThan(12),
-        reason: 'paper should come back near-neutral, got R=${after[0]} '
+        reason:
+            'paper should come back near-neutral, got R=${after[0]} '
             'G=${after[1]} B=${after[2]}',
       );
       // And it is paper-bright, not a muddy grey-brown.

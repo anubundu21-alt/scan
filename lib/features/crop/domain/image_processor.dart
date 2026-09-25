@@ -261,7 +261,55 @@ Raster _autoEnhance(Raster src) {
     mapLow: 18,
     mapHigh: 246,
   );
-  return _sharpen(contrasted, amount: 0.35);
+  return _whitenPaper(_sharpen(contrasted, amount: 0.35));
+}
+
+/// Pushes near-paper tones to white, so blank areas read as clean paper
+/// rather than grey blotches and pale halos around the text.
+///
+/// Works on luma with one shared delta per pixel, like [_stretchLuma], so
+/// ink and coloured marks keep their hue. Anything clearly darker than the
+/// paper is left alone.
+Raster _whitenPaper(Raster src) {
+  final luma = src.toLuma();
+  final histogram = Int32List(256);
+  for (final v in luma) {
+    histogram[v]++;
+  }
+  // The paper level: most of a document page is paper.
+  final paper = _histogramPercentile(histogram, luma.length, 0.80);
+  // A photo or a dark page has no paper to whiten.
+  if (paper < 150) return src;
+  final knee = (paper * 0.82).round();
+  final span = math.max(1, paper - knee);
+
+  final lut = Uint8List(256);
+  for (var v = 0; v < 256; v++) {
+    if (v <= knee) {
+      lut[v] = v;
+    } else if (v >= paper) {
+      lut[v] = 255;
+    } else {
+      final t = (v - knee) / span;
+      // Smooth step from the knee up to white, so there is no hard edge.
+      final eased = t * t * (3 - 2 * t);
+      lut[v] = (v + (255 - v) * eased).round().clamp(0, 255);
+    }
+  }
+
+  final out = Raster(src.width, src.height);
+  var i = 0;
+  for (var p = 0; p < luma.length; p++) {
+    final delta = lut[luma[p]] - luma[p];
+    final r = src.pixels[i] + delta;
+    final g = src.pixels[i + 1] + delta;
+    final b = src.pixels[i + 2] + delta;
+    out.pixels[i] = r < 0 ? 0 : (r > 255 ? 255 : r);
+    out.pixels[i + 1] = g < 0 ? 0 : (g > 255 ? 255 : g);
+    out.pixels[i + 2] = b < 0 ? 0 : (b > 255 ? 255 : b);
+    i += 3;
+  }
+  return out;
 }
 
 /// Divides out a heavily blurred estimate of the page background, so a page

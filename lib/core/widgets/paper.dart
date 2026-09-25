@@ -119,9 +119,8 @@ class _GhostSheet extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: (isLight ? Colors.white : scheme.surfaceContainerHigh).withValues(
-          alpha: opacity,
-        ),
+        color: (isLight ? Colors.white : scheme.surfaceContainerHigh)
+            .withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
           color: scheme.outlineVariant.withValues(alpha: opacity),

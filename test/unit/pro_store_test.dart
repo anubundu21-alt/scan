@@ -9,113 +9,128 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('missing store products are explained without a Bad state prefix', () async {
-    final controller = ProController(
-      purchase: StoreKitPurchase(gateway: MemoryIapGateway(products: [])),
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'PL',
-          currencyCode: 'PLN',
-          countryName: 'Poland',
+  test(
+    'missing store products are explained without a Bad state prefix',
+    () async {
+      final controller = ProController(
+        purchase: StoreKitPurchase(gateway: MemoryIapGateway(products: [])),
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'PL',
+            currencyCode: 'PLN',
+            countryName: 'Poland',
+          ),
+          ratesFor: (_) async => 3.71,
         ),
-        ratesFor: (_) async => 3.71,
-      ),
-    );
-    await controller.restore();
+      );
+      await controller.restore();
 
-    expect(controller.state.storeProductsReady, isFalse);
-    expect(controller.state.error, isNotNull);
-    expect(controller.state.error, isNot(startsWith('Bad state')));
-    expect(controller.state.error, contains('Ready to Submit'));
-    expect(controller.state.offer?.source, isNot('store'));
-    expect(controller.state.offer?.currencyCode, 'PLN');
+      expect(controller.state.storeProductsReady, isFalse);
+      expect(controller.state.error, isNotNull);
+      expect(controller.state.error, isNot(startsWith('Bad state')));
+      expect(controller.state.error, contains('Ready to Submit'));
+      expect(controller.state.offer?.source, isNot('store'));
+      expect(controller.state.offer?.currencyCode, 'PLN');
 
-    await controller.subscribe(ProPlan.monthly);
-    expect(controller.state.error, isNot(startsWith('Bad state')));
-    expect(controller.state.error, contains(ProProducts.monthly));
-  });
+      await controller.subscribe(ProPlan.monthly);
+      expect(controller.state.error, isNot(startsWith('Bad state')));
+      expect(controller.state.error, contains(ProProducts.monthly));
+    },
+  );
 
-  test('a reinstall after a cancelled trial does not re-offer the month', () async {
-    // SharedPreferences is empty, as it is after an uninstall. The store
-    // still remembers the trial, so the offer must stay hidden.
-    final purchase = FakeProPurchase(entitled: false, trialUsed: true);
-    final controller = ProController(
-      purchase: purchase,
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'US',
-          currencyCode: 'USD',
-          countryName: 'United States',
+  test(
+    'a reinstall after a cancelled trial does not re-offer the month',
+    () async {
+      // SharedPreferences is empty, as it is after an uninstall. The store
+      // still remembers the trial, so the offer must stay hidden.
+      final purchase = FakeProPurchase(entitled: false, trialUsed: true);
+      final controller = ProController(
+        purchase: purchase,
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'US',
+            currencyCode: 'USD',
+            countryName: 'United States',
+          ),
+          ratesFor: (_) async => 1,
         ),
-        ratesFor: (_) async => 1,
-      ),
-    );
-    await controller.restore();
+      );
+      await controller.restore();
 
-    expect(controller.state.isPro, isFalse);
-    expect(controller.state.trialUsed, isTrue);
+      expect(controller.state.isPro, isFalse);
+      expect(controller.state.trialUsed, isTrue);
 
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('scanella.pro.trial_used'), isTrue);
-  });
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('scanella.pro.trial_used'), isTrue);
+    },
+  );
 
-  test('a first install with no purchase history is still offered the month', () async {
-    final controller = ProController(
-      purchase: FakeProPurchase(entitled: false, trialUsed: false),
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'US',
-          currencyCode: 'USD',
-          countryName: 'United States',
+  test(
+    'a first install with no purchase history is still offered the month',
+    () async {
+      final controller = ProController(
+        purchase: FakeProPurchase(entitled: false, trialUsed: false),
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'US',
+            currencyCode: 'USD',
+            countryName: 'United States',
+          ),
+          ratesFor: (_) async => 1,
         ),
-        ratesFor: (_) async => 1,
-      ),
-    );
-    await controller.restore();
+      );
+      await controller.restore();
 
-    expect(controller.state.trialUsed, isFalse);
-  });
+      expect(controller.state.trialUsed, isFalse);
+    },
+  );
 
-  test('subscribing records the trial where an uninstall cannot reach it', () async {
-    final purchase = FakeProPurchase();
-    final controller = ProController(
-      purchase: purchase,
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'US',
-          currencyCode: 'USD',
-          countryName: 'United States',
+  test(
+    'subscribing records the trial where an uninstall cannot reach it',
+    () async {
+      final purchase = FakeProPurchase();
+      final controller = ProController(
+        purchase: purchase,
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'US',
+            currencyCode: 'USD',
+            countryName: 'United States',
+          ),
+          ratesFor: (_) async => 1,
         ),
-        ratesFor: (_) async => 1,
-      ),
-    );
-    await controller.restore();
-    expect(await controller.subscribe(ProPlan.yearly), isTrue);
+      );
+      await controller.restore();
+      expect(await controller.subscribe(ProPlan.yearly), isTrue);
 
-    expect(controller.state.isPro, isTrue);
-    expect(controller.state.trialUsed, isTrue);
-    expect(purchase.trialUsed, isTrue);
-  });
+      expect(controller.state.isPro, isTrue);
+      expect(controller.state.trialUsed, isTrue);
+      expect(purchase.trialUsed, isTrue);
+    },
+  );
 
-  test('no introductory offer configured means no free month is promised', () async {
-    // A brand new install, but App Store Connect has no offer set up.
-    final controller = ProController(
-      purchase: FakeProPurchase(trialUsed: false, introOffer: false),
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'US',
-          currencyCode: 'USD',
-          countryName: 'United States',
+  test(
+    'no introductory offer configured means no free month is promised',
+    () async {
+      // A brand new install, but App Store Connect has no offer set up.
+      final controller = ProController(
+        purchase: FakeProPurchase(trialUsed: false, introOffer: false),
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'US',
+            currencyCode: 'USD',
+            countryName: 'United States',
+          ),
+          ratesFor: (_) async => 1,
         ),
-        ratesFor: (_) async => 1,
-      ),
-    );
-    await controller.restore();
+      );
+      await controller.restore();
 
-    expect(controller.state.trialUsed, isFalse);
-    expect(controller.state.canStartTrial, isFalse);
-    expect(controller.state.canStartCourtesyTrial, isTrue);
-  });
+      expect(controller.state.trialUsed, isFalse);
+      expect(controller.state.canStartTrial, isFalse);
+      expect(controller.state.canStartCourtesyTrial, isTrue);
+    },
+  );
 
   test('the store can offer the month even when nothing is saved', () async {
     final controller = ProController(
@@ -131,8 +146,8 @@ void main() {
     );
     await controller.restore();
 
-    expect(controller.state.canStartTrial, isTrue);
-    expect(controller.state.canStartCourtesyTrial, isFalse);
+    expect(controller.state.canStartTrial, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
   });
 
   test('a cancelled trial is not offered the month again', () async {
@@ -168,8 +183,8 @@ void main() {
     );
     await controller.restore();
 
-    expect(controller.state.canStartTrial, isTrue);
-    expect(controller.state.canStartCourtesyTrial, isFalse);
+    expect(controller.state.canStartTrial, isFalse);
+    expect(controller.state.canStartCourtesyTrial, isTrue);
   });
 
   test('Restore switches Pro off when the store says there is none', () async {
@@ -198,33 +213,36 @@ void main() {
     expect(prefs.getBool('scanella.pro.entitled'), isFalse);
   });
 
-  test('Settings-style display drops USD store prices for a local country', () async {
-    final controller = ProController(
-      purchase: FakeProPurchase(
-        offer: LocalizedPricing.formatOffer(
-          currencyCode: 'USD',
-          countryCode: 'US',
-          countryName: 'United States',
-          usdToLocal: 1,
-          source: 'store',
+  test(
+    'Settings-style display drops USD store prices for a local country',
+    () async {
+      final controller = ProController(
+        purchase: FakeProPurchase(
+          offer: LocalizedPricing.formatOffer(
+            currencyCode: 'USD',
+            countryCode: 'US',
+            countryName: 'United States',
+            usdToLocal: 1,
+            source: 'store',
+          ),
         ),
-      ),
-      pricing: LocalizedPricing(
-        locate: () async => const GeoCurrency(
-          countryCode: 'IN',
-          currencyCode: 'INR',
-          countryName: 'India',
+        pricing: LocalizedPricing(
+          locate: () async => const GeoCurrency(
+            countryCode: 'IN',
+            currencyCode: 'INR',
+            countryName: 'India',
+          ),
+          ratesFor: (currency) async => currency == 'INR' ? 83.5 : 1,
         ),
-        ratesFor: (currency) async => currency == 'INR' ? 83.5 : 1,
-      ),
-    );
-    await controller.restore();
+      );
+      await controller.restore();
 
-    expect(controller.state.storeProductsReady, isTrue);
-    expect(controller.state.offer?.currencyCode, 'INR');
-    expect(controller.state.offer?.source, 'internet');
-    expect(controller.state.offer?.monthlyLabel, isNot(contains(r'$4.99')));
-  });
+      expect(controller.state.storeProductsReady, isTrue);
+      expect(controller.state.offer?.currencyCode, 'INR');
+      expect(controller.state.offer?.source, 'internet');
+      expect(controller.state.offer?.monthlyLabel, isNot(contains(r'$4.99')));
+    },
+  );
 
   test('duplicate product error is a short App Store message', () async {
     const monthly = StoreProduct(
@@ -342,8 +360,12 @@ void main() {
     expect(controller.state.isPro, isFalse);
     expect(controller.state.canStartCourtesyTrial, isTrue);
 
-    expect(await controller.startOfferedTrialOrSubscribe(ProPlan.yearly), isTrue);
-    expect(purchase.buyCalls, 0);
+    expect(
+      await controller.startOfferedTrialOrSubscribe(ProPlan.yearly),
+      isTrue,
+    );
+    expect(purchase.buyCalls, 1);
+    expect(purchase.courtesyStarts, 0);
     expect(controller.state.isPro, isTrue);
   });
 
@@ -378,71 +400,83 @@ void main() {
     expect(prefs.getBool(ProController.testingForceFreeKey), isNot(isTrue));
   });
 
-  test('a reinstall with testing pins stays free and shows the month', () async {
-    // Prefs are empty, as after an uninstall. The store still says this
-    // Apple ID is subscribed and has used the trial. The Keychain pins
-    // are what must keep the unpaid first-run screens on offer.
-    final purchase = FakeProPurchase(
-      entitled: true,
-      trialUsed: true,
-      introOffer: false,
-      testingForceFree: true,
-      testingOfferTrial: true,
-    );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-      testingTools: true,
-    );
-    await controller.restore();
+  test(
+    'a reinstall with testing pins stays free and shows the month',
+    () async {
+      // Prefs are empty, as after an uninstall. The store still says this
+      // Apple ID is subscribed and has used the trial. The Keychain pins
+      // are what must keep the unpaid first-run screens on offer.
+      final purchase = FakeProPurchase(
+        entitled: true,
+        trialUsed: true,
+        introOffer: false,
+        testingForceFree: true,
+        testingOfferTrial: true,
+      );
+      final controller = ProController(
+        purchase: purchase,
+        pricing: _usPricing(),
+        testingTools: true,
+      );
+      await controller.restore();
 
-    expect(controller.state.isPro, isFalse);
-    expect(controller.state.trialUsed, isFalse);
-    expect(controller.state.canStartCourtesyTrial, isTrue);
-    expect(controller.state.canStartTrial, isFalse);
-    expect(purchase.entitlementChecks, 0);
-  });
+      expect(controller.state.isPro, isFalse);
+      expect(controller.state.trialUsed, isFalse);
+      expect(controller.state.canStartCourtesyTrial, isTrue);
+      expect(controller.state.canStartTrial, isFalse);
+      expect(purchase.entitlementChecks, 0);
+    },
+  );
 
-  test('without testing tools, Keychain pins do not hide a subscription', () async {
-    final purchase = FakeProPurchase(
-      entitled: true,
-      trialUsed: true,
-      introOffer: false,
-      testingForceFree: true,
-      testingOfferTrial: true,
-    );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-    );
-    await controller.restore();
+  test(
+    'without testing tools, Keychain pins do not hide a subscription',
+    () async {
+      final purchase = FakeProPurchase(
+        entitled: true,
+        trialUsed: true,
+        introOffer: false,
+        testingForceFree: true,
+        testingOfferTrial: true,
+      );
+      final controller = ProController(
+        purchase: purchase,
+        pricing: _usPricing(),
+      );
+      await controller.restore();
 
-    expect(controller.state.isPro, isTrue);
-    expect(controller.state.canStartTrial, isFalse);
-    expect(purchase.entitlementChecks, greaterThan(0));
-  });
+      expect(controller.state.isPro, isTrue);
+      expect(controller.state.canStartTrial, isFalse);
+      expect(purchase.entitlementChecks, greaterThan(0));
+    },
+  );
 
-  test('Start trial does not open Apple when this Apple ID already used it', () async {
-    final purchase = FakeProPurchase(
-      entitled: false,
-      trialUsed: true,
-      introOffer: false,
-      courtesyUsed: true,
-      testingOfferTrial: true,
-    );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-      testingTools: true,
-    );
-    await controller.restore();
-    expect(controller.state.canStartCourtesyTrial, isFalse);
-    expect(controller.state.canStartTrial, isTrue);
+  test(
+    'Start trial does not open Apple when this Apple ID already used it',
+    () async {
+      final purchase = FakeProPurchase(
+        entitled: false,
+        trialUsed: true,
+        introOffer: false,
+        courtesyUsed: true,
+        testingOfferTrial: true,
+      );
+      final controller = ProController(
+        purchase: purchase,
+        pricing: _usPricing(),
+        testingTools: true,
+      );
+      await controller.restore();
+      expect(controller.state.canStartCourtesyTrial, isFalse);
+      expect(controller.state.canStartTrial, isTrue);
 
-    expect(await controller.subscribe(ProPlan.yearly), isFalse);
-    expect(purchase.buyCalls, 0);
-    expect(controller.state.error, ProController.trialWouldChargeTodayMessage);
-  });
+      expect(await controller.subscribe(ProPlan.yearly), isFalse);
+      expect(purchase.buyCalls, 0);
+      expect(
+        controller.state.error,
+        ProController.trialWouldChargeTodayMessage,
+      );
+    },
+  );
 
   test('Start trial still buys when Apple would grant the month', () async {
     final purchase = FakeProPurchase(
@@ -450,10 +484,7 @@ void main() {
       introOffer: true,
       courtesyUsed: true,
     );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-    );
+    final controller = ProController(purchase: purchase, pricing: _usPricing());
     await controller.restore();
 
     expect(await controller.subscribe(ProPlan.yearly), isTrue);
@@ -461,38 +492,41 @@ void main() {
     expect(controller.state.isPro, isTrue);
   });
 
-  test('a first install is offered the 7-day trial without Apple', () async {
+  test('a first install opens Apple’s sheet for the 1 month trial', () async {
     final purchase = FakeProPurchase(introOffer: false);
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-    );
+    final controller = ProController(purchase: purchase, pricing: _usPricing());
     await controller.restore();
     expect(controller.state.canStartCourtesyTrial, isTrue);
 
-    expect(await controller.startOfferedTrialOrSubscribe(ProPlan.yearly), isTrue);
-    expect(purchase.buyCalls, 0);
-    expect(purchase.courtesyStarts, 1);
+    expect(
+      await controller.startOfferedTrialOrSubscribe(ProPlan.yearly),
+      isTrue,
+    );
+    expect(purchase.buyCalls, 1);
+    expect(purchase.courtesyStarts, 0);
     expect(controller.state.isPro, isTrue);
     expect(controller.state.canStartCourtesyTrial, isFalse);
   });
 
-  test('the 7-day trial stays on after an uninstall while it is running', () async {
-    final until = DateTime(2026, 9, 29);
-    final purchase = FakeProPurchase(
-      entitled: false,
-      courtesyUsed: true,
-      courtesyUntil: until,
-    );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-      clock: () => DateTime(2026, 9, 24),
-    );
-    await controller.restore();
-    expect(controller.state.isPro, isTrue);
-    expect(controller.state.canStartCourtesyTrial, isFalse);
-  });
+  test(
+    'the 7-day trial stays on after an uninstall while it is running',
+    () async {
+      final until = DateTime(2026, 9, 29);
+      final purchase = FakeProPurchase(
+        entitled: false,
+        courtesyUsed: true,
+        courtesyUntil: until,
+      );
+      final controller = ProController(
+        purchase: purchase,
+        pricing: _usPricing(),
+        clock: () => DateTime(2026, 9, 24),
+      );
+      await controller.restore();
+      expect(controller.state.isPro, isTrue);
+      expect(controller.state.canStartCourtesyTrial, isFalse);
+    },
+  );
 
   test('the 7-day trial is not offered again after it ends', () async {
     final purchase = FakeProPurchase(
@@ -513,22 +547,25 @@ void main() {
     expect(purchase.courtesyStarts, 0);
   });
 
-  test('Restore keeps the 7-day trial on when Apple has no subscription', () async {
-    SharedPreferences.setMockInitialValues({'scanella.pro.entitled': true});
-    final purchase = FakeProPurchase(
-      entitled: false,
-      courtesyUsed: true,
-      courtesyUntil: DateTime(2026, 9, 29),
-    );
-    final controller = ProController(
-      purchase: purchase,
-      pricing: _usPricing(),
-      clock: () => DateTime(2026, 9, 24),
-    );
-    await controller.restore();
-    expect(controller.state.isPro, isTrue);
+  test(
+    'Restore keeps the 7-day trial on when Apple has no subscription',
+    () async {
+      SharedPreferences.setMockInitialValues({'scanella.pro.entitled': true});
+      final purchase = FakeProPurchase(
+        entitled: false,
+        courtesyUsed: true,
+        courtesyUntil: DateTime(2026, 9, 29),
+      );
+      final controller = ProController(
+        purchase: purchase,
+        pricing: _usPricing(),
+        clock: () => DateTime(2026, 9, 24),
+      );
+      await controller.restore();
+      expect(controller.state.isPro, isTrue);
 
-    expect(await controller.restorePurchases(), isFalse);
-    expect(controller.state.isPro, isTrue);
-  });
+      expect(await controller.restorePurchases(), isFalse);
+      expect(controller.state.isPro, isTrue);
+    },
+  );
 }

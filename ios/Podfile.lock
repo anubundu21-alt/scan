@@ -1,0 +1,28 @@
+PODS:
+  - cunning_document_scanner (1.0.0):
+    - Flutter
+  - Flutter (1.0.0)
+  - printing (1.0.0):
+    - Flutter
+
+DEPENDENCIES:
+  - cunning_document_scanner (from `.symlinks/plugins/cunning_document_scanner/ios`)
+  - Flutter (from `Flutter`)
+  - printing (from `.symlinks/plugins/printing/ios`)
+
+EXTERNAL SOURCES:
+  cunning_document_scanner:
+    :path: ".symlinks/plugins/cunning_document_scanner/ios"
+  Flutter:
+    :path: Flutter
+  printing:
+    :path: ".symlinks/plugins/printing/ios"
+
+SPEC CHECKSUMS:
+  cunning_document_scanner: 43a2bda11ef6a33fd68766b287ed056b4caf6a06
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
+
+PODFILE CHECKSUM: cd3ba5187a12bc07d2873f9e386b885df4d7a20c
+
+COCOAPODS: 1.17.0

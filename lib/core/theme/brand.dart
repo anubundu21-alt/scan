@@ -84,11 +84,7 @@ class Brand {
 /// The "Scanella" wordmark: Scan in black, ella in brand green.
 /// On a dark surface (the drawer header) both halves go white.
 class ScanellaWordmark extends StatelessWidget {
-  const ScanellaWordmark({
-    super.key,
-    this.fontSize = 44,
-    this.onDark = false,
-  });
+  const ScanellaWordmark({super.key, this.fontSize = 44, this.onDark = false});
 
   final double fontSize;
   final bool onDark;
@@ -113,9 +109,7 @@ class ScanellaWordmark extends StatelessWidget {
           ),
           TextSpan(
             text: 'ella',
-            style: base.copyWith(
-              color: onDark ? Colors.white : Brand.accent,
-            ),
+            style: base.copyWith(color: onDark ? Colors.white : Brand.accent),
           ),
         ],
       ),

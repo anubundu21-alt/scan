@@ -53,10 +53,8 @@ class FreeAccessScreen extends StatelessWidget {
                       icon: Icons.card_giftcard_rounded,
                       wash: const Color(0xFFE9F7F0),
                       tint: Brand.accent,
-                      title:
-                          'Get ${ScanQuota.starterLimit} free scans when you '
-                          'start',
-                      detail: 'No payment required',
+                      title: '${ScanQuota.starterLimit} free scans to start',
+                      detail: 'No payment, no account.',
                     ),
                     _AccessCard(
                       icon: Icons.autorenew_rounded,
@@ -82,7 +80,8 @@ class FreeAccessScreen extends StatelessWidget {
                       tint: Brand.accent,
                       title: 'Upgrade to Pro anytime',
                       detail:
-                          'Get unlimited scans and all premium features.',
+                          'Unlimited scans, advanced OCR and more export '
+                          'options. The first month is free.',
                       last: true,
                     ),
                   ],
@@ -122,8 +121,11 @@ class _Headline extends StatelessWidget {
         style: style,
         children: [
           TextSpan(text: 'How '),
-          TextSpan(text: 'Free Access', style: TextStyle(color: Brand.accent)),
-          TextSpan(text: ' Works?'),
+          TextSpan(
+            text: 'Free Access',
+            style: TextStyle(color: Brand.accent),
+          ),
+          TextSpan(text: ' Works'),
         ],
       ),
       textAlign: TextAlign.center,

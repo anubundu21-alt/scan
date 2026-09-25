@@ -51,11 +51,7 @@ void main() {
     test('premultiplied transparent black becomes white paper', () {
       final rgba = Uint8List(4 * 4 * 4);
       // Entirely transparent — what PDFKit leaves behind the glyphs.
-      final jpeg = flattenPremultipliedRgbaToJpeg(
-        rgba,
-        width: 4,
-        height: 4,
-      );
+      final jpeg = flattenPremultipliedRgbaToJpeg(rgba, width: 4, height: 4);
       expect(isMostlyBlack(jpeg), isFalse);
       final decoded = img.decodeImage(jpeg)!;
       expect(decoded.getPixel(0, 0).r, greaterThan(240));
@@ -78,27 +74,30 @@ void main() {
       expect(decoded.getPixel(2, 2).r.toInt(), lessThan(40));
     });
 
-    test('straight-alpha fallback recovers a page PDFKit-style premul misses', () {
-      // Straight alpha: RGB is full colour, alpha is 0 everywhere except ink.
-      // Premul blend would add 255 to those RGB values and wash them out or
-      // keep empty pixels white either way; a buffer of (0,0,0,0) is white
-      // in both. Use a page that is only recoverable as straight alpha:
-      // dark RGB with alpha 0 would stay black if treated as premul.
-      //
-      // More realistic: half the pixels are (0,0,0,0), half are opaque white
-      // already — premul is correct. The fallback is covered by isMostlyBlack
-      // on a premul-black buffer of opaque black (alpha 255).
-      final black = Uint8List(4 * 4 * 4);
-      for (var i = 0; i < black.length; i += 4) {
-        black[i + 3] = 255; // opaque black
-      }
-      expect(
-        isMostlyBlack(
-          flattenPremultipliedRgbaToJpeg(black, width: 4, height: 4),
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'straight-alpha fallback recovers a page PDFKit-style premul misses',
+      () {
+        // Straight alpha: RGB is full colour, alpha is 0 everywhere except ink.
+        // Premul blend would add 255 to those RGB values and wash them out or
+        // keep empty pixels white either way; a buffer of (0,0,0,0) is white
+        // in both. Use a page that is only recoverable as straight alpha:
+        // dark RGB with alpha 0 would stay black if treated as premul.
+        //
+        // More realistic: half the pixels are (0,0,0,0), half are opaque white
+        // already — premul is correct. The fallback is covered by isMostlyBlack
+        // on a premul-black buffer of opaque black (alpha 255).
+        final black = Uint8List(4 * 4 * 4);
+        for (var i = 0; i < black.length; i += 4) {
+          black[i + 3] = 255; // opaque black
+        }
+        expect(
+          isMostlyBlack(
+            flattenPremultipliedRgbaToJpeg(black, width: 4, height: 4),
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('PageProcessor on a transparent PDF-like PNG', () {

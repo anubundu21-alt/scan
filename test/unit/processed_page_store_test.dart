@@ -79,9 +79,7 @@ void main() {
       title: 'Offer letter',
       importedFromPdf: true,
     );
-    final scan = await store.createDocumentFromScans([
-      capture('scan.jpg', 4),
-    ]);
+    final scan = await store.createDocumentFromScans([capture('scan.jpg', 4)]);
     expect(scan.importedFromPdf, isFalse);
 
     final reopened = await newStore().getAllDocuments();

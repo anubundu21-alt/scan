@@ -201,7 +201,8 @@ class _SignaturePainter extends CustomPainter {
   final int generation;
 
   @override
-  void paint(Canvas canvas, Size size) => paintSignatureStrokes(canvas, strokes);
+  void paint(Canvas canvas, Size size) =>
+      paintSignatureStrokes(canvas, strokes);
 
   @override
   bool shouldRepaint(covariant _SignaturePainter old) =>

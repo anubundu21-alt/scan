@@ -163,6 +163,11 @@ private enum ScanellaProPlugin {
         writeFlag(true, account: courtesyUsedAccount)
         writeText(String(untilMs), account: courtesyUntilAccount)
         result(nil)
+      case "clearCourtesyTrial":
+        // Testing tools only. A real install never gets a second free week.
+        clear(account: courtesyUsedAccount)
+        clear(account: courtesyUntilAccount)
+        result(nil)
       case "readPro":
         result(readPro())
       case "readProStamp":

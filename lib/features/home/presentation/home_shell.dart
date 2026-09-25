@@ -31,6 +31,9 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// 0 = Documents, 1 = Settings. Settings is a tab, not a pushed page.
+  int _tab = 0;
+
   /// One notice at a time. The quota can change while one is open, and two
   /// full-screen messages stacked on each other is how an app feels broken.
   bool _noticeOpen = false;
@@ -61,7 +64,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   void _openSettings() {
     _closeDrawer();
-    context.push('/settings');
+    setState(() => _tab = 1);
   }
 
   void _openAbout() {
@@ -114,6 +117,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 
   void _openAllDocuments() {
+    setState(() => _tab = 0);
     ref.read(smartFolderProvider.notifier).state = null;
     ref.read(openFolderIdProvider.notifier).state = null;
     _closeDrawer();
@@ -121,10 +125,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   Future<void> _openSmartFolder(SmartFolder folder) async {
     _closeDrawer();
-    if (!ref.read(proProvider).isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
+    setState(() => _tab = 0);
+    // Favorites, Private and IDs are all on the free plan. Pro is only
+    // unlimited scans.
     if (folder == SmartFolder.private) {
       final allowed = await ref
           .read(appLockProvider.notifier)
@@ -185,13 +188,31 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         selectedSmartFolder: ref.watch(smartFolderProvider),
         proSubtitle: isPro ? 'Scanella Pro is on' : quota.freePlanLabel,
       ),
-      body: DocumentsView(
-        onOpenMenu: _openMenu,
-        onScan: () => _startScan(),
-        onAllTools: () => context.push('/tools'),
-      ),
+      body: _tab == 0
+          ? DocumentsView(
+              onOpenMenu: _openMenu,
+              onScan: () => _startScan(),
+              onAllTools: () => context.push('/tools'),
+            )
+          : Builder(
+              // The bar floats over the body (extendBody), so keep the last
+              // settings row above it.
+              builder: (context) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: const SettingsScreen(),
+                ),
+              ),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _ScanButton(onPressed: () => _startScan()),
+      // Hidden while typing so it never sits on top of the search field.
+      floatingActionButton: MediaQuery.viewInsetsOf(context).bottom > 0
+          ? null
+          : _ScanButton(onPressed: () => _startScan()),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: scheme.outlineVariant)),
@@ -215,11 +236,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           shadowColor: Colors.transparent,
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: _NavItem(
                   icon: Icons.folder_rounded,
                   label: 'Documents',
-                  selected: true,
+                  selected: _tab == 0,
+                  onTap: () => setState(() => _tab = 0),
                 ),
               ),
               SizedBox(
@@ -230,8 +252,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 child: _NavItem(
                   icon: Icons.tune_outlined,
                   label: 'Settings',
-                  selected: false,
-                  onTap: () => context.push('/settings'),
+                  selected: _tab == 1,
+                  onTap: () => setState(() => _tab = 1),
                 ),
               ),
             ],

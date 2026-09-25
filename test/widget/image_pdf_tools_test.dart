@@ -16,13 +16,18 @@ void main() {
     expect(find.text('PNG'), findsOneWidget);
     expect(find.text('Choose a PDF'), findsOneWidget);
     expect(find.textContaining('nothing is uploaded'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
 
     await tester.tap(find.text('PNG'));
     await tester.pump();
   });
 
-  testWidgets('Image to PDF asks for photos and stays on device', (tester) async {
+  testWidgets('Image to PDF asks for photos and stays on device', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app(const ImagesToPdfScreen()));
     await tester.pumpAndSettle();
 

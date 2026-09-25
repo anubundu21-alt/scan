@@ -681,11 +681,7 @@ class DocumentStore implements DocumentRepository {
     final stored = <ScanPage>[];
     for (var i = 0; i < rest.length; i++) {
       stored.add(
-        await _importPageCopy(
-          documentId: 'doc_$id',
-          index: i,
-          page: rest[i],
-        ),
+        await _importPageCopy(documentId: 'doc_$id', index: i, page: rest[i]),
       );
     }
     final created = Document(
@@ -1018,11 +1014,7 @@ class DocumentStore implements DocumentRepository {
     final original = file.readAsBytesSync();
     final baked = await const StampCompositor().paint(original, localized);
     final landed = localized.any(
-      (stamp) => stampInkLanded(
-        original: original,
-        baked: baked,
-        stamp: stamp,
-      ),
+      (stamp) => stampInkLanded(original: original, baked: baked, stamp: stamp),
     );
     if (!landed) return page.copyWith(stamps: localized);
 
@@ -1116,7 +1108,9 @@ class DocumentStore implements DocumentRepository {
               if (doc.category != null) 'category': doc.category,
               if (doc.contentHash != null) 'contentHash': doc.contentHash,
               if (doc.ocrBlocks.isNotEmpty)
-                'ocrBlocks': [for (final block in doc.ocrBlocks) block.toJson()],
+                'ocrBlocks': [
+                  for (final block in doc.ocrBlocks) block.toJson(),
+                ],
               if (doc.ocrLanguage != null) 'ocrLanguage': doc.ocrLanguage,
               if (doc.autoFiled) 'autoFiled': true,
               if (doc.hideFromLibrary) 'hideFromLibrary': true,

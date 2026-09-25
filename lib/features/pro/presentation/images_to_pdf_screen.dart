@@ -42,29 +42,28 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen>
       images.add(await File(path).readAsBytes());
     }
     if (images.isEmpty) {
-      showConversionMessage('Nothing in that selection could be read as an image.');
+      showConversionMessage(
+        'Nothing in that selection could be read as an image.',
+      );
       return;
     }
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.converting,
-            message: 'Building the PDF…',
-            fraction: 0.5,
-          ),
-        );
-        final bytes = await _convert.imagesToPdf(
-          [for (final image in images) Uint8List.fromList(image)],
-        );
-        return ConvertedFile(
-          bytes: bytes,
-          filename: 'images.pdf',
-          mimeType: 'application/pdf',
-        );
-      },
-      doneMessage: 'Images saved as a PDF.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.converting,
+          message: 'Building the PDF…',
+          fraction: 0.5,
+        ),
+      );
+      final bytes = await _convert.imagesToPdf([
+        for (final image in images) Uint8List.fromList(image),
+      ]);
+      return ConvertedFile(
+        bytes: bytes,
+        filename: 'images.pdf',
+        mimeType: 'application/pdf',
+      );
+    }, doneMessage: 'Images saved as a PDF.');
   }
 
   @override

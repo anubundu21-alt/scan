@@ -10,6 +10,7 @@ import 'package:scan2/core/imaging/raster_image.dart';
 import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/camera/domain/quad_detector.dart';
+import 'package:scan2/features/crop/domain/perspective_transformer.dart';
 import 'package:scan2/features/crop/domain/crop_args.dart';
 import 'package:scan2/features/crop/domain/image_processor.dart';
 import 'package:scan2/features/crop/domain/page_processor.dart';
@@ -366,7 +367,13 @@ class _CropScreenState extends ConsumerState<CropScreen> {
       _imagePath = page.editSource;
       _pageIndex = index;
       _pageCount = document.pageCount;
-      _keepQuad = true;
+      // A page with no real crop yet (a photo import saves the full frame)
+      // gets its edges found like page one did. A page the camera or the
+      // user already cropped keeps that crop.
+      final quad = page.quad;
+      _keepQuad =
+          widget.edgesAlreadyApplied ||
+          (quad != null && !PerspectiveTransformer.isFullFrame(quad));
       _stage = _Stage.crop;
       _saving = false;
       _rotating = false;
@@ -457,17 +464,25 @@ class _CropScreenState extends ConsumerState<CropScreen> {
           ),
           actions: [
             if (_stage == _Stage.crop) ...[
-              IconButton(
-                tooltip: 'Detect edges',
-                icon: const Icon(Icons.auto_fix_high_rounded),
-                color: Brand.paperOnDark,
+              // Words as well as icons: a wand and a dotted square mean
+              // nothing to someone who has not used a scanner app before.
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Brand.paperOnDark,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
                 onPressed: _source == null ? null : _autoDetect,
+                icon: const Icon(Icons.auto_fix_high_rounded, size: 20),
+                label: const Text('Auto edges'),
               ),
-              IconButton(
-                tooltip: 'Select whole image',
-                icon: const Icon(Icons.select_all_rounded),
-                color: Brand.paperOnDark,
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Brand.paperOnDark,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
                 onPressed: _source == null ? null : _selectAll,
+                icon: const Icon(Icons.select_all_rounded, size: 20),
+                label: const Text('Full page'),
               ),
               const SizedBox(width: 4),
             ],
@@ -487,7 +502,7 @@ class _CropScreenState extends ConsumerState<CropScreen> {
   static const _editorBackground = Color(0xFF070D19);
 
   String get _editorTitle {
-    final stage = _stage == _Stage.crop ? 'Crop & rotate' : 'Enhance';
+    final stage = _stage == _Stage.crop ? 'Crop' : 'Enhance';
     if (_pageCount < 2) return stage;
     return '$stage · ${_pageIndex + 1} of $_pageCount';
   }
@@ -744,12 +759,19 @@ class _ToneSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Tooltip(
-          message: label,
-          child: Icon(
-            icon,
-            size: 19,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+        Icon(
+          icon,
+          size: 19,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 78,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         Expanded(

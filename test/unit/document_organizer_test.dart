@@ -20,22 +20,39 @@ void main() {
 
   test('categorizes receipts and invoices', () {
     expect(organizer.categorize('Tax invoice amount due'), 'invoice');
-    expect(organizer.categorize('Thank you for your purchase receipt'), 'receipt');
+    expect(
+      organizer.categorize('Thank you for your purchase receipt'),
+      'receipt',
+    );
   });
 
   test('detects a passport before an ID card', () {
     expect(
-      organizer.detectIdentity('PASSPORT\nUnited States of America\nDate of birth'),
+      organizer.detectIdentity(
+        'PASSPORT\nUnited States of America\nDate of birth',
+      ),
       IdentityKind.passport,
     );
-    expect(organizer.detectIdentity('P<UTOERIKSSON<<ANNA<MARIA'), IdentityKind.passport);
+    expect(
+      organizer.detectIdentity('P<UTOERIKSSON<<ANNA<MARIA'),
+      IdentityKind.passport,
+    );
     expect(
       organizer.detectIdentity('REPUBLIC OF INDIA\nDriving Licence\nDL No'),
       IdentityKind.idCard,
     );
-    expect(organizer.detectIdentity('Aadhaar number 1234 5678 9012'), IdentityKind.idCard);
-    expect(organizer.detectIdentity('Date of birth 01/02/1990'), IdentityKind.none);
-    expect(organizer.detectIdentity('Tax invoice amount due'), IdentityKind.none);
+    expect(
+      organizer.detectIdentity('Aadhaar number 1234 5678 9012'),
+      IdentityKind.idCard,
+    );
+    expect(
+      organizer.detectIdentity('Date of birth 01/02/1990'),
+      IdentityKind.none,
+    );
+    expect(
+      organizer.detectIdentity('Tax invoice amount due'),
+      IdentityKind.none,
+    );
   });
 
   test('duplicate smart folder keeps only shared hashes', () {

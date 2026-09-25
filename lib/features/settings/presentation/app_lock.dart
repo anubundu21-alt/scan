@@ -14,6 +14,11 @@ const _kPinHash = 'scanella_lock_pin_hash';
 const _kEnabled = 'scanella_lock_enabled';
 const _kUseBio = 'scanella_lock_use_bio';
 
+/// What the phone calls its unlock sensor: Face ID on iPhone, fingerprint
+/// elsewhere.
+String get biometricLabel =>
+    defaultTargetPlatform == TargetPlatform.iOS ? 'Face ID' : 'Fingerprint';
+
 class AppLockState {
   const AppLockState({
     required this.enabled,
@@ -322,7 +327,7 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _bio,
-                        child: const Text('Use Face ID / fingerprint'),
+                        child: Text('Use $biometricLabel'),
                       ),
                     ],
                   ],

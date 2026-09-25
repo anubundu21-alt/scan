@@ -25,7 +25,9 @@ class DocumentOrganizer {
         .where((line) => line.length >= 4);
     for (final line in lines) {
       if (_junkLine.hasMatch(line)) continue;
-      final clipped = line.length > 48 ? '${line.substring(0, 45).trim()}…' : line;
+      final clipped = line.length > 48
+          ? '${line.substring(0, 45).trim()}…'
+          : line;
       return clipped;
     }
     return fallback ?? 'Scan';
@@ -103,7 +105,12 @@ class DocumentOrganizer {
 
   static const _categoryRules = <_CategoryRule>[
     _CategoryRule('receipt', ['receipt', 'thank you for your', 'change due']),
-    _CategoryRule('invoice', ['invoice', 'amount due', 'bill to', 'tax invoice']),
+    _CategoryRule('invoice', [
+      'invoice',
+      'amount due',
+      'bill to',
+      'tax invoice',
+    ]),
     _CategoryRule('id', [
       'passport',
       'driver licence',

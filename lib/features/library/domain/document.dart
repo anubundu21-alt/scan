@@ -214,9 +214,7 @@ class Document {
       category: clearCategory ? null : (category ?? this.category),
       contentHash: clearHash ? null : (contentHash ?? this.contentHash),
       ocrBlocks: ocrBlocks ?? this.ocrBlocks,
-      ocrLanguage: clearOcrLanguage
-          ? null
-          : (ocrLanguage ?? this.ocrLanguage),
+      ocrLanguage: clearOcrLanguage ? null : (ocrLanguage ?? this.ocrLanguage),
       autoFiled: autoFiled ?? this.autoFiled,
       hideFromLibrary: hideFromLibrary ?? this.hideFromLibrary,
     );

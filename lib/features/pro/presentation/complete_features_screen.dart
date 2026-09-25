@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/pro/domain/pro_features.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
@@ -30,7 +31,9 @@ class _CompleteFeaturesScreenState
     final theme = Theme.of(context);
     final light = theme.brightness == Brightness.light;
     return Scaffold(
-      backgroundColor: light ? const Color(0xFFF5F7FA) : theme.colorScheme.surface,
+      backgroundColor: light
+          ? const Color(0xFFF5F7FA)
+          : theme.colorScheme.surface,
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Choose your plan'),
@@ -64,7 +67,15 @@ class _FreePlanCard extends StatelessWidget {
   const _FreePlanCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // The card colours are fixed light washes, so its text must stay dark
+      // in dark mode too.
+      Theme(
+        data: AppTheme.light,
+        child: Builder(builder: _card),
+      );
+
+  Widget _card(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 16, 16),
@@ -148,7 +159,15 @@ class _ProPlanCard extends StatelessWidget {
   const _ProPlanCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // The card colours are fixed light washes, so its text must stay dark
+      // in dark mode too.
+      Theme(
+        data: AppTheme.light,
+        child: Builder(builder: _card),
+      );
+
+  Widget _card(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 16, 16),
@@ -352,11 +371,7 @@ class _PlanPapersArt extends StatelessWidget {
             ),
           ),
           if (crowned)
-            const Positioned(
-              right: 8,
-              bottom: 6,
-              child: ProMark(size: 28),
-            ),
+            const Positioned(right: 8, bottom: 6, child: ProMark(size: 28)),
         ],
       ),
     );

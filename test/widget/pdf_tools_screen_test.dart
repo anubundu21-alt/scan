@@ -112,10 +112,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         _app(
-          const SplitPdfScreen(
-            seededName: 'Invoice.pdf',
-            seededPageCount: 8,
-          ),
+          const SplitPdfScreen(seededName: 'Invoice.pdf', seededPageCount: 8),
         ),
       );
       await tester.pumpAndSettle();

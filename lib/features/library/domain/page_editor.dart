@@ -54,9 +54,7 @@ class PageEditor {
       final hasCaption =
           stamp.caption != null && stamp.caption!.trim().isNotEmpty;
       final destH = (stamp.nh * canvas.height).round().clamp(1, canvas.height);
-      final sigH = hasCaption
-          ? (destH * 0.72).round().clamp(1, destH)
-          : destH;
+      final sigH = hasCaption ? (destH * 0.72).round().clamp(1, destH) : destH;
       final destX = (stamp.nx * canvas.width).round();
       final destY = (stamp.ny * canvas.height).round();
 

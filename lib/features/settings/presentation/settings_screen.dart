@@ -222,7 +222,7 @@ class SettingsScreen extends ConsumerWidget {
                 _SwitchRow(
                   icon: Icons.face_retouching_natural_rounded,
                   tint: Brand.docBlue,
-                  title: 'Face ID / fingerprint',
+                  title: biometricLabel,
                   subtitle: 'Used when App lock is on',
                   value: lock.useBiometrics,
                   onChanged: lock.enabled
@@ -242,7 +242,7 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.lock_rounded,
                   tint: Brand.accent,
                   title: 'Everything stays on your device',
-                  subtitle: 'No accounts, no uploads.',
+                  subtitle: 'No accounts. PDF tools upload only to process.',
                 ),
                 const Divider(indent: 68, endIndent: 16),
                 _InfoRow(
@@ -269,12 +269,20 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => copySupportEmail(context),
                 ),
                 const Divider(indent: 68, endIndent: 16),
-                _InfoRow(
-                  icon: Icons.info_rounded,
-                  tint: Brand.docBlue,
-                  title: 'About Scanella',
-                  subtitle: 'Version',
-                  onTap: () => showScanellaAbout(context),
+                FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snapshot) {
+                    final info = snapshot.data;
+                    return _InfoRow(
+                      icon: Icons.info_rounded,
+                      tint: Brand.docBlue,
+                      title: 'About Scanella',
+                      subtitle: info == null
+                          ? 'Version'
+                          : 'Version ${info.version} (${info.buildNumber})',
+                      onTap: () => showScanellaAbout(context),
+                    );
+                  },
                 ),
               ],
             ),
@@ -309,7 +317,7 @@ String settingsProTitle(WidgetRef ref) {
 String settingsProSubtitle(WidgetRef ref) {
   final offer = ref.watch(proProvider).offer;
   if (ref.watch(proProvider).isPro) {
-    return 'Advanced OCR, organisation, private files and export';
+    return 'Unlimited scans';
   }
   if (offer == null) {
     return 'Prices in your currency';

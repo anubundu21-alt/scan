@@ -9,8 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan2/features/library/domain/document.dart';
 import 'package:scan2/features/library/domain/export_service.dart';
 import 'package:scan2/features/library/domain/pdf_export_options.dart';
-import 'package:scan2/features/pro/domain/pro_store.dart';
-import 'package:scan2/features/pro/presentation/pro_gate.dart';
 
 /// What the user picked in the export sheet.
 enum ExportAction {
@@ -19,8 +17,6 @@ enum ExportAction {
   sharePdf,
   shareImages,
   sharePng,
-  printPdf,
-  exportOcrText,
 }
 
 class ExportRequest {
@@ -41,6 +37,8 @@ class ExportSheet extends ConsumerStatefulWidget {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
+      // Keeps the sheet (and its drag handle) below the status bar.
+      useSafeArea: true,
       builder: (context) => ExportSheet(document: document),
     );
   }
@@ -67,14 +65,13 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
     quality: _quality,
     password: _password.text.trim().isEmpty ? null : _password.text.trim(),
     searchable: _searchable,
-    pageIndexes: _selectedPages.isEmpty ? null : (_selectedPages.toList()..sort()),
+    pageIndexes: _selectedPages.isEmpty
+        ? null
+        : (_selectedPages.toList()..sort()),
   );
 
-  Future<void> _pick(ExportAction action, {bool pro = false}) async {
-    if (pro && !ref.read(proProvider).isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
+  // Every export option is free; Pro is only unlimited scans.
+  Future<void> _pick(ExportAction action) async {
     Navigator.pop(context, ExportRequest(action, _options));
   }
 
@@ -98,16 +95,27 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text('Export', style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${widget.document.title} · $pageLabel',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Export', style: theme.textTheme.headlineSmall),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${widget.document.title} · $pageLabel',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -154,22 +162,14 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Searchable PDF'),
-                subtitle: const Text(
-                  'Pro · hidden text you can find and copy',
-                ),
+                subtitle: const Text('Hidden text you can find and copy'),
                 value: _searchable,
-                onChanged: (value) async {
-                  if (value && !ref.read(proProvider).isPro) {
-                    final ok = await requirePro(context, ref);
-                    if (!ok || !mounted) return;
-                  }
-                  setState(() => _searchable = value);
-                },
+                onChanged: (value) => setState(() => _searchable = value),
               ),
               if (pageCount > 1) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Pages (Pro · empty means all)',
+                  'Pages (empty means all)',
                   style: theme.textTheme.labelMedium,
                 ),
                 const SizedBox(height: 8),
@@ -181,11 +181,7 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
                       FilterChip(
                         label: Text('${i + 1}'),
                         selected: _selectedPages.contains(i),
-                        onSelected: (selected) async {
-                          if (!ref.read(proProvider).isPro) {
-                            final ok = await requirePro(context, ref);
-                            if (!ok || !mounted) return;
-                          }
+                        onSelected: (selected) {
                           setState(() {
                             if (selected) {
                               _selectedPages.add(i);
@@ -236,24 +232,8 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
                 icon: Icons.photo_size_select_actual_rounded,
                 tint: Brand.imageGreen,
                 title: 'Share PNG',
-                subtitle: 'Pro · lossless pages',
-                onTap: () => _pick(ExportAction.sharePng, pro: true),
-              ),
-              const SizedBox(height: 8),
-              _ExportTile(
-                icon: Icons.print_rounded,
-                tint: Brand.ink,
-                title: 'Print',
-                subtitle: 'Pro · system printer',
-                onTap: () => _pick(ExportAction.printPdf, pro: true),
-              ),
-              const SizedBox(height: 8),
-              _ExportTile(
-                icon: Icons.notes_rounded,
-                tint: Brand.docBlue,
-                title: 'Export OCR text',
-                subtitle: 'Pro · a .txt of the recognised words',
-                onTap: () => _pick(ExportAction.exportOcrText, pro: true),
+                subtitle: 'Lossless pages',
+                onTap: () => _pick(ExportAction.sharePng),
               ),
             ],
           ),
@@ -379,15 +359,6 @@ Future<String> runExportAction(
         shareOrigin: origin.isEmpty ? null : origin,
         png: true,
         pageIndexes: options.pageIndexes,
-      );
-      return '';
-    case ExportAction.printPdf:
-      await exporter.printPdf(document, options: options);
-      return '';
-    case ExportAction.exportOcrText:
-      await exporter.shareOcrText(
-        document,
-        shareOrigin: origin.isEmpty ? null : origin,
       );
       return '';
   }

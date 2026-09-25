@@ -184,57 +184,60 @@ void main() {
       expect(quad.isClearlyInset, isFalse);
     });
 
-    test('native scan does not recrop a full-bleed page into an inner photo', () {
-      // What VisionKit / ML Kit hands back: the sheet already fills the
-      // frame. A printed photo or heading on that sheet is high-contrast
-      // and inset — the detector treats it as the page. The tick then
-      // used to save only that block.
-      var page = buildColorScene(
-        corners: const [
-          Offset(0, 0),
-          Offset(900, 0),
-          Offset(900, 1200),
-          Offset(0, 1200),
-        ],
-        backgroundR: 236,
-        backgroundG: 233,
-        backgroundB: 226,
-      );
-      final x0 = (page.width * 0.12).round();
-      final x1 = (page.width * 0.88).round();
-      final y0 = (page.height * 0.10).round();
-      final y1 = (page.height * 0.52).round();
-      for (var y = y0; y < y1; y++) {
-        for (var x = x0; x < x1; x++) {
-          final i = (y * page.width + x) * 3;
-          page.pixels[i] = 48;
-          page.pixels[i + 1] = 52;
-          page.pixels[i + 2] = 58;
+    test(
+      'native scan does not recrop a full-bleed page into an inner photo',
+      () {
+        // What VisionKit / ML Kit hands back: the sheet already fills the
+        // frame. A printed photo or heading on that sheet is high-contrast
+        // and inset — the detector treats it as the page. The tick then
+        // used to save only that block.
+        var page = buildColorScene(
+          corners: const [
+            Offset(0, 0),
+            Offset(900, 0),
+            Offset(900, 1200),
+            Offset(0, 1200),
+          ],
+          backgroundR: 236,
+          backgroundG: 233,
+          backgroundB: 226,
+        );
+        final x0 = (page.width * 0.12).round();
+        final x1 = (page.width * 0.88).round();
+        final y0 = (page.height * 0.10).round();
+        final y1 = (page.height * 0.52).round();
+        for (var y = y0; y < y1; y++) {
+          for (var x = x0; x < x1; x++) {
+            final i = (y * page.width + x) * 3;
+            page.pixels[i] = 48;
+            page.pixels[i + 1] = 52;
+            page.pixels[i + 2] = 58;
+          }
         }
-      }
 
-      final detected = detectQuadInRaster(page);
-      expect(detected, isNotNull);
-      expect(
-        detected!.isClearlyInset,
-        isTrue,
-        reason: 'the detector latches onto the inner photo',
-      );
+        final detected = detectQuadInRaster(page);
+        expect(detected, isNotNull);
+        expect(
+          detected!.isClearlyInset,
+          isTrue,
+          reason: 'the detector latches onto the inner photo',
+        );
 
-      final resolved = resolveScanQuad(
-        page,
-        edgesAlreadyApplied: true,
-        initial: const Quad.fullFrame(),
-      );
-      expect(PerspectiveTransformer.isFullFrame(resolved), isTrue);
+        final resolved = resolveScanQuad(
+          page,
+          edgesAlreadyApplied: true,
+          initial: const Quad.fullFrame(),
+        );
+        expect(PerspectiveTransformer.isFullFrame(resolved), isTrue);
 
-      final inner = warpRaster(page, detected)!;
-      expect(
-        inner.width * inner.height,
-        lessThan(page.width * page.height * 0.5),
-        reason: 'that inner crop is the half-page the tick used to save',
-      );
-    });
+        final inner = warpRaster(page, detected)!;
+        expect(
+          inner.width * inner.height,
+          lessThan(page.width * page.height * 0.5),
+          reason: 'that inner crop is the half-page the tick used to save',
+        );
+      },
+    );
 
     test('in-app camera still finds a page sitting in the photo', () {
       final quad = resolveScanQuad(scene, edgesAlreadyApplied: false);

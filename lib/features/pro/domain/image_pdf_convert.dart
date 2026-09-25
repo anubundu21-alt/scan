@@ -41,10 +41,8 @@ class ImagePdfConvert {
         pw.Page(
           pageFormat: format,
           margin: pw.EdgeInsets.zero,
-          build: (_) => pw.Image(
-            pw.MemoryImage(page.bytes),
-            fit: pw.BoxFit.fill,
-          ),
+          build: (_) =>
+              pw.Image(pw.MemoryImage(page.bytes), fit: pw.BoxFit.fill),
         ),
       );
     }

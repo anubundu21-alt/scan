@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +29,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _finish() {
-    // On to the free-plan explainer, then the Pro offer. Someone who already
+    // On to the Pro offer, which also sums up the free plan. Someone who already
     // has Pro has neither a free allowance to explain nor an offer to see,
     // so they go straight in. There is still no account and no login: the
     // only wall in front of this scanner is one you can close.
@@ -36,7 +38,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       context.go('/library');
       return;
     }
-    context.go('/free-access');
+    context.go('/pro-intro');
   }
 
   void _next() {
@@ -95,6 +97,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           _OnboardingPage(page: _pages[index]),
                     ),
                   ),
+                  // Room between the page's last line and the dots.
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -357,6 +361,374 @@ class _ToolsShowcase extends StatelessWidget {
   }
 }
 
+/// One scanned page, the sparkle, and the three enhance promises.
+class _CleanPagesArt extends StatelessWidget {
+  const _CleanPagesArt();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final perkBlock = constraints.maxHeight < 280 ? 72.0 : 92.0;
+        final artHeight = math.max(120.0, constraints.maxHeight - perkBlock);
+        final cardWidth = math.min(
+          constraints.maxWidth * 0.56,
+          artHeight * 0.72,
+        );
+        final cardHeight = cardWidth * 1.16;
+        return Column(
+          children: [
+            Expanded(
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: constraints.maxWidth * 0.08,
+                    top: artHeight * 0.08,
+                    child: _SoftDisc(size: cardWidth * 0.72),
+                  ),
+                  Positioned(
+                    right: constraints.maxWidth * 0.06,
+                    bottom: artHeight * 0.06,
+                    child: _SoftDisc(size: cardWidth * 0.55),
+                  ),
+                  Transform.rotate(
+                    angle: -0.08,
+                    child: _EnhanceCard(width: cardWidth, height: cardHeight),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: artHeight * 0.18,
+                    child: const _SparkleMark(),
+                  ),
+                ],
+              ),
+            ),
+            const _EnhancePerks(),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SoftDisc extends StatelessWidget {
+  const _SoftDisc({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Brand.accent.withValues(alpha: 0.08),
+      ),
+    );
+  }
+}
+
+class _EnhanceCard extends StatelessWidget {
+  const _EnhanceCard({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = width * 0.07;
+    return SizedBox(
+      width: width + 36,
+      height: height + 36,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: Size(width + 28, height + 28),
+            painter: _ScanCornersPainter(),
+          ),
+          Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              boxShadow: [
+                BoxShadow(
+                  color: Brand.accent.withValues(alpha: 0.22),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: ColoredBox(
+                color: Colors.white,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    width * 0.1,
+                    height * 0.1,
+                    width * 0.1,
+                    height * 0.08,
+                  ),
+                  child: const _CleanPageCopy(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CleanPageCopy extends StatelessWidget {
+  const _CleanPageCopy();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: math.max(constraints.maxWidth, 1),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Meeting Notes',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: Brand.font,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Brand.docBlue,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                for (var i = 0; i < 4; i++) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width:
+                          math.max(constraints.maxWidth, 1) *
+                          (i.isEven ? 1 : 0.72),
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD5DDEA),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                ],
+                const SizedBox(height: 12),
+                Container(
+                  width: 54,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F5FA),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    size: 18,
+                    color: Color(0xFFB7C0D0),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ScanCornersPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Brand.accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    const arm = 16.0;
+    const inset = 2.0;
+    final corners = <Offset>[
+      const Offset(inset, inset),
+      Offset(size.width - inset, inset),
+      Offset(inset, size.height - inset),
+      Offset(size.width - inset, size.height - inset),
+    ];
+    final dirs = <List<Offset>>[
+      [const Offset(arm, 0), const Offset(0, arm)],
+      [const Offset(-arm, 0), const Offset(0, arm)],
+      [const Offset(arm, 0), const Offset(0, -arm)],
+      [const Offset(-arm, 0), const Offset(0, -arm)],
+    ];
+    for (var i = 0; i < corners.length; i++) {
+      final path = Path()
+        ..moveTo(corners[i].dx + dirs[i][0].dx, corners[i].dy + dirs[i][0].dy)
+        ..lineTo(corners[i].dx, corners[i].dy)
+        ..lineTo(corners[i].dx + dirs[i][1].dx, corners[i].dy + dirs[i][1].dy);
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _SparkleMark extends StatelessWidget {
+  const _SparkleMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 86,
+      height: 64,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Positioned(
+            left: 0,
+            bottom: 0,
+            child: CustomPaint(
+              size: Size(34, 26),
+              painter: _HookArrowPainter(),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Brand.accent,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Brand.accent.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HookArrowPainter extends CustomPainter {
+  const _HookArrowPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Brand.accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    final path = Path()
+      ..moveTo(2, size.height - 2)
+      ..quadraticBezierTo(
+        size.width * 0.15,
+        4,
+        size.width - 2,
+        size.height * 0.55,
+      );
+    canvas.drawPath(path, paint);
+    final tip = Offset(size.width - 2, size.height * 0.55);
+    final head = Path()
+      ..moveTo(tip.dx - 7, tip.dy - 3)
+      ..lineTo(tip.dx, tip.dy)
+      ..lineTo(tip.dx - 2, tip.dy + 7);
+    canvas.drawPath(head, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _EnhancePerks extends StatelessWidget {
+  const _EnhancePerks();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 4, bottom: 2),
+      child: Row(
+        children: [
+          _Perk(icon: Icons.crop_rounded, label: 'Auto Crop'),
+          _Perk(icon: Icons.wb_sunny_outlined, label: 'Enhance Automatically'),
+          _Perk(icon: Icons.description_outlined, label: 'Clear & Readable'),
+        ],
+      ),
+    );
+  }
+}
+
+class _Perk extends StatelessWidget {
+  const _Perk({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Brand.accent.withValues(alpha: 0.45),
+                width: 1.4,
+              ),
+            ),
+            child: Icon(icon, color: Brand.accent, size: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: const TextStyle(
+              fontFamily: Brand.font,
+              fontSize: 12,
+              height: 1.2,
+              fontWeight: FontWeight.w700,
+              color: Brand.ink,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 final _pages = <_PageData>[
   const _PageData(
     badge: Icons.document_scanner_rounded,
@@ -384,7 +756,7 @@ final _pages = <_PageData>[
         HeroChip(
           x: 0.10,
           y: 0.72,
-          icon: Icons.qr_code_2_rounded,
+          icon: Icons.text_snippet_rounded,
           color: Brand.imageGreen,
           label: 'OCR',
         ),
@@ -397,8 +769,6 @@ final _pages = <_PageData>[
       ],
     ),
   ),
-  // Middle page: the design pack did not include this one, so it covers the
-  // step between capturing and privacy — what the app does with a scan.
   const _PageData(
     badge: Icons.auto_fix_high_rounded,
     // No comma: at this size Plus Jakarta Sans leaves a visible gap before
@@ -408,31 +778,7 @@ final _pages = <_PageData>[
     body:
         'Edges are straightened and pages enhanced\n'
         'automatically. Export as PDF or images.',
-    illustration: HeroStage(
-      centre: ScannerDevice(),
-      chips: [
-        HeroChip(
-          x: 0.10,
-          y: 0.32,
-          icon: Icons.crop_rounded,
-          color: Brand.accent,
-        ),
-        HeroChip(x: 0.90, y: 0.36, icon: Icons.tune_rounded, color: Brand.accent),
-        HeroChip(
-          x: 0.11,
-          y: 0.70,
-          icon: Icons.picture_as_pdf_rounded,
-          color: Brand.pdfRed,
-          label: 'PDF',
-        ),
-        HeroChip(
-          x: 0.89,
-          y: 0.72,
-          icon: Icons.ios_share_rounded,
-          color: Brand.imageGreen,
-        ),
-      ],
-    ),
+    illustration: _CleanPagesArt(),
   ),
   const _PageData(
     badge: Icons.grid_view_rounded,
