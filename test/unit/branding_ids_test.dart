@@ -9,8 +9,10 @@ void main() {
   test('brand accent is #1F9A6B and wordmark splits Scan / ella', () {
     expect(Brand.accent, const Color(0xFF1F9A6B));
     expect(Brand.wordmarkScan, const Color(0xFF111111));
-    expect(File('android/app/src/main/res/values/colors.xml').readAsStringSync(),
-        contains('#1F9A6B'));
+    expect(
+      File('android/app/src/main/res/values/colors.xml').readAsStringSync(),
+      contains('#1F9A6B'),
+    );
     expect(File('assets/brand/app_mark.png').existsSync(), isTrue);
   });
 
@@ -49,7 +51,9 @@ void main() {
   });
 
   test('Android release workflow builds a signed app bundle', () {
-    final yml = File('.github/workflows/android-release.yml').readAsStringSync();
+    final yml = File(
+      '.github/workflows/android-release.yml',
+    ).readAsStringSync();
     expect(yml, contains('flutter build appbundle --release'));
     expect(yml, contains('com.scanella.mobile'));
     expect(yml, isNot(contains('Android release not configured yet')));

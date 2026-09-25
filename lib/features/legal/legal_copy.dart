@@ -54,9 +54,13 @@ class LegalCopy {
     LegalSection(
       heading: 'Free scans',
       body:
-          'The first time you install Scanella, the free plan includes 10 '
-          'scans on this device. After those are used, you get 5 free scans '
-          'every 30 days, and unused scans do not carry over. A scan is a new '
+          'Starting the free trial asks you to confirm payment with Apple or '
+          'Google. '
+          'You are not charged during the first month, and you have Pro '
+          'with no scan limit. Unless you cancel before that month ends, '
+          'your app store charges the plan. If you do not subscribe, the free plan '
+          'is 10 scans every 30 days, and unused scans do not carry over. '
+          'A scan is a new '
           'document you capture or import. Merging, splitting, or editing an '
           'existing document does not use another free scan. The count stays '
           'with the device: deleting the app and installing it again does not '
@@ -103,10 +107,13 @@ class LegalCopy {
 
   static const _privacy = [
     LegalSection(
-      heading: 'Nothing is uploaded',
+      heading: 'Nothing is stored',
       body:
-          'Scanella does not have a server, an account system, or analytics. '
-          'Scans, PDFs, folder names, and settings stay on this phone. We '
+          'Scanella has no account system and no analytics. Scans, PDFs, '
+          'folder names, and settings stay on this phone. Compress, merge, '
+          'split, and the Word tools upload the file you pick only to '
+          'process it; the result comes straight back and the file is not '
+          'stored. We '
           'do not collect, sell, or share your documents. Opening Scanella '
           'Pro may look up this connection’s country so the price can be '
           'shown in local currency. That request does not include scans.',
@@ -149,7 +156,7 @@ class LegalCopy {
     LegalSection(
       heading: 'Questions',
       body:
-          'Because nothing is sent to us, there is no personal data on a '
+          'Because nothing is stored, there is no personal data on a '
           'Scanella server to access, correct, or delete. Removing the app '
           'deletes the on-device library. If you want to ask about this '
           'policy, or about anything the app does with your pages, write to '

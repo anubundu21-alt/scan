@@ -25,10 +25,7 @@ class PdfPageTools {
 
   Future<List<Uint8List>> rasterPages(Uint8List pdfBytes) => _pages(pdfBytes);
 
-  Future<Uint8List> rotate(
-    Uint8List pdfBytes, {
-    int quarterTurns = 1,
-  }) async {
+  Future<Uint8List> rotate(Uint8List pdfBytes, {int quarterTurns = 1}) async {
     final pages = await _pages(pdfBytes);
     return buildRotatedPdf(pages, quarterTurns: quarterTurns);
   }
@@ -71,10 +68,7 @@ class PdfPageTools {
     ]);
   }
 
-  Future<Uint8List> unlock(
-    Uint8List pdfBytes, {
-    String password = '',
-  }) async {
+  Future<Uint8List> unlock(Uint8List pdfBytes, {String password = ''}) async {
     if (!pdfLooksEncrypted(pdfBytes)) {
       throw const ConversionFailure('not-locked', 'This PDF is not locked.');
     }

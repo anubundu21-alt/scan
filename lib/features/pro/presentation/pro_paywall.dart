@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/pro/domain/pro_features.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
@@ -19,7 +20,9 @@ Future<void> showProPaywall(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (context) => const ProPaywall(),
+    // The sheet is always light, so its text must be too.
+    builder: (context) =>
+        Theme(data: AppTheme.light, child: const ProPaywall()),
   );
 }
 
@@ -101,18 +104,18 @@ class _ProPaywallState extends ConsumerState<ProPaywall> {
                     detail: 'Scan as many documents as you need.',
                   ),
                   const _ProBenefitTile(
-                    icon: Icons.document_scanner_outlined,
+                    icon: Icons.schedule_rounded,
                     color: Color(0xFF7B61FF),
                     wash: Color(0xFFF0ECFF),
-                    title: 'Advanced OCR',
-                    detail: 'Searchable PDFs with extra OCR languages.',
+                    title: 'No ${ScanQuota.resetDays}-day wait',
+                    detail: 'Keep scanning after the free scans run out.',
                   ),
                   const _ProBenefitTile(
-                    icon: Icons.picture_as_pdf_outlined,
-                    color: Color(0xFFE85A7A),
-                    wash: Color(0xFFFDE8EE),
-                    title: 'All PDF tools',
-                    detail: 'Convert, compress, merge, split, sign and more.',
+                    icon: Icons.check_circle_outline_rounded,
+                    color: Color(0xFF2C7BE5),
+                    wash: Color(0xFFE6F0FF),
+                    title: 'Everything else stays free',
+                    detail: 'Text extraction, PDF tools, export and folders.',
                   ),
                   const SizedBox(height: 8),
                   ProCheckout(
@@ -172,9 +175,7 @@ class _GoProBanner extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'Unlock the full power of Scanella and scan without limits.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        height: 1.35,
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                     ),
                   ],
                 ),
@@ -197,19 +198,19 @@ class _GoProBanner extends StatelessWidget {
               SizedBox(width: 8),
               Expanded(
                 child: _HeroChip(
-                  icon: Icons.document_scanner_outlined,
+                  icon: Icons.schedule_rounded,
                   color: Color(0xFF7B61FF),
                   wash: Color(0xFFF7F4FF),
-                  label: 'Advanced OCR',
+                  label: 'No ${ScanQuota.resetDays}-day wait',
                 ),
               ),
               SizedBox(width: 8),
               Expanded(
                 child: _HeroChip(
-                  icon: Icons.picture_as_pdf_outlined,
-                  color: Color(0xFFE85A7A),
-                  wash: Color(0xFFFFF4F7),
-                  label: 'All PDF tools',
+                  icon: Icons.check_circle_outline_rounded,
+                  color: Color(0xFF2C7BE5),
+                  wash: Color(0xFFF1F6FF),
+                  label: 'Rest is free',
                 ),
               ),
             ],

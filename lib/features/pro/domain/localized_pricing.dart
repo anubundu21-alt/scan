@@ -138,8 +138,7 @@ class LocalizedPricing {
         list?.amount ??
         charmPrice(LocalizedOffer.monthlyUsd * usdToLocal, currency);
     final year =
-        yearly ??
-        charmPrice(LocalizedOffer.yearlyUsd * usdToLocal, currency);
+        yearly ?? charmPrice(LocalizedOffer.yearlyUsd * usdToLocal, currency);
     return LocalizedOffer(
       currencyCode: currency,
       countryCode: countryCode,
@@ -254,9 +253,7 @@ class LocalizedPricing {
   /// App Store-style charm prices: 4.99, 18.99, 74.99 — not 18.62.
   static double charmPrice(double value, String currency) {
     if (value <= 0) {
-      return _zeroDecimalCurrencies.contains(currency.toUpperCase())
-          ? 1
-          : 0.99;
+      return _zeroDecimalCurrencies.contains(currency.toUpperCase()) ? 1 : 0.99;
     }
     if (_zeroDecimalCurrencies.contains(currency.toUpperCase())) {
       if (value >= 1000) {

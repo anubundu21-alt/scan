@@ -49,7 +49,9 @@ void main() {
       pageFile.writeAsBytesSync(img.encodeJpg(page, quality: 95));
 
       final store = DocumentStore(
-        storage: DocumentStorage(overrideRoot: Directory(p.join(temp.path, 'lib'))),
+        storage: DocumentStorage(
+          overrideRoot: Directory(p.join(temp.path, 'lib')),
+        ),
       );
       final doc = await store.createDocumentFromScans([pageFile.path]);
       await store.setPageStamps(
@@ -73,12 +75,16 @@ void main() {
       final decoded = img.decodeImage(jpeg!)!;
 
       var dark = 0;
-      for (var y = (0.72 * decoded.height).round();
-          y < (0.90 * decoded.height).round();
-          y += 2) {
-        for (var x = (0.50 * decoded.width).round();
-            x < (0.92 * decoded.width).round();
-            x += 2) {
+      for (
+        var y = (0.72 * decoded.height).round();
+        y < (0.90 * decoded.height).round();
+        y += 2
+      ) {
+        for (
+          var x = (0.50 * decoded.width).round();
+          x < (0.92 * decoded.width).round();
+          x += 2
+        ) {
           final pixel = decoded.getPixel(
             x.clamp(0, decoded.width - 1),
             y.clamp(0, decoded.height - 1),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scan2/core/theme/brand.dart';
+import 'package:scan2/features/pro/domain/scan_quota.dart';
 
 /// Copy for Free vs Pro, used by the paywall and Complete features.
 class ProFeatureLine {
@@ -27,29 +28,18 @@ class PlanPerk {
 
 const freeFeatureLines = [
   ProFeatureLine(
-    '10 free scans for new users, then 5 every 30 days',
-    'The first time you install Scanella, you get 10 scans. After those are '
-        'used, you get 5 free scans every 30 days. Unused scans do not carry '
-        'over.',
+    '${ScanQuota.starterLimit} free scans to start, then '
+        '${ScanQuota.monthlyLimit} every ${ScanQuota.resetDays} days',
+    'Unused scans do not carry over.',
   ),
-  ProFeatureLine(
-    'All PDF tools',
-    'Convert, compress, merge, split and sign',
-  ),
+  ProFeatureLine('All PDF tools', 'Convert, compress, merge, split and sign'),
 ];
 
 const proFeatureLines = [
+  ProFeatureLine('Unlimited scans', 'Scan as many documents as you need.'),
   ProFeatureLine(
-    'Unlimited scans',
-    'Scan as many documents as you need.',
-  ),
-  ProFeatureLine(
-    'Advanced OCR',
-    'Searchable PDFs with extra OCR languages.',
-  ),
-  ProFeatureLine(
-    'All PDF tools',
-    'Convert, compress, merge, split, sign and more.',
+    'No ${ScanQuota.resetDays}-day wait',
+    'Keep scanning after the free scans run out.',
   ),
 ];
 
@@ -58,8 +48,8 @@ const freePlanPerks = [
     icon: Icons.crop_free_rounded,
     color: Color(0xFF1F9A6B),
     wash: Color(0xFFE4F3ED),
-    title: '10 free scans for new users',
-    detail: 'Then 5 free scans every 30 days',
+    title: '${ScanQuota.starterLimit} free scans to start',
+    detail: 'Then ${ScanQuota.monthlyLimit} every ${ScanQuota.resetDays} days',
   ),
   PlanPerk(
     icon: Icons.picture_as_pdf_outlined,
@@ -73,7 +63,7 @@ const freePlanPerks = [
     color: Color(0xFF2C7BE5),
     wash: Color(0xFFE6F0FF),
     title: 'Extract text from scans',
-    detail: 'Basic OCR',
+    detail: 'Any page count, any language',
   ),
   PlanPerk(
     icon: Icons.folder_outlined,
@@ -87,13 +77,13 @@ const freePlanPerks = [
     color: Color(0xFF1F9A6B),
     wash: Color(0xFFE4F3ED),
     title: 'Save & share',
-    detail: 'Export as PDF or JPEG',
+    detail: 'PDF, JPEG, PNG, searchable PDF and selected pages',
   ),
 ];
 
 const freePlanLimits = [
-  'Limited to 10 scans at start',
-  'After that, 5 scans every 30 days',
+  '${ScanQuota.starterLimit} scans to start',
+  'Then ${ScanQuota.monthlyLimit} scans every ${ScanQuota.resetDays} days',
 ];
 
 const proPlanPerks = [
@@ -105,31 +95,17 @@ const proPlanPerks = [
     detail: 'Scan as many documents as you need',
   ),
   PlanPerk(
-    icon: Icons.document_scanner_outlined,
+    icon: Icons.schedule_rounded,
     color: Color(0xFF7B61FF),
     wash: Color(0xFFF0ECFF),
-    title: 'Advanced OCR',
-    detail: 'Searchable PDFs with extra OCR languages',
+    title: 'No ${ScanQuota.resetDays}-day wait',
+    detail: 'Keep scanning after the free scans run out',
   ),
   PlanPerk(
-    icon: Icons.picture_as_pdf_outlined,
-    color: Color(0xFFE85A7A),
-    wash: Color(0xFFFDE8EE),
-    title: 'All PDF tools',
-    detail: 'Convert, compress, merge, split, sign and more',
-  ),
-  PlanPerk(
-    icon: Icons.folder_outlined,
+    icon: Icons.check_circle_outline_rounded,
     color: Brand.docBlue,
     wash: Color(0xFFE6F0FF),
-    title: 'Smart organization',
-    detail: 'Folders, favorites and private documents',
-  ),
-  PlanPerk(
-    icon: Icons.file_upload_outlined,
-    color: Color(0xFFE07A3D),
-    wash: Color(0xFFFFEDE3),
-    title: 'More export options',
-    detail: 'PNG, print, selected pages and batch export',
+    title: 'Everything in Free',
+    detail: 'All other features stay free for everyone',
   ),
 ];

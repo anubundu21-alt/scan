@@ -21,10 +21,7 @@ import 'package:scan2/features/library/data/document_store.dart';
 /// Both arrive here as ordinary pages, so everything downstream — enhance,
 /// reorder, export — treats them the same as a capture.
 class ImportService {
-  const ImportService({
-    this.processor = const PageProcessor(),
-    this.picker,
-  });
+  const ImportService({this.processor = const PageProcessor(), this.picker});
 
   final PageProcessor processor;
 
@@ -70,16 +67,9 @@ class ImportService {
     if (imagePaths.isEmpty) {
       throw StateError('That PDF has no pages that could be read.');
     }
-    final pages = await _process(
-      imagePaths,
-      ScanFilter.original,
-      onProgress,
-    );
+    final pages = await _process(imagePaths, ScanFilter.original, onProgress);
     final title = p.basenameWithoutExtension(path).trim();
-    return PdfImport(
-      pages: pages,
-      title: title.isEmpty ? 'PDF' : title,
-    );
+    return PdfImport(pages: pages, title: title.isEmpty ? 'PDF' : title);
   }
 
   /// Images or PDFs from Files / Drive / iCloud.

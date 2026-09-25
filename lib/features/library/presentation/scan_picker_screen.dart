@@ -44,10 +44,8 @@ class ScanPickerScreen extends ConsumerWidget {
                 final doc = documents[index];
                 return _PickTile(
                   document: doc,
-                  onTap: () => context.push(
-                    '/library/document/${doc.id}',
-                    extra: mode,
-                  ),
+                  onTap: () =>
+                      context.push('/library/document/${doc.id}', extra: mode),
                 );
               },
             ),
@@ -110,10 +108,7 @@ class _PickTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: scheme.onSurfaceVariant,
-              ),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
             ],
           ),
         ),

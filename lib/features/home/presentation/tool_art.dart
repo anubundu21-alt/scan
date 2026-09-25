@@ -132,10 +132,18 @@ class _FilePainter extends CustomPainter {
       RRect.fromLTRBR(left, top, right, bottom, const Radius.circular(3)),
       stroke,
     );
-    canvas.drawLine(Offset((left + right) / 2, top), Offset((left + right) / 2, bottom), stroke);
+    canvas.drawLine(
+      Offset((left + right) / 2, top),
+      Offset((left + right) / 2, bottom),
+      stroke,
+    );
     final row = (bottom - top) / 3;
     canvas.drawLine(Offset(left, top + row), Offset(right, top + row), stroke);
-    canvas.drawLine(Offset(left, top + row * 2), Offset(right, top + row * 2), stroke);
+    canvas.drawLine(
+      Offset(left, top + row * 2),
+      Offset(right, top + row * 2),
+      stroke,
+    );
     canvas.drawRect(
       Rect.fromLTRB(left, top, (left + right) / 2, top + row),
       Paint()..color = _ink.withValues(alpha: 0.18),
@@ -144,23 +152,51 @@ class _FilePainter extends CustomPainter {
 
   void _slide(Canvas canvas, double w, double h) {
     canvas.drawRRect(
-      RRect.fromLTRBR(w * 0.14, h * 0.36, w * 0.86, h * 0.78, const Radius.circular(5)),
+      RRect.fromLTRBR(
+        w * 0.14,
+        h * 0.36,
+        w * 0.86,
+        h * 0.78,
+        const Radius.circular(5),
+      ),
       Paint()..color = _ink.withValues(alpha: 0.16),
     );
-    canvas.drawCircle(Offset(w * 0.36, h * 0.54), w * 0.09, Paint()..color = _ink);
+    canvas.drawCircle(
+      Offset(w * 0.36, h * 0.54),
+      w * 0.09,
+      Paint()..color = _ink,
+    );
     canvas.drawRRect(
-      RRect.fromLTRBR(w * 0.50, h * 0.48, w * 0.78, h * 0.54, const Radius.circular(1.4)),
+      RRect.fromLTRBR(
+        w * 0.50,
+        h * 0.48,
+        w * 0.78,
+        h * 0.54,
+        const Radius.circular(1.4),
+      ),
       Paint()..color = _ink.withValues(alpha: 0.7),
     );
     canvas.drawRRect(
-      RRect.fromLTRBR(w * 0.50, h * 0.60, w * 0.72, h * 0.66, const Radius.circular(1.4)),
+      RRect.fromLTRBR(
+        w * 0.50,
+        h * 0.60,
+        w * 0.72,
+        h * 0.66,
+        const Radius.circular(1.4),
+      ),
       Paint()..color = _ink.withValues(alpha: 0.4),
     );
   }
 
   void _pdfMark(Canvas canvas, double w, double h) {
     canvas.drawRRect(
-      RRect.fromLTRBR(w * 0.16, h * 0.42, w * 0.84, h * 0.78, const Radius.circular(6)),
+      RRect.fromLTRBR(
+        w * 0.16,
+        h * 0.42,
+        w * 0.84,
+        h * 0.78,
+        const Radius.circular(6),
+      ),
       Paint()..color = _ink,
     );
     final tp = TextPainter(
@@ -180,7 +216,13 @@ class _FilePainter extends CustomPainter {
 
   void _photo(Canvas canvas, double w, double h) {
     canvas.drawRRect(
-      RRect.fromLTRBR(w * 0.14, h * 0.34, w * 0.86, h * 0.86, const Radius.circular(5)),
+      RRect.fromLTRBR(
+        w * 0.14,
+        h * 0.34,
+        w * 0.86,
+        h * 0.86,
+        const Radius.circular(5),
+      ),
       Paint()..color = const Color(0xFFE8F1FF),
     );
     canvas.drawCircle(Offset(w * 0.32, h * 0.48), 3.4, Paint()..color = _ink);
@@ -195,7 +237,8 @@ class _FilePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FilePainter oldDelegate) => oldDelegate.kind != kind;
+  bool shouldRepaint(covariant _FilePainter oldDelegate) =>
+      oldDelegate.kind != kind;
 }
 
 /// Large action graphic on a pastel plate.
@@ -225,7 +268,11 @@ class ToolActionArt extends StatelessWidget {
       ),
       'extract' => const _Plate(
         wash: Color(0xFFD6E8FF),
-        child: Icon(Icons.format_list_bulleted_rounded, color: Color(0xFF2F6FE4), size: 36),
+        child: Icon(
+          Icons.format_list_bulleted_rounded,
+          color: Color(0xFF2F6FE4),
+          size: 36,
+        ),
       ),
       'sign' => const _Plate(
         wash: Color(0xFFD4F3EE),
@@ -277,8 +324,16 @@ class _MergeGraphic extends StatelessWidget {
       height: 48,
       child: Stack(
         children: [
-          Positioned(left: 14, top: 10, child: _PageSheet(color: color.withValues(alpha: 0.72))),
-          Positioned(left: 7, top: 5, child: _PageSheet(color: color.withValues(alpha: 0.88))),
+          Positioned(
+            left: 14,
+            top: 10,
+            child: _PageSheet(color: color.withValues(alpha: 0.72)),
+          ),
+          Positioned(
+            left: 7,
+            top: 5,
+            child: _PageSheet(color: color.withValues(alpha: 0.88)),
+          ),
           Positioned(left: 0, top: 0, child: _PageSheet(color: color)),
         ],
       ),
@@ -505,7 +560,9 @@ class AllToolsMark extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size * _stageHeight / _stageWidth,
-      child: CustomPaint(painter: _ToolMarkPainter(toolId: toolId, ink: ink)),
+      child: CustomPaint(
+        painter: _ToolMarkPainter(toolId: toolId, ink: ink),
+      ),
     );
   }
 }
@@ -668,10 +725,7 @@ class _ToolMarkPainter extends CustomPainter {
     final height = wide ? 15.0 : 18.0;
     final rect = Rect.fromCenter(center: center, width: width, height: height);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.inflate(2),
-        Radius.circular(height / 2 + 2),
-      ),
+      RRect.fromRectAndRadius(rect.inflate(2), Radius.circular(height / 2 + 2)),
       Paint()..color = Colors.white,
     );
     canvas.drawRRect(
@@ -853,9 +907,27 @@ class _ToolMarkPainter extends CustomPainter {
     const back = Rect.fromLTWH(5, 3, 23, 28);
     const front = Rect.fromLTWH(15, 12, 23, 28);
     _sheet(canvas, back, edge: ink, fold: 8, shadow: false);
-    _lines(canvas, back, ink, top: 14, count: 2, gap: 5, thickness: 2.2, inset: 4);
+    _lines(
+      canvas,
+      back,
+      ink,
+      top: 14,
+      count: 2,
+      gap: 5,
+      thickness: 2.2,
+      inset: 4,
+    );
     _sheet(canvas, front, fold: 8);
-    _lines(canvas, front, ink, top: 23, count: 2, gap: 5, thickness: 2.2, inset: 4);
+    _lines(
+      canvas,
+      front,
+      ink,
+      top: 23,
+      count: 2,
+      gap: 5,
+      thickness: 2.2,
+      inset: 4,
+    );
     const centre = Offset(40, 35);
     canvas.drawCircle(centre, 11, Paint()..color = Colors.white);
     canvas.drawCircle(centre, 9, Paint()..color = ink);
@@ -863,16 +935,8 @@ class _ToolMarkPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      centre.translate(-4.5, 0),
-      centre.translate(4.5, 0),
-      glyph,
-    );
-    canvas.drawLine(
-      centre.translate(0, -4.5),
-      centre.translate(0, 4.5),
-      glyph,
-    );
+    canvas.drawLine(centre.translate(-4.5, 0), centre.translate(4.5, 0), glyph);
+    canvas.drawLine(centre.translate(0, -4.5), centre.translate(0, 4.5), glyph);
   }
 
   void _split(Canvas canvas) {
@@ -883,14 +947,32 @@ class _ToolMarkPainter extends CustomPainter {
     canvas.rotate(-0.09);
     canvas.translate(-left.center.dx, -left.center.dy);
     _sheet(canvas, left, radius: 4, fold: 0);
-    _lines(canvas, left, ink, top: 14, count: 3, gap: 5, thickness: 2, inset: 3.5);
+    _lines(
+      canvas,
+      left,
+      ink,
+      top: 14,
+      count: 3,
+      gap: 5,
+      thickness: 2,
+      inset: 3.5,
+    );
     canvas.restore();
     canvas.save();
     canvas.translate(right.center.dx, right.center.dy);
     canvas.rotate(0.09);
     canvas.translate(-right.center.dx, -right.center.dy);
     _sheet(canvas, right, radius: 4, fold: 7);
-    _lines(canvas, right, ink, top: 14, count: 3, gap: 5, thickness: 2, inset: 3.5);
+    _lines(
+      canvas,
+      right,
+      ink,
+      top: 14,
+      count: 3,
+      gap: 5,
+      thickness: 2,
+      inset: 3.5,
+    );
     canvas.restore();
     final dash = Paint()
       ..color = ink
@@ -980,7 +1062,16 @@ class _ToolMarkPainter extends CustomPainter {
     canvas.rotate(0.2);
     canvas.translate(-page.center.dx, -page.center.dy);
     _sheet(canvas, page, fold: 8);
-    _lines(canvas, page, ink, top: 21, count: 3, gap: 5, thickness: 2.2, inset: 4);
+    _lines(
+      canvas,
+      page,
+      ink,
+      top: 21,
+      count: 3,
+      gap: 5,
+      thickness: 2.2,
+      inset: 4,
+    );
     canvas.restore();
     final centre = page.center;
     canvas.drawArc(
@@ -1181,8 +1272,7 @@ class _ToolMarkPainter extends CustomPainter {
         final rect = Rect.fromLTWH(14 + col * 13.0, 12 + row * 13.0, 10, 10);
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect, const Radius.circular(3)),
-          Paint()
-            ..color = ink.withValues(alpha: row == col ? 1.0 : 0.45),
+          Paint()..color = ink.withValues(alpha: row == col ? 1.0 : 0.45),
         );
       }
     }

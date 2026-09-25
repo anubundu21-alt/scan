@@ -49,6 +49,7 @@ class TestingTools {
         'basisMs': null,
       });
       await _channel.invokeMethod<void>('clearTrialUsed');
+      await _channel.invokeMethod<void>('clearCourtesyTrial');
       await _channel.invokeMethod<void>('writeTestingPins', <String, Object?>{
         'forceFree': true,
         'offerTrial': true,
@@ -97,13 +98,10 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
   }
 
   Future<void> _setUsed(int used) {
-    return _run(
-      'Free scans used set to $used.',
-      () async {
-        await ref.read(scanQuotaProvider.notifier).setUsedForTesting(used);
-        await TestingTools.forgetNotices();
-      },
-    );
+    return _run('Free scans used set to $used.', () async {
+      await ref.read(scanQuotaProvider.notifier).setUsedForTesting(used);
+      await TestingTools.forgetNotices();
+    });
   }
 
   Future<void> _actAsNewFreeUser() {
@@ -179,31 +177,26 @@ class _TestingToolsScreenState extends ConsumerState<TestingToolsScreen> {
           _Action(
             label: 'Act as a new free user',
             detail:
-                'Replays welcome → free scans → the last upgrade screen '
-                'with 1 month free. This TestFlight already shows the trial '
-                'layout without this; use it when you want those screens '
-                'again.',
+                'Turns Pro off for this iPhone and replays the upgrade '
+                'screen with the 7-day trial, even if this Apple ID is '
+                'already subscribed.',
             onTap: _actAsNewFreeUser,
           ),
           _Action(
             label: 'Ask the store again',
-            detail: 'Uses Apple’s answer. Pro comes back if the sandbox '
+            detail:
+                'Uses Apple’s answer. Pro comes back if the sandbox '
                 'subscription is still running, and the free month hides.',
-            onTap: () => _run(
-              'Asked.',
-              () async {
-                await TestingTools.listenToStoreAgain();
-                await ref.read(proProvider.notifier).restore();
-              },
-            ),
+            onTap: () => _run('Asked.', () async {
+              await TestingTools.listenToStoreAgain();
+              await ref.read(proProvider.notifier).restore();
+            }),
           ),
           _Action(
             label: 'Show the one-off messages again',
             detail: 'Lets the refill and running-low screens reappear',
-            onTap: () => _run(
-              'They can appear again.',
-              TestingTools.forgetNotices,
-            ),
+            onTap: () =>
+                _run('They can appear again.', TestingTools.forgetNotices),
           ),
           if (_note != null) ...[
             const SizedBox(height: 20),
@@ -245,9 +238,9 @@ class _Fact extends StatelessWidget {
           Text(label, style: Theme.of(context).textTheme.bodyMedium),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

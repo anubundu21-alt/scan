@@ -118,12 +118,9 @@ class HelpScreen extends StatelessWidget {
       'Scanella Pro',
       'Menu → Scanella Pro, or Settings → Scanella Pro. Payment goes '
           'through the App Store and your Apple ID — not a card form in the '
-          'app. Pro adds unlimited scans, all tools, auto-save by document '
-          'type (passports to Private, a second ID copy in IDs), searchable '
-          'PDFs, more OCR languages, smart folders, tags, favorites, private '
-          'documents, PNG, print, selected pages and batch share. PDF tools '
-          'stay open on the free plan. Pro is for scanning after the free '
-          'scans are used.',
+          'app. Pro adds one thing: unlimited scans, so you can keep '
+          'scanning after the free scans are used. Everything else is free '
+          'for everyone.',
     ),
     (
       'Free scans',
@@ -139,12 +136,12 @@ class HelpScreen extends StatelessWidget {
       'Private documents',
       'Long-press a scan → Make private. It leaves the main list. Open '
           'Private from the menu with Face ID to see it again. The file never '
-          'leaves this phone. Scanella Pro also files a scanned passport '
-          'there automatically.',
+          'leaves this phone. A scanned passport is filed there '
+          'automatically.',
     ),
     (
       'IDs',
-      'Menu → IDs lists identity cards. Scanella Pro reads a new scan and '
+      'Menu → IDs lists identity cards. Scanella reads a new scan and '
           'saves a second copy there when it is an ID card. Passports go to '
           'Private instead.',
     ),

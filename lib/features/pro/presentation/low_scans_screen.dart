@@ -122,9 +122,7 @@ class _LowScansScreenState extends ConsumerState<LowScansScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          Brand.radiusButton,
-                        ),
+                        borderRadius: BorderRadius.circular(Brand.radiusButton),
                       ),
                     ),
                     onPressed: pro.busy ? null : _upgrade,

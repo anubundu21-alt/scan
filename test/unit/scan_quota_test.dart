@@ -238,9 +238,7 @@ void main() {
   });
 
   test('existing installs skip the starter pack', () async {
-    SharedPreferences.setMockInitialValues({
-      DeviceQuotaStore.prefsKey: 2,
-    });
+    SharedPreferences.setMockInitialValues({DeviceQuotaStore.prefsKey: 2});
     final store = DeviceQuotaStore();
     expect(await store.readStarterDone(), isTrue);
 
@@ -277,7 +275,10 @@ void main() {
   });
 
   test('setUsedForTesting can give the allowance back', () async {
-    final store = MemoryQuotaStore(used: ScanQuota.starterLimit, starterDone: true);
+    final store = MemoryQuotaStore(
+      used: ScanQuota.starterLimit,
+      starterDone: true,
+    );
     final quota = ScanQuotaController(store);
     await quota.ensureLoaded();
     await quota.setUsedForTesting(0);

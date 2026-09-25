@@ -4,11 +4,7 @@ import 'package:scan2/features/library/domain/document_repository.dart';
 
 /// Result of filing a scan into Private or IDs from on-device OCR.
 class AutoFileOutcome {
-  const AutoFileOutcome({
-    required this.kind,
-    this.idCopy,
-    this.message,
-  });
+  const AutoFileOutcome({required this.kind, this.idCopy, this.message});
 
   final IdentityKind kind;
   final Document? idCopy;

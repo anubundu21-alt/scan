@@ -118,28 +118,22 @@ class _PdfRotateScreenState extends State<PdfRotateScreen>
     final pages = _pages;
     final turns = _turns;
     final stem = _stem;
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.converting,
-            message: 'Building the PDF…',
-            fraction: 0.55,
-          ),
-        );
-        final bytes = await _tools.buildRotatedPdf(
-          pages,
-          quarterTurns: turns,
-        );
-        final suffix = turns % 4 == 0 ? '' : '-rotated';
-        return ConvertedFile(
-          bytes: bytes,
-          filename: '$stem$suffix.pdf',
-          mimeType: 'application/pdf',
-        );
-      },
-      doneMessage: 'PDF ready to save.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.converting,
+          message: 'Building the PDF…',
+          fraction: 0.55,
+        ),
+      );
+      final bytes = await _tools.buildRotatedPdf(pages, quarterTurns: turns);
+      final suffix = turns % 4 == 0 ? '' : '-rotated';
+      return ConvertedFile(
+        bytes: bytes,
+        filename: '$stem$suffix.pdf',
+        mimeType: 'application/pdf',
+      );
+    }, doneMessage: 'PDF ready to save.');
   }
 
   @override
@@ -337,24 +331,21 @@ class _PdfPageNumbersScreenState extends State<PdfPageNumbersScreen>
     if (isBusy) return;
     final picked = await _pickPdf(onWeb: showConversionMessage);
     if (picked == null) return;
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.converting,
-            message: 'Numbering pages…',
-            fraction: 0.45,
-          ),
-        );
-        final bytes = await _tools.addPageNumbers(picked.bytes);
-        return ConvertedFile(
-          bytes: bytes,
-          filename: '${picked.stem}-pages.pdf',
-          mimeType: 'application/pdf',
-        );
-      },
-      doneMessage: 'Page numbers added.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.converting,
+          message: 'Numbering pages…',
+          fraction: 0.45,
+        ),
+      );
+      final bytes = await _tools.addPageNumbers(picked.bytes);
+      return ConvertedFile(
+        bytes: bytes,
+        filename: '${picked.stem}-pages.pdf',
+        mimeType: 'application/pdf',
+      );
+    }, doneMessage: 'Page numbers added.');
   }
 
   @override
@@ -418,24 +409,21 @@ class _PdfWatermarkScreenState extends State<PdfWatermarkScreen>
     }
     final picked = await _pickPdf(onWeb: showConversionMessage);
     if (picked == null) return;
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.converting,
-            message: 'Adding the watermark…',
-            fraction: 0.45,
-          ),
-        );
-        final bytes = await _tools.addWatermark(picked.bytes, text: label);
-        return ConvertedFile(
-          bytes: bytes,
-          filename: '${picked.stem}-watermark.pdf',
-          mimeType: 'application/pdf',
-        );
-      },
-      doneMessage: 'Watermark added.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.converting,
+          message: 'Adding the watermark…',
+          fraction: 0.45,
+        ),
+      );
+      final bytes = await _tools.addWatermark(picked.bytes, text: label);
+      return ConvertedFile(
+        bytes: bytes,
+        filename: '${picked.stem}-watermark.pdf',
+        mimeType: 'application/pdf',
+      );
+    }, doneMessage: 'Watermark added.');
   }
 
   @override
@@ -505,24 +493,21 @@ class _PdfUnlockScreenState extends State<PdfUnlockScreen>
     final picked = await _pickPdf(onWeb: showConversionMessage);
     if (picked == null) return;
     final password = _password.text;
-    await runConversion(
-      (onProgress) async {
-        onProgress(
-          const ConversionStatus(
-            stage: ConversionStage.converting,
-            message: 'Removing the lock…',
-            fraction: 0.45,
-          ),
-        );
-        final bytes = await _tools.unlock(picked.bytes, password: password);
-        return ConvertedFile(
-          bytes: bytes,
-          filename: '${picked.stem}-unlocked.pdf',
-          mimeType: 'application/pdf',
-        );
-      },
-      doneMessage: 'PDF unlocked.',
-    );
+    await runConversion((onProgress) async {
+      onProgress(
+        const ConversionStatus(
+          stage: ConversionStage.converting,
+          message: 'Removing the lock…',
+          fraction: 0.45,
+        ),
+      );
+      final bytes = await _tools.unlock(picked.bytes, password: password);
+      return ConvertedFile(
+        bytes: bytes,
+        filename: '${picked.stem}-unlocked.pdf',
+        mimeType: 'application/pdf',
+      );
+    }, doneMessage: 'PDF unlocked.');
   }
 
   @override
@@ -554,7 +539,8 @@ class _PdfUnlockScreenState extends State<PdfUnlockScreen>
               const SizedBox(height: 20),
               ConversionUploadTile(
                 title: 'Choose a PDF',
-                subtitle: 'Pick a locked file, then save one that opens freely.',
+                subtitle:
+                    'Pick a locked file, then save one that opens freely.',
                 icon: Icons.lock_open_rounded,
                 onPressed: isBusy ? null : _pickAndUnlock,
               ),

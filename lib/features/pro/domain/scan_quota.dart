@@ -75,7 +75,6 @@ class ScanQuota {
     return 'period:${refreshedAt?.millisecondsSinceEpoch ?? 0}';
   }
 
-
   static String formatResetAt(DateTime at) {
     return DateFormat("EEEE, d MMMM y 'at' h:mm a").format(at.toLocal());
   }

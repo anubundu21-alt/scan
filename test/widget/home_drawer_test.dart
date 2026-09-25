@@ -64,7 +64,10 @@ void main() {
       ),
       GoRoute(path: '/pdf/merge', builder: (_, __) => const MergePdfScreen()),
       GoRoute(path: '/pdf/split', builder: (_, __) => const SplitPdfScreen()),
-      GoRoute(path: '/pdf/images', builder: (_, __) => const PdfToImageScreen()),
+      GoRoute(
+        path: '/pdf/images',
+        builder: (_, __) => const PdfToImageScreen(),
+      ),
       GoRoute(
         path: '/pdf/from-images',
         builder: (_, __) => const ImagesToPdfScreen(),
@@ -175,13 +178,13 @@ void main() {
     expect(find.text('Import files'), findsNothing);
     expect(find.text('Recent scans'), findsOneWidget);
     expect(find.text('See all'), findsOneWidget);
-    expect(find.text('Your best document scanner'), findsOneWidget);
+    expect(find.text('Scan, save and share PDFs'), findsOneWidget);
     expect(find.text('Turn your documents\ninto clarity'), findsOneWidget);
     expect(find.byType(ScanellaWordmark), findsWidgets);
     expect(find.text('Search'), findsNothing);
-    expect(find.text('Search names or text'), findsOneWidget);
+    expect(find.text('Search names'), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('Search names or text')).dy,
+      tester.getTopLeft(find.text('Search names')).dy,
       greaterThan(tester.getBottomLeft(find.text('Recent scans')).dy),
     );
     final headline = tester.widget<Text>(
@@ -196,7 +199,7 @@ void main() {
     expect(tester.getSize(find.byType(HomeHeroArt)).height, 94);
     expect(
       tester.getTopLeft(find.text('Turn your documents\ninto clarity')).dy -
-          tester.getBottomLeft(find.text('Your best document scanner')).dy,
+          tester.getBottomLeft(find.text('Scan, save and share PDFs')).dy,
       greaterThan(14),
     );
 
@@ -260,7 +263,10 @@ void main() {
       findsNothing,
     );
     expect(
-      find.descendant(of: find.byType(Drawer), matching: find.text('Duplicates')),
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Duplicates'),
+      ),
       findsNothing,
     );
     expect(
@@ -312,7 +318,9 @@ void main() {
     expect(find.text('App lock'), findsOneWidget);
   });
 
-  testWidgets('About from the menu shows version, not licences', (tester) async {
+  testWidgets('About from the menu shows version, not licences', (
+    tester,
+  ) async {
     final router = testRouter();
     await tester.pumpWidget(app(router));
     await tester.pumpAndSettle();
@@ -449,7 +457,9 @@ void main() {
     expect(style?.backgroundColor?.resolve({}), Brand.accent);
     expect(style?.foregroundColor?.resolve({}), Colors.white);
 
-    final size = tester.getSize(find.widgetWithText(FilledButton, 'New folder'));
+    final size = tester.getSize(
+      find.widgetWithText(FilledButton, 'New folder'),
+    );
     expect(size.height, lessThan(40));
     final label = tester.widget<Text>(
       find.descendant(
@@ -857,7 +867,9 @@ void main() {
     expect(find.text('ID card'), findsNothing);
   });
 
-  testWidgets('Scan from camera on home opens the camera route', (tester) async {
+  testWidgets('Scan from camera on home opens the camera route', (
+    tester,
+  ) async {
     final router = testRouter();
     await tester.pumpWidget(app(router));
     await tester.pumpAndSettle();
@@ -878,10 +890,7 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(
-              used: ScanQuota.weeklyLimit,
-              starterDone: true,
-            ),
+            MemoryQuotaStore(used: ScanQuota.weeklyLimit, starterDone: true),
           ),
         ],
       ),
@@ -895,10 +904,15 @@ void main() {
     expect(find.textContaining('You’ve used all'), findsOneWidget);
     expect(find.text('Unlock Scanella Pro'), findsOneWidget);
     expect(find.text('Maybe Later'), findsOneWidget);
-    expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      isNot('/camera'),
+    );
   });
 
-  testWidgets('All tools lists every converter in its category', (tester) async {
+  testWidgets('All tools lists every converter in its category', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1002,7 +1016,10 @@ void main() {
     expect(find.text('JPG'), findsOneWidget);
     expect(find.text('PNG'), findsOneWidget);
     expect(find.text('Choose a PDF'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Image to PDF opens when Pro is on', (tester) async {
@@ -1014,7 +1031,10 @@ void main() {
 
     expect(find.widgetWithText(AppBar, 'Image to PDF'), findsOneWidget);
     expect(find.text('Choose photos'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Rotate PDF opens without Pro', (tester) async {
@@ -1027,7 +1047,10 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Rotate PDF'), findsOneWidget);
     expect(find.text('Choose a PDF'), findsOneWidget);
     expect(find.text('Download'), findsNothing);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Page numbers opens without Pro', (tester) async {
@@ -1039,7 +1062,10 @@ void main() {
 
     expect(find.widgetWithText(AppBar, 'Page numbers'), findsOneWidget);
     expect(find.textContaining('1 / n'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Watermark opens without Pro', (tester) async {
@@ -1051,7 +1077,10 @@ void main() {
 
     expect(find.widgetWithText(AppBar, 'Watermark'), findsOneWidget);
     expect(find.text('CONFIDENTIAL'), findsWidgets);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Unlock PDF opens without Pro', (tester) async {
@@ -1063,7 +1092,10 @@ void main() {
 
     expect(find.widgetWithText(AppBar, 'Unlock PDF'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('drawer shows remaining free scans, not chips under search', (
@@ -1086,11 +1118,12 @@ void main() {
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
 
+    // Once in the drawer, once on the home screen under All tools.
     expect(
       find.text(
         '${ScanQuota.starterLimit - 3} of ${ScanQuota.starterLimit} free scans left',
       ),
-      findsOneWidget,
+      findsNWidgets(2),
     );
     expect(
       find.descendant(
@@ -1123,9 +1156,9 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Choose your plan'), findsOneWidget);
     expect(find.text('Free plan'), findsOneWidget);
     expect(find.text('Pro plan'), findsOneWidget);
-    expect(find.text('All PDF tools'), findsNWidgets(2));
+    expect(find.text('All PDF tools'), findsOneWidget);
     expect(find.text('Unlimited scans'), findsOneWidget);
-    expect(find.text('Advanced OCR'), findsOneWidget);
+    expect(find.text('Advanced OCR'), findsNothing);
     await tester.scrollUntilVisible(
       find.text('Yearly'),
       80,
@@ -1145,7 +1178,7 @@ void main() {
     );
   });
 
-  testWidgets('Favorites in the drawer asks for Pro, Close returns home', (
+  testWidgets('Favorites in the drawer opens without a paywall', (
     tester,
   ) async {
     final router = testRouter();
@@ -1162,12 +1195,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Go Pro'), findsOneWidget);
-    await tester.tap(find.byTooltip('Close'));
-    await tester.pumpAndSettle();
-
+    // Pro is only unlimited scans; the smart folders are free.
     expect(find.text('Go Pro'), findsNothing);
-    expect(find.text('Documents'), findsWidgets);
+    expect(find.text('Favorites'), findsWidgets);
   });
 
   testWidgets('scan button asks for Pro when free scans are used', (
@@ -1179,10 +1209,7 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(
-              used: ScanQuota.weeklyLimit,
-              starterDone: true,
-            ),
+            MemoryQuotaStore(used: ScanQuota.weeklyLimit, starterDone: true),
           ),
         ],
       ),
@@ -1195,7 +1222,10 @@ void main() {
     expect(find.textContaining('You’ve used all'), findsOneWidget);
     expect(find.text('Unlock Scanella Pro'), findsOneWidget);
     expect(find.text('Maybe Later'), findsOneWidget);
-    expect(router.routerDelegate.currentConfiguration.uri.path, isNot('/camera'));
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      isNot('/camera'),
+    );
   });
 
   testWidgets('drawer shows used-up scans and the same popup on Pro', (
@@ -1207,10 +1237,7 @@ void main() {
         router,
         extra: [
           quotaStoreProvider.overrideWithValue(
-            MemoryQuotaStore(
-              used: ScanQuota.weeklyLimit,
-              starterDone: true,
-            ),
+            MemoryQuotaStore(used: ScanQuota.weeklyLimit, starterDone: true),
           ),
         ],
       ),
@@ -1263,7 +1290,13 @@ void main() {
             MemoryQuotaStore(
               used: ScanQuota.weeklyLimit,
               starterDone: true,
-              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+              periodStartMs: DateTime(
+                2026,
+                9,
+                12,
+                12,
+                31,
+              ).millisecondsSinceEpoch,
             ),
           ),
         ],

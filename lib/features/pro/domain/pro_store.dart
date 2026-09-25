@@ -10,13 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:scan2/features/pro/domain/pro_purchase.dart';
 
-/// App-granted Pro, separate from Apple's introductory month.
+/// App-granted Pro for one month. After it ends, the free plan is 10 scans
+/// every 30 days. This is not Apple's paid subscription.
 class ProTrial {
-  static const courtesyDays = 7;
+  static const courtesyDays = 30;
   static const courtesy = Duration(days: courtesyDays);
 
-  static String get freeTitle => '$courtesyDays days FREE';
-  static String get startButton => 'Start $courtesyDays-day free trial';
+  static const freeTitle = '1 month FREE';
+  static const startButton = 'Start 1 month free trial';
 }
 
 @immutable
@@ -63,10 +64,10 @@ class ProState {
   /// show the upgrade screen so a tester can see it.
   final bool testingBuild;
 
-  /// Whether this device may still start the app-granted 7-day Pro window.
+  /// Whether this device may still start the app-granted month of Pro.
   ///
-  /// This is the trial the app can start without Apple. It is offered when
-  /// this Apple ID is not owed the introductory month, and only once.
+  /// Unlimited scans for [ProTrial.courtesyDays] days, once per device.
+  /// After that, the free plan is 10 scans every 30 days.
   final bool canStartCourtesyTrial;
 
   ProState copyWith({
@@ -149,8 +150,8 @@ class ProController extends StateNotifier<ProState> {
         courtesyUsed = courtesy.used;
         courtesyUntil = courtesy.until;
       } catch (_) {}
-      final courtesyActive = courtesyUntil != null &&
-          courtesyUntil.isAfter(_now());
+      final courtesyActive =
+          courtesyUntil != null && courtesyUntil.isAfter(_now());
 
       var useStore =
           _testingTools && (prefs.getBool(testingUseStoreKey) ?? false);
@@ -210,10 +211,7 @@ class ProController extends StateNotifier<ProState> {
         storeError = entitled ? null : _readable(e);
       }
       final located = await _pricing.resolve(locale: locale);
-      final offer = LocalizedPricing.forDisplay(
-        located: located,
-        store: store,
-      );
+      final offer = LocalizedPricing.forDisplay(located: located, store: store);
 
       if (entitled && !trialUsed) trialUsed = true;
       if (!offerTrial &&
@@ -243,11 +241,13 @@ class ProController extends StateNotifier<ProState> {
       }
 
       if (courtesyActive) entitled = true;
+      final canStartCourtesyTrial = !entitled && !courtesyUsed;
+      // The free month is Pro with no scan limit. Do not also offer Apple's
+      // paid month on the same button.
+      if (canStartCourtesyTrial) canStartTrial = false;
       if (_testingTools && offerTrial && !courtesyUsed && !entitled) {
         canStartTrial = false;
       }
-      final canStartCourtesyTrial =
-          !entitled && !courtesyUsed && !canStartTrial;
 
       state = state.copyWith(
         isPro: entitled,
@@ -349,8 +349,8 @@ class ProController extends StateNotifier<ProState> {
       } catch (_) {}
       if (live == false) {
         final courtesy = await _purchase.readCourtesyTrial();
-        final courtesyActive = courtesy.until != null &&
-            courtesy.until!.isAfter(_now());
+        final courtesyActive =
+            courtesy.until != null && courtesy.until!.isAfter(_now());
         if (courtesyActive) {
           state = state.copyWith(isPro: true, busy: false);
           return false;
@@ -386,7 +386,8 @@ class ProController extends StateNotifier<ProState> {
       if (existing.used) {
         state = state.copyWith(
           busy: false,
-          error: 'The ${ProTrial.courtesyDays}-day trial has already been used '
+          error:
+              'The 1 month free trial has already been used '
               'on this iPhone.',
         );
         return false;
@@ -406,9 +407,10 @@ class ProController extends StateNotifier<ProState> {
     }
   }
 
-  /// Starts the 7-day app trial when that is on offer, otherwise Apple.
+  /// The free month and the paid plans both open Apple’s payment sheet.
+  /// Apple sets the charge date: one month out when this Apple ID is still
+  /// owed the free month, today when that offer is already used.
   Future<bool> startOfferedTrialOrSubscribe(ProPlan plan) {
-    if (state.canStartCourtesyTrial) return startCourtesyTrial();
     return subscribe(plan);
   }
 

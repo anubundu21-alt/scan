@@ -25,8 +25,7 @@ class _SignaturePickerSheet extends StatefulWidget {
   const _SignaturePickerSheet();
 
   @override
-  State<_SignaturePickerSheet> createState() =>
-      _SignaturePickerSheetState();
+  State<_SignaturePickerSheet> createState() => _SignaturePickerSheetState();
 }
 
 class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
@@ -75,7 +74,10 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Text('Sign this page', style: theme.textTheme.headlineSmall),
+              child: Text(
+                'Sign this page',
+                style: theme.textTheme.headlineSmall,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.draw_rounded),

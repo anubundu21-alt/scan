@@ -28,10 +28,12 @@ class AppHaptics {
   static Future<void> impactMedium() => HapticFeedback.mediumImpact();
 
   /// Save completed, copy success, Enhance applied.
-  static Future<void> success() => _invokeNative('success', HapticFeedback.mediumImpact);
+  static Future<void> success() =>
+      _invokeNative('success', HapticFeedback.mediumImpact);
 
   /// Failed detect, save error.
-  static Future<void> error() => _invokeNative('error', HapticFeedback.heavyImpact);
+  static Future<void> error() =>
+      _invokeNative('error', HapticFeedback.heavyImpact);
 
   static Future<void> play(AppHaptic haptic) {
     return switch (haptic) {
@@ -56,11 +58,4 @@ class AppHaptics {
   }
 }
 
-enum AppHaptic {
-  none,
-  selection,
-  impactLight,
-  impactMedium,
-  success,
-  error,
-}
+enum AppHaptic { none, selection, impactLight, impactMedium, success, error }

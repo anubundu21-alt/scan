@@ -3,6 +3,21 @@ import 'package:scan2/core/theme/brand.dart';
 
 const kScanNameSuggestions = ['Invoice', 'Receipt', 'ID', 'Contract', 'Notes'];
 
+/// Puts [label] in front of [current] and keeps the rest, so
+/// "Scan 09/23 19:53" becomes "Invoice 09/23 19:53" and names stay unique.
+/// A leading "Scan" or earlier suggestion is swapped rather than stacked.
+String withSuggestedName(String current, String label) {
+  final text = current.trim();
+  if (text.isEmpty) return label;
+  for (final word in ['Scan', ...kScanNameSuggestions]) {
+    if (text == word) return label;
+    if (text.startsWith('$word ')) {
+      return '$label ${text.substring(word.length + 1).trim()}';
+    }
+  }
+  return '$label $text';
+}
+
 /// Asks for a file or scan name. Skip / empty keeps the current title.
 Future<String?> promptScanName(
   BuildContext context, {
@@ -44,7 +59,11 @@ class _ScanNameDialogState extends State<_ScanNameDialog> {
   }
 
   void _use(String value) {
-    _controller.text = value;
+    final text = withSuggestedName(_controller.text, value);
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
     setState(() {});
   }
 

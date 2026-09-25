@@ -18,7 +18,9 @@ void main() {
   }
 
   test('rotateClockwise swaps width and height', () {
-    final rotated = const PageEditor().rotateClockwise(solidJpeg(40, 80, 10, 20, 200));
+    final rotated = const PageEditor().rotateClockwise(
+      solidJpeg(40, 80, 10, 20, 200),
+    );
     expect(rotated, isNotNull);
     final decoded = img.decodeImage(rotated!);
     expect(decoded!.width, 80);
@@ -49,13 +51,7 @@ void main() {
 
     final page = solidJpeg(100, 100, 255, 255, 255);
     final out = const PageEditor().compositeStamps(page, [
-      PageStamp(
-        imagePath: sigFile.path,
-        nx: 0,
-        ny: 0,
-        nw: 0.2,
-        nh: 0.1,
-      ),
+      PageStamp(imagePath: sigFile.path, nx: 0, ny: 0, nw: 0.2, nh: 0.1),
     ]);
     final decoded = img.decodeImage(out)!;
     // Top-left of a white page should no longer be pure white after a black stamp.
@@ -121,13 +117,7 @@ void main() {
 
     final page = solidJpeg(200, 200, 30, 90, 210);
     final out = const PageEditor().compositeStamps(page, [
-      PageStamp(
-        imagePath: sigFile.path,
-        nx: 0,
-        ny: 0,
-        nw: 0.4,
-        nh: 0.4,
-      ),
+      PageStamp(imagePath: sigFile.path, nx: 0, ny: 0, nw: 0.4, nh: 0.4),
     ]);
     final decoded = img.decodeImage(out)!;
 

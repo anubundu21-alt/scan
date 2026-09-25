@@ -152,7 +152,9 @@ bool isMostlyBlack(
     if (i % step == 0) {
       total++;
       final luma =
-          (pixel.r.toInt() * 77 + pixel.g.toInt() * 150 + pixel.b.toInt() * 29) >>
+          (pixel.r.toInt() * 77 +
+              pixel.g.toInt() * 150 +
+              pixel.b.toInt() * 29) >>
           8;
       if (luma <= lumaCutoff) dark++;
     }

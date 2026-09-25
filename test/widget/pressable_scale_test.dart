@@ -55,16 +55,23 @@ void main() {
       ),
     );
 
-    final gesture = await tester.startGesture(tester.getCenter(find.text('Hold me')));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Hold me')),
+    );
     await tester.pump();
     final transform = tester.widget<Transform>(
       find.byKey(const ValueKey('scanella-press-scale')),
     );
-    expect(transform.transform.entry(0, 0), closeTo(Tactile.pressScaleCard, 0.01));
+    expect(
+      transform.transform.entry(0, 0),
+      closeTo(Tactile.pressScaleCard, 0.01),
+    );
     await gesture.up();
   });
 
-  testWidgets('sliding off a PressableScale cancels the action', (tester) async {
+  testWidgets('sliding off a PressableScale cancels the action', (
+    tester,
+  ) async {
     var taps = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -73,11 +80,7 @@ void main() {
             child: PressableScale(
               haptic: AppHaptic.none,
               onPressed: () => taps++,
-              child: const SizedBox(
-                width: 80,
-                height: 80,
-                child: Text('Hold'),
-              ),
+              child: const SizedBox(width: 80, height: 80, child: Text('Hold')),
             ),
           ),
         ),
@@ -95,7 +98,9 @@ void main() {
     expect(taps, 0);
   });
 
-  testWidgets('Reduce Motion still leaves the control tappable', (tester) async {
+  testWidgets('Reduce Motion still leaves the control tappable', (
+    tester,
+  ) async {
     var taps = 0;
     await tester.pumpWidget(
       MediaQuery(

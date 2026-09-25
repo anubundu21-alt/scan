@@ -21,8 +21,6 @@ import 'package:scan2/features/library/domain/document_auto_file.dart';
 import 'package:scan2/features/library/domain/document_organizer.dart';
 import 'package:scan2/features/library/domain/export_service.dart';
 import 'package:scan2/features/library/domain/ocr_layout.dart';
-import 'package:scan2/features/pro/domain/pro_store.dart';
-import 'package:scan2/features/pro/presentation/pro_gate.dart';
 import 'package:scan2/features/library/presentation/name_scan_dialog.dart';
 import 'package:scan2/features/library/presentation/widgets/add_pages_sheet.dart';
 import 'package:scan2/features/library/presentation/widgets/export_sheet.dart';
@@ -146,10 +144,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'text', child: Text('Extract text')),
-              const PopupMenuItem(
-                value: 'favorite',
-                child: Text('Favorite'),
-              ),
+              const PopupMenuItem(value: 'favorite', child: Text('Favorite')),
               const PopupMenuItem(value: 'private', child: Text('Private')),
               if (widget.mode == DocumentScreenMode.editPdf)
                 const PopupMenuItem(
@@ -270,10 +265,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   }
 
   Future<void> _rotatePage(Document document, ScanPage page) async {
-    await ref.read(documentRepositoryProvider).rotatePageClockwise(
-      documentId: document.id,
-      pagePath: page.path,
-    );
+    await ref
+        .read(documentRepositoryProvider)
+        .rotatePageClockwise(documentId: document.id, pagePath: page.path);
     bumpLibrary(ref);
     AppHaptics.selection();
   }
@@ -344,9 +338,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       bumpLibrary(ref);
       if (!mounted) return;
       AppHaptics.success();
-      _showMessage(
-        'Added ${pages.length} page${pages.length == 1 ? '' : 's'}',
-      );
+      _showMessage('Added ${pages.length} page${pages.length == 1 ? '' : 's'}');
     } catch (e) {
       if (mounted) _showMessage(_readable(e));
     } finally {
@@ -355,7 +347,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   }
 
   Future<void> _mergeWith(Document document) async {
-    final all = ref.read(documentsProvider).valueOrNull ??
+    final all =
+        ref.read(documentsProvider).valueOrNull ??
         await ref.read(documentRepositoryProvider).getAllDocuments();
     if (!mounted) return;
     final others = [
@@ -369,16 +362,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     );
     if (picked == null || picked.isEmpty || !mounted) return;
     try {
-      final merged = await ref
-          .read(documentRepositoryProvider)
-          .mergeDocuments([document.id, ...picked]);
+      final merged = await ref.read(documentRepositoryProvider).mergeDocuments([
+        document.id,
+        ...picked,
+      ]);
       bumpLibrary(ref);
       AppHaptics.success();
       if (mounted) {
-        context.push(
-          '/library/document/${merged.id}',
-          extra: widget.mode,
-        );
+        context.push('/library/document/${merged.id}', extra: widget.mode);
       }
     } catch (e) {
       if (mounted) _showMessage(_readable(e));
@@ -440,7 +431,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       if (exportReturnsToHome(widget.mode, request.action) &&
           message.isNotEmpty) {
         if (!mounted) return;
+        // Grab the app-wide messenger first so the confirmation survives
+        // leaving this screen.
+        final messenger = ScaffoldMessenger.of(context);
         context.go('/library');
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
         return;
       }
       if (message.isNotEmpty) _showMessage(message);
@@ -571,13 +568,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       _showMessage('Text recognition is available on iOS and Android.');
       return;
     }
-    final isPro = ref.read(proProvider).isPro;
-    if (document.pages.length > 1 && !isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
     var language = document.ocrLanguage ?? OcrLanguage.english.code;
-    if (ref.read(proProvider).isPro) {
+    // OCR on any page count, in any language, is on the free plan.
+    {
       final picked = await showModalBottomSheet<String>(
         context: context,
         showDragHandle: true,
@@ -623,22 +616,21 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       }
       final text = parts.join('\n\n').trim();
       const organizer = DocumentOrganizer();
-      await ref.read(documentRepositoryProvider).updateDocument(
-        document.id,
-        (current) {
-          var next = current.copyWith(
-            ocrText: text,
-            ocrBlocks: blocks,
-            ocrLanguage: language,
-            category: organizer.categorize(text) ?? current.category,
-          );
-          if (DocumentOrganizer.isGenericTitle(current.title) &&
-              text.isNotEmpty) {
-            next = next.copyWith(title: organizer.suggestTitle(text));
-          }
-          return next;
-        },
-      );
+      await ref.read(documentRepositoryProvider).updateDocument(document.id, (
+        current,
+      ) {
+        var next = current.copyWith(
+          ocrText: text,
+          ocrBlocks: blocks,
+          ocrLanguage: language,
+          category: organizer.categorize(text) ?? current.category,
+        );
+        if (DocumentOrganizer.isGenericTitle(current.title) &&
+            text.isNotEmpty) {
+          next = next.copyWith(title: organizer.suggestTitle(text));
+        }
+        return next;
+      });
       bumpLibrary(ref);
       if (!mounted) return;
       AppHaptics.success();
@@ -655,26 +647,23 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   }
 
   Future<void> _toggleFavorite(Document document) async {
-    if (!ref.read(proProvider).isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
-    await ref.read(documentRepositoryProvider).updateDocument(
-      document.id,
-      (current) => current.copyWith(isFavorite: !current.isFavorite),
-    );
+    await ref
+        .read(documentRepositoryProvider)
+        .updateDocument(
+          document.id,
+          (current) => current.copyWith(isFavorite: !current.isFavorite),
+        );
     bumpLibrary(ref);
   }
 
   Future<void> _togglePrivate(Document document) async {
-    if (!ref.read(proProvider).isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
-    await ref.read(documentRepositoryProvider).updateDocument(
-      document.id,
-      (current) => current.copyWith(isPrivate: !current.isPrivate),
-    );
+    // Private documents are part of the free plan.
+    await ref
+        .read(documentRepositoryProvider)
+        .updateDocument(
+          document.id,
+          (current) => current.copyWith(isPrivate: !current.isPrivate),
+        );
     bumpLibrary(ref);
   }
 
@@ -752,7 +741,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   Future<void> _autoFileIfNeeded() async {
     if (_autoFileStarted || kIsWeb) return;
     _autoFileStarted = true;
-    if (!ref.read(proProvider).isPro) return;
     final document = await ref
         .read(documentRepositoryProvider)
         .getDocument(widget.documentId);
@@ -788,7 +776,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       repository: ref.read(documentRepositoryProvider),
       document: latest,
       text: text,
-      isPro: ref.read(proProvider).isPro,
+      isPro: true,
     );
     bumpLibrary(ref);
     if (outcome.message != null && mounted) {
@@ -1016,9 +1004,7 @@ class _PageCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             onSign != null
-                                ? (page.hasSignature
-                                      ? 'Signed'
-                                      : 'Tap to sign')
+                                ? (page.hasSignature ? 'Signed' : 'Tap to sign')
                                 : 'Crop and enhance',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: scheme.primary,

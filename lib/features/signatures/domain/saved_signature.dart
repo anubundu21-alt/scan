@@ -18,7 +18,10 @@ class SavedSignature {
     'createdAt': createdAt.toIso8601String(),
   };
 
-  static SavedSignature? fromJson(Object? raw, String Function(String rel) resolve) {
+  static SavedSignature? fromJson(
+    Object? raw,
+    String Function(String rel) resolve,
+  ) {
     if (raw is! Map) return null;
     final id = raw['id'];
     final path = raw['path'];
@@ -26,7 +29,8 @@ class SavedSignature {
     return SavedSignature(
       id: id,
       path: resolve(path),
-      createdAt: DateTime.tryParse(raw['createdAt'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(raw['createdAt'] as String? ?? '') ??
           DateTime.now(),
     );
   }

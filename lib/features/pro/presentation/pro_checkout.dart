@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:scan2/core/haptics/app_haptics.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/core/theme/tactile.dart';
@@ -30,6 +31,10 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pro = ref.watch(proProvider);
+    final linkStyle = theme.textTheme.titleSmall?.copyWith(
+      color: Brand.accent,
+      fontWeight: FontWeight.w700,
+    );
     final offer =
         pro.offer ??
         LocalizedPricing.formatOffer(
@@ -40,7 +45,7 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           source: 'device',
         );
 
-    // App-granted 7 days first. Apple's month only after that window is used
+    // App-granted month of Pro first. Paid Apple plans after that month.
     // and this Apple ID is still owed one.
     final courtesy = pro.canStartCourtesyTrial;
     final freeMonth = !courtesy && pro.canStartTrial;
@@ -124,22 +129,33 @@ class _ProCheckoutState extends ConsumerState<ProCheckout> {
           ),
         ),
         const SizedBox(height: 4),
-        TextButton(
-          onPressed: pro.busy
-              ? null
-              : () => ref.read(proProvider.notifier).restorePurchases(),
-          child: Text(
-            'Restore purchases',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: Brand.accent,
-              fontWeight: FontWeight.w700,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () => context.push('/legal/terms'),
+              child: Text('Terms', style: linkStyle),
             ),
-          ),
+            Text('·', style: linkStyle),
+            TextButton(
+              onPressed: () => context.push('/legal/privacy'),
+              child: Text('Privacy', style: linkStyle),
+            ),
+            Text('·', style: linkStyle),
+            TextButton(
+              onPressed: pro.busy
+                  ? null
+                  : () => ref.read(proProvider.notifier).restorePurchases(),
+              child: Text('Restore purchases', style: linkStyle),
+            ),
+          ],
         ),
         Text(
           courtesy
-              ? 'No payment now. After ${ProTrial.courtesyDays} days you can '
-                    'subscribe. Scanella never sees your card.'
+              ? 'Confirm with Apple. You have Pro for 1 month, '
+                    'with no scan limit. Apple charges after that month '
+                    'unless you cancel. Scanella never sees your card.'
               : freeMonth
               ? 'Free for one month, then it renews automatically until you '
                     'cancel. Payment uses your Apple ID. Scanella never sees '

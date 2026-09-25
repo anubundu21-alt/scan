@@ -121,7 +121,11 @@ void main() {
       final decoded = img.decodeImage(jpeg!)!;
       // Stamp sits at 10%,10% of 400x500 → around (40, 50).
       final ink = decoded.getPixel(55, 60);
-      expect(ink.r.toInt(), lessThan(80), reason: 'saved PDF must show the ink');
+      expect(
+        ink.r.toInt(),
+        lessThan(80),
+        reason: 'saved PDF must show the ink',
+      );
       expect(ink.g.toInt(), lessThan(80));
       expect(ink.b.toInt(), lessThan(80));
       // Paper away from the stamp must not be a white rectangle covering the page.
@@ -129,35 +133,42 @@ void main() {
       expect(paper.b.toInt(), greaterThan(100));
     });
 
-    test('a page with ink already baked still shows it in the saved PDF', () async {
-      final page = img.Image(width: 200, height: 260);
-      for (var y = 0; y < 260; y++) {
-        for (var x = 0; x < 200; x++) {
-          page.setPixelRgb(x, y, 50, 110, 210);
+    test(
+      'a page with ink already baked still shows it in the saved PDF',
+      () async {
+        final page = img.Image(width: 200, height: 260);
+        for (var y = 0; y < 260; y++) {
+          for (var x = 0; x < 200; x++) {
+            page.setPixelRgb(x, y, 50, 110, 210);
+          }
         }
-      }
-      for (var y = 200; y < 230; y++) {
-        for (var x = 120; x < 170; x++) {
-          page.setPixelRgb(x, y, 10, 10, 10);
+        for (var y = 200; y < 230; y++) {
+          for (var x = 120; x < 170; x++) {
+            page.setPixelRgb(x, y, 10, 10, 10);
+          }
         }
-      }
-      final file = File('${temp.path}/baked.jpg');
-      file.writeAsBytesSync(img.encodeJpg(page, quality: 95));
-      final doc = Document(
-        id: 2,
-        title: 'Signed bake',
-        createdAt: DateTime(2026, 8, 19),
-        pages: [ScanPage(path: file.path)],
-      );
-      final bytes = await const ExportService().buildPdfBytes(doc);
-      final jpeg = firstJpegIn(bytes);
-      expect(jpeg, isNotNull);
-      final decoded = img.decodeImage(jpeg!)!;
-      final ink = decoded.getPixel(145, 215);
-      expect(ink.r.toInt(), lessThan(80), reason: 'baked ink must survive PDF save');
-      final paper = decoded.getPixel(20, 20);
-      expect(paper.b.toInt(), greaterThan(140));
-    });
+        final file = File('${temp.path}/baked.jpg');
+        file.writeAsBytesSync(img.encodeJpg(page, quality: 95));
+        final doc = Document(
+          id: 2,
+          title: 'Signed bake',
+          createdAt: DateTime(2026, 8, 19),
+          pages: [ScanPage(path: file.path)],
+        );
+        final bytes = await const ExportService().buildPdfBytes(doc);
+        final jpeg = firstJpegIn(bytes);
+        expect(jpeg, isNotNull);
+        final decoded = img.decodeImage(jpeg!)!;
+        final ink = decoded.getPixel(145, 215);
+        expect(
+          ink.r.toInt(),
+          lessThan(80),
+          reason: 'baked ink must survive PDF save',
+        );
+        final paper = decoded.getPixel(20, 20);
+        expect(paper.b.toInt(), greaterThan(140));
+      },
+    );
 
     test(
       'an empty document fails loudly rather than writing a blank PDF',

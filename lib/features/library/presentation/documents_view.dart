@@ -12,6 +12,7 @@ import 'package:scan2/features/library/presentation/document_detail_screen.dart'
 import 'package:scan2/features/library/data/document_store.dart';
 import 'package:scan2/features/shared/providers/settings_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:scan2/features/crop/domain/crop_args.dart';
 import 'package:intl/intl.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/core/widgets/illustrations.dart';
@@ -24,6 +25,7 @@ import 'package:scan2/features/library/domain/smart_folder.dart';
 import 'package:scan2/features/library/presentation/widgets/export_sheet.dart';
 import 'package:scan2/features/library/presentation/widgets/folder_actions.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
+import 'package:scan2/features/pro/domain/scan_quota.dart';
 import 'package:scan2/features/pro/presentation/pro_gate.dart';
 import 'package:scan2/features/settings/presentation/app_lock.dart';
 import 'package:scan2/features/shared/providers/db_provider.dart';
@@ -116,90 +118,105 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
       backgroundColor: theme.brightness == Brightness.light
           ? Brand.canvas
           : scheme.surface,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: _selecting
-                  ? SafeArea(
-                      bottom: false,
-                      child: _SelectionBar(
-                        key: const ValueKey('selecting'),
-                        count: _selected.length,
-                        onCancel: () => setState(_selected.clear),
-                        onSelectAll: () => setState(() {
-                          _selected
-                            ..clear()
-                            ..addAll(documents.map((d) => d.id));
-                        }),
-                        onMove: () => _moveSelected(folders),
-                        onShare: () => _shareSelected(documents),
-                        onMerge: _selected.length >= 2
-                            ? () => _mergeSelected()
-                            : null,
-                        onDelete: () => _deleteSelected(documents),
-                      ),
-                    )
-                  : onRoot
-                  ? HomeHero(
-                      key: const ValueKey('home'),
-                      onOpenMenu: widget.onOpenMenu,
-                    )
-                  : SafeArea(
-                      bottom: false,
-                      child: _FolderHeader(
-                        key: ValueKey(
-                          openFolder?.id ?? smartFolder?.name ?? 'folder',
+      body: _StatusBarScrim(
+        color: onRoot && !_selecting
+            ? Brand.hero
+            : theme.brightness == Brightness.light
+            ? Brand.canvas
+            : scheme.surface,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: _selecting
+                    ? SafeArea(
+                        bottom: false,
+                        child: _SelectionBar(
+                          key: const ValueKey('selecting'),
+                          count: _selected.length,
+                          onCancel: () => setState(_selected.clear),
+                          onSelectAll: () => setState(() {
+                            _selected
+                              ..clear()
+                              ..addAll(documents.map((d) => d.id));
+                          }),
+                          onMove: () => _moveSelected(folders),
+                          onShare: () => _shareSelected(documents),
+                          onMerge: _selected.length >= 2
+                              ? () => _mergeSelected()
+                              : null,
+                          onDelete: () => _deleteSelected(documents),
                         ),
-                        title: openFolder?.name ?? smartFolder?.label ?? '',
-                        scanCount: documents.length,
-                        onBack: _leaveFolder,
+                      )
+                    : onRoot
+                    ? HomeHero(
+                        key: const ValueKey('home'),
+                        onOpenMenu: widget.onOpenMenu,
+                      )
+                    : SafeArea(
+                        bottom: false,
+                        child: _FolderHeader(
+                          key: ValueKey(
+                            openFolder?.id ?? smartFolder?.name ?? 'folder',
+                          ),
+                          title: openFolder?.name ?? smartFolder?.label ?? '',
+                          scanCount: documents.length,
+                          onBack: _leaveFolder,
+                        ),
                       ),
-                    ),
-            ),
-          ),
-          if (!_selecting && onRoot)
-            SliverToBoxAdapter(
-              child: HomeShortcuts(
-                onFromPhotos: _importPhotos,
-                onImportFile: _uploadPdf,
-                onScanFromCamera: _openCameraScan,
-                onAllTools: _openAllTools,
               ),
             ),
-          if (hasLibrary) ...[
-            SliverToBoxAdapter(
-              child: _toolBar(
-                theme,
-                documents.length,
-                folderCount: shownFolders.length,
-                onRoot: onRoot,
+            if (!_selecting && onRoot)
+              SliverToBoxAdapter(
+                child: HomeShortcuts(
+                  onFromPhotos: _importPhotos,
+                  onImportFile: _uploadPdf,
+                  onScanFromCamera: _openCameraScan,
+                  onAllTools: _openAllTools,
+                ),
               ),
-            ),
-            if (showSearch) SliverToBoxAdapter(child: _searchField(theme)),
+            if (!_selecting && onRoot)
+              SliverToBoxAdapter(
+                child: _FreeScansLine(
+                  label: ref.watch(proProvider).isPro
+                      ? 'Scanella Pro · unlimited scans'
+                      : ref.watch(scanQuotaProvider).freePlanLabel,
+                ),
+              ),
+            if (hasLibrary) ...[
+              SliverToBoxAdapter(
+                child: _toolBar(
+                  theme,
+                  documents.length,
+                  folderCount: shownFolders.length,
+                  onRoot: onRoot,
+                ),
+              ),
+              if (showSearch) SliverToBoxAdapter(child: _searchField(theme)),
+            ],
+            if (loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (empty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _query.isNotEmpty
+                    ? _NoResults(query: _query)
+                    : openFolder != null
+                    ? _EmptyFolder(name: openFolder.name)
+                    : smartFolder != null
+                    ? _EmptyFolder(name: smartFolder.label)
+                    : _EmptyLibrary(onNewFolder: _createFolder),
+              )
+            else if (_gridView)
+              _grid(listed)
+            else
+              _list(listed),
           ],
-          if (loading)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (empty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _query.isNotEmpty
-                  ? _NoResults(query: _query)
-                  : openFolder != null
-                  ? _EmptyFolder(name: openFolder.name)
-                  : smartFolder != null
-                  ? _EmptyFolder(name: smartFolder.label)
-                  : _EmptyLibrary(onNewFolder: _createFolder),
-            )
-          else if (_gridView)
-            _grid(listed)
-          else
-            _list(listed),
-        ],
+        ),
       ),
     );
 
@@ -346,7 +363,19 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
       await recordNewScan(ref);
       bumpLibrary(ref);
       await AppHaptics.success();
-      if (mounted) context.push('/library/document/${doc.id}');
+      if (!mounted) return;
+      // Open the crop on page one with no quad, so the crop screen finds the
+      // page edges itself; the user checks them and taps Next.
+      final first = doc.pages.first;
+      context.push(
+        '/crop',
+        extra: CropArgs(
+          imagePath: first.editSource,
+          adjustments: first.adjustments,
+          documentId: doc.id,
+          cropRemainingPages: true,
+        ),
+      );
     } catch (e) {
       await AppHaptics.error();
       if (mounted) _message(_readable(e));
@@ -571,7 +600,7 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
           fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
-          hintText: 'Search names or text',
+          hintText: 'Search names',
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
             color: scheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
@@ -663,7 +692,9 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: Brand.ink,
+                color: theme.brightness == Brightness.light
+                    ? Brand.ink
+                    : theme.colorScheme.onSurface,
               ),
             )
           else
@@ -900,10 +931,6 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
           shareOrigin: shareOriginFor(context),
         );
       } else {
-        if (!ref.read(proProvider).isPro) {
-          final ok = await requirePro(context, ref);
-          if (!ok || !mounted) return;
-        }
         await exporter.shareDocuments(
           selected,
           shareOrigin: shareOriginFor(context),
@@ -1029,10 +1056,6 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
       case 'share':
         await _shareOne(document);
       case 'favorite':
-        if (!ref.read(proProvider).isPro) {
-          final ok = await requirePro(context, ref);
-          if (!ok || !mounted) return;
-        }
         await ref
             .read(documentRepositoryProvider)
             .updateDocument(
@@ -1056,10 +1079,7 @@ class _DocumentsViewState extends ConsumerState<DocumentsView> {
   }
 
   Future<void> _togglePrivate(Document document) async {
-    if (!ref.read(proProvider).isPro) {
-      final ok = await requirePro(context, ref);
-      if (!ok || !mounted) return;
-    }
+    // Private documents are part of the free plan.
     if (!document.isPrivate) {
       final allowed = await ref
           .read(appLockProvider.notifier)
@@ -1961,4 +1981,59 @@ String formatScanTime(DateTime at, [DateTime? now]) {
     return 'Yesterday, ${DateFormat.jm().format(local)}';
   }
   return DateFormat('MMM d, h:mm a').format(local);
+}
+
+/// Keeps the clock readable once the list scrolls under it.
+class _StatusBarScrim extends StatelessWidget {
+  const _StatusBarScrim({required this.color, required this.child});
+
+  final Color color;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: MediaQuery.paddingOf(context).top,
+          child: ColoredBox(color: color),
+        ),
+      ],
+    );
+  }
+}
+
+/// How many free scans are left, read from [ScanQuota], or that Pro is on.
+class _FreeScansLine extends StatelessWidget {
+  const _FreeScansLine({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.document_scanner_outlined,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

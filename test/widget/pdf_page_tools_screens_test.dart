@@ -28,39 +28,47 @@ void main() {
     expect(find.text('Download'), findsNothing);
     expect(find.text('90°'), findsNothing);
     expect(find.textContaining('download when it looks right'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
-  });
-
-  testWidgets('Rotate PDF shows the page, turns it live, and waits for Download', (
-    tester,
-  ) async {
-    final page = _jpeg(width: 80, height: 100);
-    await tester.pumpWidget(
-      _app(PdfRotateScreen(initialPages: [page], initialStem: 'scan')),
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
     );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(Image), findsOneWidget);
-    expect(tester.widget<RotatedBox>(find.byType(RotatedBox)).quarterTurns, 0);
-    expect(find.text('Download'), findsOneWidget);
-    expect(find.text('Rotate'), findsOneWidget);
-    expect(find.text('Choose a PDF'), findsNothing);
-
-    await tester.tap(find.text('Rotate'));
-    await tester.pump();
-
-    expect(tester.widget<RotatedBox>(find.byType(RotatedBox)).quarterTurns, 1);
-    expect(find.text('Download'), findsOneWidget);
   });
+
+  testWidgets(
+    'Rotate PDF shows the page, turns it live, and waits for Download',
+    (tester) async {
+      final page = _jpeg(width: 80, height: 100);
+      await tester.pumpWidget(
+        _app(PdfRotateScreen(initialPages: [page], initialStem: 'scan')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(
+        tester.widget<RotatedBox>(find.byType(RotatedBox)).quarterTurns,
+        0,
+      );
+      expect(find.text('Download'), findsOneWidget);
+      expect(find.text('Rotate'), findsOneWidget);
+      expect(find.text('Choose a PDF'), findsNothing);
+
+      await tester.tap(find.text('Rotate'));
+      await tester.pump();
+
+      expect(
+        tester.widget<RotatedBox>(find.byType(RotatedBox)).quarterTurns,
+        1,
+      );
+      expect(find.text('Download'), findsOneWidget);
+    },
+  );
 
   testWidgets('Rotate PDF names the current page when there are several', (
     tester,
   ) async {
     final a = _jpeg(width: 40, height: 50);
     final b = _jpeg(width: 40, height: 50);
-    await tester.pumpWidget(
-      _app(PdfRotateScreen(initialPages: [a, b])),
-    );
+    await tester.pumpWidget(_app(PdfRotateScreen(initialPages: [a, b])));
     await tester.pumpAndSettle();
 
     expect(find.text('1 of 2'), findsOneWidget);
@@ -74,7 +82,10 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Page numbers'), findsOneWidget);
     expect(find.text('Choose a PDF'), findsOneWidget);
     expect(find.textContaining('1 / n'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Watermark starts with CONFIDENTIAL and a file pick', (
@@ -86,7 +97,10 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Watermark'), findsOneWidget);
     expect(find.text('CONFIDENTIAL'), findsWidgets);
     expect(find.text('Choose a PDF'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 
   testWidgets('Unlock PDF asks for a password and a file pick', (tester) async {
@@ -96,6 +110,9 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Unlock PDF'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Choose a PDF'), findsOneWidget);
-    expect(find.textContaining('not in this version of Scanella yet'), findsNothing);
+    expect(
+      find.textContaining('not in this version of Scanella yet'),
+      findsNothing,
+    );
   });
 }

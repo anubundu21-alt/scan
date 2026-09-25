@@ -77,13 +77,10 @@ class PluginIapGateway implements IapGateway {
   void _listen() {
     if (_sub != null) return;
     try {
-      _sub = _plugin.purchaseStream.listen(
-        (list) async {
-          await _finish(list);
-          if (!_events.isClosed) _events.add(_map(list));
-        },
-        onError: _events.addError,
-      );
+      _sub = _plugin.purchaseStream.listen((list) async {
+        await _finish(list);
+        if (!_events.isClosed) _events.add(_map(list));
+      }, onError: _events.addError);
     } catch (_) {}
   }
 

@@ -158,16 +158,9 @@ void main() {
   ) async {
     await tester.pumpWidget(const SizedBox());
     final png = await tester.runAsync(
-      () => encodeSignaturePng(
-        [
-          [
-            const Offset(40, 40),
-            const Offset(90, 48),
-            const Offset(140, 36),
-          ],
-        ],
-        logicalSize: const Size(200, 120),
-      ),
+      () => encodeSignaturePng([
+        [const Offset(40, 40), const Offset(90, 48), const Offset(140, 36)],
+      ], logicalSize: const Size(200, 120)),
     );
     expect(png, isNotNull);
     final decoded = img.decodeImage(png!)!;

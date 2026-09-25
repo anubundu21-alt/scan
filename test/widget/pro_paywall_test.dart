@@ -67,8 +67,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Unlimited scans'), findsWidgets);
-    expect(find.text('All PDF tools'), findsWidgets);
-    expect(find.text('Advanced OCR'), findsWidgets);
+    expect(find.text('Everything else stays free'), findsWidgets);
+    expect(find.text('Advanced OCR'), findsNothing);
     expect(find.text('All tools'), findsNothing);
   });
 
@@ -180,42 +180,46 @@ void main() {
     expect(find.text('Open pro'), findsOneWidget);
   });
 
-  testWidgets('paywall explains StoreKit miss without asking to add product ids', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          proProvider.overrideWith(
-            (ref) => ProController(
-              purchase: FakeProPurchase(
-                trialUsed: true,
-                introOffer: false,
-                courtesyUsed: true,
-              ),
-              pricing: LocalizedPricing(
-                locate: () async => const GeoCurrency(
-                  countryCode: 'PL',
-                  currencyCode: 'PLN',
-                  countryName: 'Poland',
+  testWidgets(
+    'paywall explains StoreKit miss without asking to add product ids',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            proProvider.overrideWith(
+              (ref) => ProController(
+                purchase: FakeProPurchase(
+                  trialUsed: true,
+                  introOffer: false,
+                  courtesyUsed: true,
                 ),
-                ratesFor: (_) async => 3.71,
+                pricing: LocalizedPricing(
+                  locate: () async => const GeoCurrency(
+                    countryCode: 'PL',
+                    currencyCode: 'PLN',
+                    countryName: 'Poland',
+                  ),
+                  ratesFor: (_) async => 3.71,
+                ),
               ),
             ),
-          ),
-        ],
-        child: MaterialApp(theme: AppTheme.light, home: const ProPaywall()),
-      ),
-    );
-    await tester.pumpAndSettle();
+          ],
+          child: MaterialApp(theme: AppTheme.light, home: const ProPaywall()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Upgrade Now'), findsOneWidget);
-    expect(find.textContaining('Estimated'), findsNothing);
-    expect(find.textContaining('Reinstalling TestFlight will not fix this'), findsOneWidget);
-    expect(find.textContaining('Ready to Submit'), findsOneWidget);
-    expect(find.textContaining('Add auto-renewable'), findsNothing);
-    expect(find.textContaining('Bad state'), findsNothing);
-  });
+      expect(find.text('Upgrade Now'), findsOneWidget);
+      expect(find.textContaining('Estimated'), findsNothing);
+      expect(
+        find.textContaining('Reinstalling TestFlight will not fix this'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Ready to Submit'), findsOneWidget);
+      expect(find.textContaining('Add auto-renewable'), findsNothing);
+      expect(find.textContaining('Bad state'), findsNothing);
+    },
+  );
 
   testWidgets('paywall shows weekly reset only for free users', (tester) async {
     tester.view.physicalSize = const Size(400, 1200);
@@ -230,7 +234,13 @@ void main() {
             MemoryQuotaStore(
               used: ScanQuota.weeklyLimit,
               starterDone: true,
-              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+              periodStartMs: DateTime(
+                2026,
+                9,
+                12,
+                12,
+                31,
+              ).millisecondsSinceEpoch,
             ),
           ),
           proProvider.overrideWith(
@@ -271,7 +281,13 @@ void main() {
             MemoryQuotaStore(
               used: ScanQuota.weeklyLimit,
               starterDone: true,
-              periodStartMs: DateTime(2026, 9, 12, 12, 31).millisecondsSinceEpoch,
+              periodStartMs: DateTime(
+                2026,
+                9,
+                12,
+                12,
+                31,
+              ).millisecondsSinceEpoch,
             ),
           ),
           proProvider.overrideWith(
@@ -295,6 +311,9 @@ void main() {
 
     expect(find.text('You have Scanella Pro'), findsOneWidget);
     expect(find.textContaining('free scans reset'), findsNothing);
-    expect(find.textContaining('Scanella Pro lets you keep scanning'), findsNothing);
+    expect(
+      find.textContaining('Scanella Pro lets you keep scanning'),
+      findsNothing,
+    );
   });
 }

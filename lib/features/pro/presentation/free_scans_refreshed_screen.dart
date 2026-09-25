@@ -94,9 +94,7 @@ class FreeScansRefreshedScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w700,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          Brand.radiusButton,
-                        ),
+                        borderRadius: BorderRadius.circular(Brand.radiusButton),
                       ),
                     ),
                     onPressed: () {
@@ -168,10 +166,7 @@ class _AvailableCard extends StatelessWidget {
                     at == null
                         ? 'Unused scans don’t carry over'
                         : 'Valid until ${ScanQuota.formatResetDate(at)}',
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      color: Brand.grey,
-                    ),
+                    style: const TextStyle(fontSize: 13.5, color: Brand.grey),
                   ),
                 ],
               ),
@@ -209,10 +204,7 @@ class _GiftMark extends StatelessWidget {
         height: 186,
         child: Stack(
           alignment: Alignment.center,
-          children: [
-            for (final fleck in _confetti) fleck,
-            const _GiftBox(),
-          ],
+          children: [for (final fleck in _confetti) fleck, const _GiftBox()],
         ),
       ),
     );

@@ -195,7 +195,7 @@ class StoreKitPurchase implements ProPurchase {
 
   @override
   Future<({bool forceFree, bool offerTrial, bool useStore})>
-      readTestingPins() async {
+  readTestingPins() async {
     try {
       final pins = await _channel.invokeMapMethod<String, Object?>(
         'readTestingPins',

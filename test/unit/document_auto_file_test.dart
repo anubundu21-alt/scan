@@ -9,7 +9,9 @@ void main() {
 
   test('free plan does not auto-file a passport', () async {
     final repo = WebDemoRepository();
-    final doc = await repo.createDocumentFromScans(['a.jpg'], title: 'Scan 09/13 08:01');
+    final doc = await repo.createDocumentFromScans([
+      'a.jpg',
+    ], title: 'Scan 09/13 08:01');
     final outcome = await autoFile.apply(
       repository: repo,
       document: doc,
@@ -24,7 +26,9 @@ void main() {
 
   test('Pro files a passport into Private', () async {
     final repo = WebDemoRepository();
-    final doc = await repo.createDocumentFromScans(['a.jpg'], title: 'Scan 09/13 08:01');
+    final doc = await repo.createDocumentFromScans([
+      'a.jpg',
+    ], title: 'Scan 09/13 08:01');
     final outcome = await autoFile.apply(
       repository: repo,
       document: doc,
@@ -46,7 +50,9 @@ void main() {
 
   test('Pro saves a second ID copy for the IDs drawer', () async {
     final repo = WebDemoRepository();
-    final doc = await repo.createDocumentFromScans(['a.jpg'], title: 'Scan 09/13 08:01');
+    final doc = await repo.createDocumentFromScans([
+      'a.jpg',
+    ], title: 'Scan 09/13 08:01');
     final outcome = await autoFile.apply(
       repository: repo,
       document: doc,
@@ -73,11 +79,11 @@ void main() {
 
     final all = await repo.getAllDocuments();
     expect(all, hasLength(2));
+    expect(SmartFolder.ids.filter(all).map((d) => d.id), contains(copy.id));
     expect(
       SmartFolder.ids.filter(all).map((d) => d.id),
-      contains(copy.id),
+      isNot(contains(doc.id)),
     );
-    expect(SmartFolder.ids.filter(all).map((d) => d.id), isNot(contains(doc.id)));
   });
 
   test('does not copy an ID-card tool scan again', () async {

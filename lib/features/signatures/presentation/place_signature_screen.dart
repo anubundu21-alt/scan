@@ -83,11 +83,13 @@ class _PlaceSignatureScreenState extends ConsumerState<PlaceSignatureScreen> {
           .getDocument(widget.args.documentId);
       final page = document?.pageAt(widget.args.pagePath);
       final existing = page?.stamps ?? const <PageStamp>[];
-      await ref.read(documentRepositoryProvider).setPageStamps(
-        documentId: widget.args.documentId,
-        pagePath: widget.args.pagePath,
-        stamps: [...existing, stamp],
-      );
+      await ref
+          .read(documentRepositoryProvider)
+          .setPageStamps(
+            documentId: widget.args.documentId,
+            pagePath: widget.args.pagePath,
+            stamps: [...existing, stamp],
+          );
       bumpLibrary(ref);
       if (!mounted) return;
       AppHaptics.success();
@@ -105,8 +107,9 @@ class _PlaceSignatureScreenState extends ConsumerState<PlaceSignatureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final document =
-        ref.watch(documentProvider(widget.args.documentId)).valueOrNull;
+    final document = ref
+        .watch(documentProvider(widget.args.documentId))
+        .valueOrNull;
     final page = document?.pageAt(widget.args.pagePath);
     final theme = Theme.of(context);
 

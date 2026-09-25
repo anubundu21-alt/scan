@@ -70,7 +70,8 @@ class _SplitPdfScreenState extends State<SplitPdfScreen>
     if (seededBytes != null || widget.seededPageCount != null) {
       _bytes = seededBytes;
       _fileName = widget.seededName ?? 'document.pdf';
-      _pageCount = widget.seededPageCount ??
+      _pageCount =
+          widget.seededPageCount ??
           (seededBytes == null ? null : countPdfPages(seededBytes));
     }
     _ranges.text = defaultKeepRange(_pageCount ?? 0);

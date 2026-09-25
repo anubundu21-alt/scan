@@ -47,11 +47,7 @@ class StampCompositor {
     return jpeg;
   }
 
-  Future<void> _drawStamp(
-    Canvas canvas,
-    ui.Image page,
-    PageStamp stamp,
-  ) async {
+  Future<void> _drawStamp(Canvas canvas, ui.Image page, PageStamp stamp) async {
     final file = File(stamp.imagePath);
     if (!file.existsSync()) return;
     Uint8List overlayBytes;
@@ -71,8 +67,12 @@ class StampCompositor {
     final overlay = await decodeUiImage(overlayBytes);
     if (overlay == null) return;
 
-    final destW = (stamp.nw * page.width).clamp(1, page.width.toDouble()).toDouble();
-    final destH = (stamp.nh * page.height).clamp(1, page.height.toDouble()).toDouble();
+    final destW = (stamp.nw * page.width)
+        .clamp(1, page.width.toDouble())
+        .toDouble();
+    final destH = (stamp.nh * page.height)
+        .clamp(1, page.height.toDouble())
+        .toDouble();
     final hasCaption =
         stamp.caption != null && stamp.caption!.trim().isNotEmpty;
     final sigH = hasCaption ? destH * 0.72 : destH;

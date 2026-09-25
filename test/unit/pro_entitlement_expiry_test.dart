@@ -149,31 +149,33 @@ void main() {
     await purchase.dispose();
   });
 
-  test('a cancelled trial stops being Pro on old iOS once the month is up',
-      () async {
-    // iOS 13 or 14: no silent store answer at all.
-    keychain.storeKit2 = false;
-    final gateway = MemoryIapGateway(
-      products: const [_yearly],
-      transactionDate: DateTime.now(),
-    );
-    final purchase = buildPurchase(gateway);
-    expect(await purchase.buy(ProPlan.yearly), isTrue);
+  test(
+    'a cancelled trial stops being Pro on old iOS once the month is up',
+    () async {
+      // iOS 13 or 14: no silent store answer at all.
+      keychain.storeKit2 = false;
+      final gateway = MemoryIapGateway(
+        products: const [_yearly],
+        transactionDate: DateTime.now(),
+      );
+      final purchase = buildPurchase(gateway);
+      expect(await purchase.buy(ProPlan.yearly), isTrue);
 
-    // Still inside the free month, cancelled or not: Apple keeps serving.
-    expect(await purchase.hasActiveEntitlement(), isTrue);
+      // Still inside the free month, cancelled or not: Apple keeps serving.
+      expect(await purchase.hasActiveEntitlement(), isTrue);
 
-    // The month runs out. The app was deleted and reinstalled in between,
-    // so the only thing left is the Keychain.
-    keychain.until = DateTime.now().subtract(const Duration(days: 1));
+      // The month runs out. The app was deleted and reinstalled in between,
+      // so the only thing left is the Keychain.
+      keychain.until = DateTime.now().subtract(const Duration(days: 1));
 
-    expect(await purchase.hasActiveEntitlement(), isFalse);
-    // And the stale yes is gone for good, not re-read on the next launch.
-    expect(keychain.entitled, isFalse);
-    // The free month is still spent, so it must not be offered again.
-    expect(await purchase.trialConsumed(), isTrue);
-    await purchase.dispose();
-  });
+      expect(await purchase.hasActiveEntitlement(), isFalse);
+      // And the stale yes is gone for good, not re-read on the next launch.
+      expect(keychain.entitled, isFalse);
+      // The free month is still spent, so it must not be offered again.
+      expect(await purchase.trialConsumed(), isTrue);
+      await purchase.dispose();
+    },
+  );
 
   test('a paying subscriber keeps Pro across a reinstall on old iOS', () async {
     keychain.storeKit2 = false;
@@ -190,8 +192,7 @@ void main() {
     await purchase.dispose();
   });
 
-  test('a renewal pushes the end date forward without anyone asking',
-      () async {
+  test('a renewal pushes the end date forward without anyone asking', () async {
     keychain.storeKit2 = false;
     keychain.trialUsed = true;
     final gateway = MemoryIapGateway(

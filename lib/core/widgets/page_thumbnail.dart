@@ -32,8 +32,7 @@ class PageThumbnail extends StatelessWidget {
     final onDisk = File(file);
     var cacheKey = file;
     try {
-      cacheKey =
-          '$file-${onDisk.lastModifiedSync().millisecondsSinceEpoch}';
+      cacheKey = '$file-${onDisk.lastModifiedSync().millisecondsSinceEpoch}';
     } catch (_) {}
 
     return Image.file(

@@ -7,7 +7,9 @@ import 'package:scan2/features/legal/legal_screen.dart';
 import 'package:scan2/features/onboarding/presentation/welcome_screen.dart';
 
 void main() {
-  testWidgets('welcome has no login and opens real legal pages', (tester) async {
+  testWidgets('welcome has no login and opens real legal pages', (
+    tester,
+  ) async {
     final router = GoRouter(
       initialLocation: '/welcome',
       routes: [
@@ -18,8 +20,7 @@ void main() {
         ),
         GoRoute(
           path: '/legal/terms',
-          builder: (_, __) =>
-              const LegalScreen(document: LegalDocument.terms),
+          builder: (_, __) => const LegalScreen(document: LegalDocument.terms),
         ),
         GoRoute(
           path: '/legal/privacy',
@@ -49,15 +50,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(AppBar, 'Privacy Policy'), findsOneWidget);
-    expect(find.textContaining('does not have a server'), findsOneWidget);
-    expect(find.textContaining('Nothing is uploaded'), findsOneWidget);
+    expect(find.textContaining('the file is not stored'), findsOneWidget);
+    expect(find.textContaining('Nothing is stored'), findsOneWidget);
   });
 
   testWidgets('Terms of Use page has real sections', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: LegalScreen(document: LegalDocument.terms),
-      ),
+      const MaterialApp(home: LegalScreen(document: LegalDocument.terms)),
     );
     expect(find.widgetWithText(AppBar, 'Terms of Use'), findsOneWidget);
     expect(find.text('Your scans'), findsOneWidget);

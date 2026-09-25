@@ -23,10 +23,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        child: MaterialApp.router(
-          theme: AppTheme.light,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -39,7 +36,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('onboarding has a tools page after the scan pages', (tester) async {
+  testWidgets('onboarding has a tools page after the scan pages', (
+    tester,
+  ) async {
     await pumpOnboarding(tester);
 
     expect(find.textContaining('Scan Anything'), findsOneWidget);
@@ -48,6 +47,10 @@ void main() {
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Clean Pages'), findsOneWidget);
+    expect(find.text('Meeting Notes'), findsOneWidget);
+    expect(find.text('Auto Crop'), findsOneWidget);
+    expect(find.text('Enhance Automatically'), findsOneWidget);
+    expect(find.text('Clear & Readable'), findsOneWidget);
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();

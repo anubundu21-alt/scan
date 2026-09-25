@@ -51,7 +51,7 @@ class HomeHero extends StatelessWidget {
                         ScanellaWordmark(fontSize: 22, onDark: true),
                         SizedBox(height: 3),
                         Text(
-                          'Your best document scanner',
+                          'Scan, save and share PDFs',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -197,11 +197,7 @@ class _HomeHeroArtState extends State<HomeHeroArt>
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            left: 8,
-            top: 4,
-            child: _LiveScanFrame(progress: _scan),
-          ),
+          Positioned(left: 8, top: 4, child: _LiveScanFrame(progress: _scan)),
           const Positioned(
             right: 0,
             top: 0,
@@ -251,10 +247,7 @@ class _LiveScanFrame extends StatelessWidget {
       child: Stack(
         children: [
           const Positioned.fill(
-            child: Padding(
-              padding: EdgeInsets.all(_inset),
-              child: _MiniPage(),
-            ),
+            child: Padding(padding: EdgeInsets.all(_inset), child: _MiniPage()),
           ),
           Positioned.fill(
             child: AnimatedBuilder(
@@ -320,9 +313,7 @@ class _EdgeDetectPainter extends CustomPainter {
     bracket(rect.bottomRight, -1, -1, glow(rect.bottomRight));
 
     canvas.save();
-    canvas.clipRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-    );
+    canvas.clipRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)));
     final band = Rect.fromLTWH(rect.left, sweepY - 7, rect.width, 14);
     final light = Paint()
       ..shader = LinearGradient(

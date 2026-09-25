@@ -64,7 +64,9 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
             Text(
               'PDF, text, sign, convert and more',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isLight ? const Color(0xFF68748A) : scheme.onSurfaceVariant,
+                color: isLight
+                    ? const Color(0xFF68748A)
+                    : scheme.onSurfaceVariant,
               ),
             ),
           ],

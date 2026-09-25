@@ -138,10 +138,7 @@ class _ShortcutCard extends StatelessWidget {
             Container(
               width: 38,
               height: 38,
-              decoration: BoxDecoration(
-                color: ink,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: ink, shape: BoxShape.circle),
               child: Icon(icon, color: Colors.white, size: 20),
             ),
             const SizedBox(height: 8),
@@ -150,11 +147,13 @@ class _ShortcutCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 height: 1.2,
-                color: HomeShortcuts._label,
+                color: isLight
+                    ? HomeShortcuts._label
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -215,7 +214,7 @@ class _AllToolsRow extends StatelessWidget {
                     'All tools',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: HomeShortcuts._label,
+                      color: isLight ? HomeShortcuts._label : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -224,7 +223,9 @@ class _AllToolsRow extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: HomeShortcuts._muted,
+                      color: isLight
+                          ? HomeShortcuts._muted
+                          : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

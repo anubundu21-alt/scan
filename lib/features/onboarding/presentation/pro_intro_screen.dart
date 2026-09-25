@@ -6,6 +6,7 @@ import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/pro/domain/localized_pricing.dart';
 import 'package:scan2/features/pro/domain/pro_store.dart';
+import 'package:scan2/features/pro/domain/scan_quota.dart';
 import 'package:scan2/features/pro/presentation/pro_paywall.dart' show ProMark;
 
 /// The Pro offer, shown once at the end of the intro.
@@ -58,8 +59,7 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
           usdToLocal: 1,
           source: 'device',
         );
-    // App-granted 7 days when that is still available. Apple's month only
-    // when this Apple ID is still owed it and the 7 days have been used.
+    // One month of Pro, no scan limit. After that, 10 free scans a month.
     final courtesy = pro.canStartCourtesyTrial;
     final firstTime = courtesy || pro.canStartTrial;
 
@@ -70,26 +70,14 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    tooltip: 'Close',
-                    icon: const Icon(Icons.close_rounded, color: Brand.ink),
-                    onPressed: widget.onDone,
-                  ),
-                  TextButton(
-                    onPressed: pro.busy ? null : _restore,
-                    child: const Text(
-                      'Restore',
-                      style: TextStyle(
-                        color: Brand.grey,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              // Restore lives in the footer row, as on the other paywalls.
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close_rounded, color: Brand.ink),
+                  onPressed: widget.onDone,
+                ),
               ),
               Expanded(
                 child: ListView(
@@ -114,9 +102,8 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                     ),
                     const SizedBox(height: 18),
                     const _Tick('Unlimited scans'),
-                    const _Tick('OCR – extract text'),
-                    const _Tick('Advanced PDF tools'),
-                    const _Tick('No ads'),
+                    _Tick('No ${ScanQuota.resetDays}-day wait'),
+                    const _Tick('Everything else stays free'),
                     const SizedBox(height: 22),
                     _PlanCard(
                       selected: _plan == ProPlan.yearly,
@@ -192,11 +179,23 @@ class _ProIntroScreenState extends ConsumerState<ProIntroScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    Text(
+                      'Or stay free: ${ScanQuota.starterLimit} scans to start, '
+                      'then ${ScanQuota.monthlyLimit} every '
+                      '${ScanQuota.resetDays} days. PDF tools are always free.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: Brand.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     Text(
                       courtesy
-                          ? 'No payment now. After ${ProTrial.courtesyDays} days, '
-                                'upgrade to keep unlimited scans.'
+                          ? 'Confirm with Apple. You have Pro for 1 month, '
+                                'with no scan limit. Apple charges after '
+                                'that month unless you cancel.'
                           : firstTime
                           ? 'Cancel anytime. Your subscription will '
                                 'automatically renew at the end of the trial.'
@@ -238,7 +237,10 @@ class _ProWordmark extends StatelessWidget {
         ),
         children: [
           TextSpan(text: 'Scanella '),
-          TextSpan(text: 'Pro', style: TextStyle(color: Brand.accent)),
+          TextSpan(
+            text: 'Pro',
+            style: TextStyle(color: Brand.accent),
+          ),
         ],
       ),
     );
@@ -322,9 +324,7 @@ class _PlanCard extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                selected
-                    ? Icons.check_circle_rounded
-                    : Icons.circle_outlined,
+                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
                 size: 30,
                 color: selected ? Brand.accent : Brand.grey,
               ),
@@ -343,10 +343,7 @@ class _PlanCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     price,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Brand.grey,
-                    ),
+                    style: const TextStyle(fontSize: 15, color: Brand.grey),
                   ),
                 ],
               ),
@@ -396,25 +393,26 @@ class _FooterLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     const style = TextStyle(
       fontSize: 13,
-      color: Color(0xFF2F6FED),
-      fontWeight: FontWeight.w600,
+      color: Brand.accent,
+      fontWeight: FontWeight.w700,
     );
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         TextButton(
           onPressed: () => context.push('/legal/terms'),
-          child: const Text('Terms of Service', style: style),
+          child: const Text('Terms', style: style),
         ),
-        const Text('|', style: TextStyle(color: Brand.outline)),
+        const Text('·', style: style),
         TextButton(
           onPressed: () => context.push('/legal/privacy'),
-          child: const Text('Privacy Policy', style: style),
+          child: const Text('Privacy', style: style),
         ),
-        const Text('|', style: TextStyle(color: Brand.outline)),
+        const Text('·', style: style),
         TextButton(
           onPressed: onRestore,
-          child: const Text('Restore Purchase', style: style),
+          child: const Text('Restore purchases', style: style),
         ),
       ],
     );

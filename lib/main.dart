@@ -71,7 +71,9 @@ class _LaunchHoldState extends State<LaunchHold> {
   @override
   Widget build(BuildContext context) {
     if (_ready) return widget.child;
-    return const ColoredBox(
+    // Material gives the wordmark a text style; without it Flutter draws
+    // its yellow "missing style" underline.
+    return const Material(
       color: Brand.accent,
       child: Center(
         child: Column(
@@ -99,9 +101,8 @@ class Scan2App extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ref.watch(settingsProvider.select((s) => s.themeMode)),
       routerConfig: ref.watch(appRouterProvider),
-      builder: (context, child) => LaunchHold(
-        child: AppLockGate(child: child ?? const SizedBox()),
-      ),
+      builder: (context, child) =>
+          LaunchHold(child: AppLockGate(child: child ?? const SizedBox())),
     );
   }
 }

@@ -69,7 +69,12 @@ void main() {
       expect(jpegPixel.r.toInt(), greaterThan(150));
       expect(jpegPixel.g.toInt(), lessThan(80));
 
-      final png = rgbaToPageImage(rgba, width: width, height: height, png: true);
+      final png = rgbaToPageImage(
+        rgba,
+        width: width,
+        height: height,
+        png: true,
+      );
       expect(png[0], 0x89);
       expect(String.fromCharCodes(png.sublist(1, 4)), 'PNG');
       final pngImage = img.decodeImage(png)!;
@@ -86,11 +91,7 @@ void main() {
       expect(single.mimeType, 'image/jpeg');
       expect(single.bytes, page);
 
-      final zipped = convert.packImages(
-        [page, page],
-        png: true,
-        stem: 'pages',
-      );
+      final zipped = convert.packImages([page, page], png: true, stem: 'pages');
       expect(zipped.filename, 'pages.zip');
       expect(zipped.mimeType, 'application/zip');
       final archive = ZipDecoder().decodeBytes(zipped.bytes);
