@@ -6,7 +6,7 @@ import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/core/theme/tactile.dart';
 import 'package:scan2/core/widgets/pressable_scale.dart';
 import 'package:scan2/features/home/domain/import_service.dart';
-import 'package:scan2/features/home/presentation/tool_art.dart';
+import 'package:scan2/features/home/presentation/tool_glyph.dart';
 import 'package:scan2/features/ocr/domain/on_device_ocr.dart';
 import 'package:scan2/features/ocr/presentation/ocr_result_screen.dart';
 import 'package:scan2/features/pro/presentation/coming_soon_tool_screen.dart';
@@ -29,6 +29,12 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width >= 600 ? 4 : 3;
+    const maxGridWidth = 680.0;
+    final sidePad = width > maxGridWidth + 36
+        ? (width - maxGridWidth) / 2
+        : 18.0;
 
     return Scaffold(
       backgroundColor: isLight ? const Color(0xFFF7F9FC) : scheme.surface,
@@ -77,13 +83,15 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
           CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
+                // On an iPad the grid stays phone-sized and centred, so the
+                // tiles do not stretch into huge empty cards.
+                padding: EdgeInsets.fromLTRB(sidePad, 12, sidePad, 28),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.88,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.95,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     childCount: _allTools.length,
@@ -188,98 +196,30 @@ class _AllToolsScreenState extends ConsumerState<AllToolsScreen> {
 }
 
 class _ToolItem {
-  const _ToolItem({
-    required this.id,
-    required this.title,
-    required this.wash,
-    required this.ink,
-  });
+  const _ToolItem({required this.id, required this.title, required this.ink});
 
   final String id;
   final String title;
-  final Color wash;
+
+  /// The tool's bright colour. The tile wash and the icon square are made
+  /// from it, so each tool needs only one colour.
   final Color ink;
 }
 
 const _allTools = <_ToolItem>[
-  _ToolItem(
-    id: 'pdf-word',
-    title: 'PDF to Word',
-    wash: Color(0xFFEDF3FF),
-    ink: Color(0xFF2F6FED),
-  ),
-  _ToolItem(
-    id: 'word-pdf',
-    title: 'Word to PDF',
-    wash: Color(0xFFEDF3FF),
-    ink: Color(0xFF2F6FED),
-  ),
-  _ToolItem(
-    id: 'img-pdf',
-    title: 'Image to PDF',
-    wash: Color(0xFFE7F5FE),
-    ink: Color(0xFF0EA5E9),
-  ),
-  _ToolItem(
-    id: 'compress',
-    title: 'Compress PDF',
-    wash: Color(0xFFF1EDFF),
-    ink: Color(0xFF7C5CFF),
-  ),
-  _ToolItem(
-    id: 'merge',
-    title: 'Merge PDF',
-    wash: Color(0xFFF1EDFF),
-    ink: Color(0xFF7C5CFF),
-  ),
-  _ToolItem(
-    id: 'jpg',
-    title: 'PDF to JPG',
-    wash: Color(0xFFE7F5FE),
-    ink: Color(0xFF0EA5E9),
-  ),
-  _ToolItem(
-    id: 'split',
-    title: 'Split PDF',
-    wash: Color(0xFFFFE9EE),
-    ink: Color(0xFFF43F5E),
-  ),
-  _ToolItem(
-    id: 'pages',
-    title: 'Page numbers',
-    wash: Color(0xFFF1EDFF),
-    ink: Color(0xFF7C5CFF),
-  ),
-  _ToolItem(
-    id: 'watermark',
-    title: 'Watermark',
-    wash: Color(0xFFFFF5E0),
-    ink: Color(0xFFF59E0B),
-  ),
-  _ToolItem(
-    id: 'rotate',
-    title: 'Rotate PDF',
-    wash: Color(0xFFF1EDFF),
-    ink: Color(0xFF7C5CFF),
-  ),
-  _ToolItem(
-    id: 'unlock',
-    title: 'Unlock PDF',
-    wash: Color(0xFFE2F5F2),
-    ink: Color(0xFF0D9488),
-  ),
-  _ToolItem(
-    id: 'sign',
-    title: 'Sign PDF',
-    wash: Color(0xFFE2F5F2),
-    ink: Color(0xFF0D9488),
-  ),
-  _ToolItem(
-    id: 'extract',
-    title: 'Extract text',
-    wash: Color(0xFFEDF3FF),
-    ink: Color(0xFF2F6FED),
-  ),
+  _ToolItem(id: 'img-pdf', title: 'Image to PDF', ink: Color(0xFF1E88E5)),
+  _ToolItem(id: 'word-pdf', title: 'Word to PDF', ink: Color(0xFF2B6CEE)),
+  _ToolItem(id: 'pdf-word', title: 'PDF to Word', ink: Color(0xFF2B6CEE)),
+  _ToolItem(id: 'compress', title: 'Compress PDF', ink: Color(0xFF7C4DFF)),
+  _ToolItem(id: 'merge', title: 'Merge PDF', ink: Color(0xFFFB8C00)),
+  _ToolItem(id: 'jpg', title: 'PDF to JPG', ink: Color(0xFFF9A825)),
+  _ToolItem(id: 'split', title: 'Split PDF', ink: Color(0xFFF4511E)),
+  _ToolItem(id: 'pages', title: 'Page numbers', ink: Color(0xFF7E57C2)),
+  _ToolItem(id: 'watermark', title: 'Watermark', ink: Color(0xFF2E9E4F)),
+  _ToolItem(id: 'rotate', title: 'Rotate PDF', ink: Color(0xFF1E88E5)),
+  _ToolItem(id: 'unlock', title: 'Unlock PDF', ink: Color(0xFF00A38C)),
+  _ToolItem(id: 'sign', title: 'Sign PDF', ink: Color(0xFF3F51D8)),
+  _ToolItem(id: 'extract', title: 'Extract text', ink: Color(0xFFE8457A)),
 ];
 
 class _ToolCard extends StatelessWidget {
@@ -292,55 +232,33 @@ class _ToolCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
-    final wash = tool.wash;
-    final tint = Color.lerp(wash, Colors.white, 0.6) ?? wash;
+    final ink = tool.ink;
 
     return PressableScale(
       onPressed: onPressed,
       haptic: AppHaptic.impactLight,
       scale: Tactile.pressScaleCard,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(20),
       minSize: 0,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(6, 12, 6, 11),
+        padding: const EdgeInsets.fromLTRB(6, 12, 6, 10),
         decoration: BoxDecoration(
-          // A top-left highlight into the flat wash: the card reads as lit
-          // paper rather than a swatch, and the white sheets in the mark keep
-          // their edge against it.
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isLight
-                ? [tint, wash]
-                : [
-                    tool.ink.withValues(alpha: 0.22),
-                    tool.ink.withValues(alpha: 0.10),
-                  ],
-          ),
-          borderRadius: BorderRadius.circular(22),
+          color: isLight
+              ? Color.lerp(Colors.white, ink, 0.07)
+              : ink.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: tool.ink.withValues(alpha: isLight ? 0.14 : 0.30),
+            color: ink.withValues(alpha: isLight ? 0.16 : 0.30),
           ),
-          boxShadow: isLight
-              ? [
-                  BoxShadow(
-                    color: tool.ink.withValues(alpha: 0.10),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
         ),
         child: Column(
           children: [
             Expanded(
               child: Center(
-                // Scale down rather than clip: three columns on a 320pt phone
-                // leave the art less room than the stage wants.
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: AllToolsMark(toolId: tool.id, ink: tool.ink),
+                  child: ToolGlyph(toolId: tool.id, color: ink),
                 ),
               ),
             ),
@@ -352,7 +270,7 @@ class _ToolCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 13.5,
                 height: 1.15,
                 letterSpacing: -0.1,
                 color: isLight
