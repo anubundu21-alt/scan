@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/home/presentation/all_tools_screen.dart';
-import 'package:scan2/features/home/presentation/tool_art.dart';
+import 'package:scan2/features/home/presentation/tool_glyph.dart';
 import 'package:scan2/features/home/presentation/home_hero.dart';
 import 'package:scan2/features/home/presentation/home_shortcuts.dart';
 import 'package:scan2/features/home/presentation/home_shell.dart';
@@ -933,7 +933,7 @@ void main() {
     expect(find.text('EDIT & ORGANIZE'), findsNothing);
     expect(find.text('VIEW & EXTRACT'), findsNothing);
     expect(find.text('PDF to Word'), findsOneWidget);
-    expect(find.byType(AllToolsMark), findsWidgets);
+    expect(find.byType(ToolGlyph), findsWidgets);
     expect(find.text('Word to PDF'), findsOneWidget);
     expect(find.text('Image to PDF'), findsOneWidget);
     expect(find.text('Excel to PDF'), findsNothing);
@@ -952,14 +952,16 @@ void main() {
     expect(find.text('Extract text'), findsOneWidget);
     expect(find.text('Sign PDF'), findsOneWidget);
     expect(find.text('ID card'), findsNothing);
-    expect(
-      tester.getTopLeft(find.text('PDF to Word')).dy,
-      lessThan(tester.getTopLeft(find.text('Compress PDF')).dy),
-    );
-    expect(
-      tester.getTopLeft(find.text('Word to PDF')).dy,
-      lessThan(tester.getTopLeft(find.text('Compress PDF')).dy),
-    );
+    // Converters come first in reading order (row, then column): wide
+    // screens show more columns, so they can share a row with Compress.
+    bool readsBefore(String a, String b) {
+      final pa = tester.getTopLeft(find.text(a));
+      final pb = tester.getTopLeft(find.text(b));
+      return pa.dy < pb.dy - 1 || ((pa.dy - pb.dy).abs() <= 1 && pa.dx < pb.dx);
+    }
+
+    expect(readsBefore('PDF to Word', 'Compress PDF'), isTrue);
+    expect(readsBefore('Word to PDF', 'Compress PDF'), isTrue);
     expect(find.text('Popular'), findsNothing);
     expect(
       find.text('Split by page ranges or into one PDF per page'),
