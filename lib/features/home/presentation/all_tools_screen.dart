@@ -300,8 +300,6 @@ class _ToolCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
-    final wash = tool.wash;
-    final tint = Color.lerp(wash, Colors.white, 0.35) ?? wash;
 
     return PressableScale(
       onPressed: onPressed,
@@ -313,29 +311,22 @@ class _ToolCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(6, 12, 6, 11),
         decoration: BoxDecoration(
-          // A top-left highlight into the flat wash: the card reads as lit
-          // paper rather than a swatch, and the white sheets in the mark keep
-          // their edge against it.
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isLight
-                ? [tint, wash]
-                : [
-                    tool.ink.withValues(alpha: 0.22),
-                    tool.ink.withValues(alpha: 0.10),
-                  ],
-          ),
+          // Plain card: the colour lives in the icon, not behind it.
+          color: isLight
+              ? Colors.white
+              : theme.colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: tool.ink.withValues(alpha: isLight ? 0.22 : 0.40),
+            color: isLight
+                ? const Color(0xFFE6EAF2)
+                : theme.colorScheme.outlineVariant,
           ),
           boxShadow: isLight
               ? [
                   BoxShadow(
-                    color: tool.ink.withValues(alpha: 0.18),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
+                    color: const Color(0xFF101D41).withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : null,
