@@ -348,7 +348,7 @@ class _ToolCard extends StatelessWidget {
                 // leave the art less room than the stage wants.
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: AllToolsMark(toolId: tool.id, ink: tool.ink),
+                  child: AllToolsMark(toolId: tool.id, ink: tool.ink, size: 78),
                 ),
               ),
             ),
