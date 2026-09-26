@@ -360,7 +360,7 @@ class _ToolCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 13.5,
                 height: 1.15,
                 letterSpacing: -0.1,
                 color: isLight
