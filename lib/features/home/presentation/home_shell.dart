@@ -327,7 +327,7 @@ class _ScanButton extends StatelessWidget {
           child: Center(
             child: Icon(
               Icons.document_scanner_rounded,
-              size: 28,
+              size: 34,
               color: scheme.onPrimary,
             ),
           ),
