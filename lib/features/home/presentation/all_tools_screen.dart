@@ -282,12 +282,6 @@ const _allTools = <_ToolItem>[
     wash: Color(0xFFC9F2EA),
     ink: Color(0xFF00A88F),
   ),
-  _ToolItem(
-    id: 'extract',
-    title: 'Extract text',
-    wash: Color(0xFFFFD4E8),
-    ink: Color(0xFFE5337F),
-  ),
 ];
 
 class _ToolCard extends StatelessWidget {

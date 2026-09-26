@@ -949,7 +949,7 @@ void main() {
     expect(find.text('Watermark'), findsOneWidget);
     expect(find.text('Rotate PDF'), findsOneWidget);
     expect(find.text('Unlock PDF'), findsOneWidget);
-    expect(find.text('Extract text'), findsOneWidget);
+    expect(find.text('Extract text'), findsNothing);
     expect(find.text('Sign PDF'), findsOneWidget);
     expect(find.text('ID card'), findsNothing);
     // Converters come first in reading order (row, then column): wide
