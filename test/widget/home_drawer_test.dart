@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:scan2/core/theme/app_theme.dart';
 import 'package:scan2/core/theme/brand.dart';
 import 'package:scan2/features/home/presentation/all_tools_screen.dart';
-import 'package:scan2/features/home/presentation/tool_glyph.dart';
+import 'package:scan2/features/home/presentation/tool_art.dart';
 import 'package:scan2/features/home/presentation/home_hero.dart';
 import 'package:scan2/features/home/presentation/home_shortcuts.dart';
 import 'package:scan2/features/home/presentation/home_shell.dart';
@@ -933,7 +933,7 @@ void main() {
     expect(find.text('EDIT & ORGANIZE'), findsNothing);
     expect(find.text('VIEW & EXTRACT'), findsNothing);
     expect(find.text('PDF to Word'), findsOneWidget);
-    expect(find.byType(ToolGlyph), findsWidgets);
+    expect(find.byType(AllToolsMark), findsWidgets);
     expect(find.text('Word to PDF'), findsOneWidget);
     expect(find.text('Image to PDF'), findsOneWidget);
     expect(find.text('Excel to PDF'), findsNothing);
